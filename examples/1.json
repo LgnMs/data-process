@@ -1,0 +1,35 @@
+{
+    "b": {
+        "result": [
+            {
+                "citycode": "512000",
+                "cityname": "四川省 资阳市",
+                "cnt": "196",
+                "comwaterquality": "未评价",
+                "datatime": "2023/03/02",
+                "goallevel": "3",
+                "lat": "30.0604000000000",
+                "lng": "104.6816000000000",
+                "mainpollutant": "",
+                "managelevel": "0",
+                "mn": "A512000_2003",
+                "mnname": "拱城铺渡口",
+                "monitorobj": "1",
+                "pkid": "9694a418df8a8c7d11e3ea9899885c564d671c5d",
+                "riverid": "1100000227",
+                "rivername": "长江流域|沱江",
+                "updatetime": "2023-03-03 23:39:34",
+                "vehicletype": "1",
+                "w01001": null,
+                "w01003": null,
+                "w01009": null,
+                "w01010": null,
+                "w01014": null,
+                "w01019": null,
+                "w21001": null,
+                "w21003": null,
+                "w21011": null
+            }
+        ]
+    }
+}
