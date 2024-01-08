@@ -75,21 +75,24 @@ pub fn generate_new_map<'a>(
             let key = target[last_has_index..i].to_string();
             if str == "." {
                 has_dot = true;
-                temp_data
-                    .as_object_mut()
-                    .ok_or(anyhow!(err.clone()))?
-                    .insert(key.clone(), json!({}));
+                if temp_data.as_object_mut().unwrap().get(&key).is_none() {
+                    temp_data
+                        .as_object_mut()
+                        .ok_or(anyhow!(err.clone()))?
+                        .insert(key.clone(), json!({}));
+                }
                 temp_data = temp_data.as_object_mut().unwrap().get_mut(&key).unwrap();
                 last_has_index = i + 1;
             }
             if str == "#" {
                 has_sharp = true;
-                
                 let temp_data =  temp_data
                     .as_object_mut()
                     .ok_or(anyhow!(err.clone()))?;
+
                 let current_item = temp_data.get_mut(&key);
 
+                
                 if current_item.is_none() {
                     let init_insert = || -> Result<Value> {
                         let new_origin_data = find_value(origin, old_data)?;

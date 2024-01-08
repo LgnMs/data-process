@@ -15,6 +15,8 @@ pub trait Serde {
 }
 
 /// 数据处理-导出数据到目标平台
-pub trait Export<R> {
-    fn export(&mut self) -> R;
+pub trait Export {
+    type Target;
+
+    fn export(&mut self) -> Self::Target;
 }
