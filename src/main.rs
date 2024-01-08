@@ -1,8 +1,8 @@
 use tracing::Level;
 
-mod scheduler;
 mod data_processing;
 mod http;
+mod scheduler;
 
 fn main() {
     tracing_subscriber::fmt()
