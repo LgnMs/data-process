@@ -1,0 +1,15 @@
+.main {
+  &-header {
+    &-logo {
+      display: flex;
+      align-items: center;
+      height: 48px;
+      width: 180px;
+      &-title {
+        display: inline-block;
+        color: #fff;
+        margin-left: 8px;
+      }
+    }
+  }
+}
