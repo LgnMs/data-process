@@ -1,20 +1,28 @@
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use reqwest::{
     header::{self, HeaderName, HeaderValue},
     Method,
 };
 use serde_json::{json, Value};
+use tracing::{error, debug};
 
 use crate::{process::{Export, Receive, Serde}, json::{generate_new_map, find_value}};
 
 #[derive(Default, Debug, Clone)]
 pub struct Http {
-    data: Value,
-    // 将数组0的数据映射给数组1的
-    map_rules: Vec<[String; 2]>,
+    pub data: Value,
+    /// 将数组0的数据映射给数组1的
+    pub map_rules: Vec<[String; 2]>,
+    /// 导出字符模板
+    /// ```
+    /// 例如：data = { data: [{"id: 1, "name": "name1"}, {"id: 2, "name": "name2"}] }
+    /// "INSERT INTO table_name (column1, column2) VALUES (${data#id}, ${data#name})" ->
+    /// ["INSERT INTO table_name (column1, column2) VALUES (1, name1)", "INSERT INTO table_name (column1, column2) VALUES (2, name2)"]
+    /// ````
+    pub template_string: Option<String>,
 }
 
 #[derive(Debug)]
@@ -33,6 +41,12 @@ impl Http {
         
         self
     }
+
+    pub fn set_template_string(&mut self, template_string: String) -> &mut Self {
+        self.template_string = Some(template_string.trim().to_string());
+
+        self
+    }
 }
 
 #[async_trait]
@@ -47,7 +61,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
             if name.is_ok() && value.is_ok() {
                 headers.insert(name.unwrap(), value.unwrap());
             } else {
-                println!("{:?} 添加到header中失败", x);
+                error!("{:?} 添加到header中失败", x);
             }
         }
 
@@ -56,7 +70,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
             .timeout(Duration::from_millis(5000))
             .build()?;
 
-        tracing::debug!(
+        debug!(
             "准备发起请求: client: {:?}\n url: {:?}\n paramters: {:?}",
             client,
             url,
@@ -110,9 +124,7 @@ impl Export for Http {
     type Target = Result<SQLString>;
     
     fn export(&mut self) -> Self::Target {
-        let template_sql = r#"
-            INSERT ${code2} VALUES ${res.data#citycode} ${res.data#no2}
-        "#.trim().to_string();
+        let template_sql = self.template_string.as_ref().ok_or(anyhow!("未设置template_string"))?;
 
         let mut temp_index_vec = vec![];
 
@@ -139,10 +151,6 @@ impl Export for Http {
             key_vec.push(template_sql[one_index..two_index+1].to_string());
 
             i += 2;
-        }
-
-        if template_sql.contains("#") {
-
         }
 
         let mut result_vec: Vec<String> = vec![];

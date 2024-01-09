@@ -1,13 +1,16 @@
 use serde_json::{Value, Map, json};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Result, Error};
+use tracing::error;
 
 pub fn find_value(key: &String, data: &Value) -> Result<Value> {
     let mut target_value = &data.clone();
     let mut last_has_index = 0;
     let mut has_dot = false;
     let mut has_sharp = false;
-    let err = || -> String {
-        format!("未在数据 {data} 中找到键值：{key}")
+    let err = || -> Error {
+        let err_str = format!("未在数据 {data} 中找到键值：{key}");
+        error!("{}", err_str);
+        anyhow!(err_str)
     };
 
     for i in 0..key.len() {
@@ -19,13 +22,13 @@ pub fn find_value(key: &String, data: &Value) -> Result<Value> {
             has_dot = true;
             target_value = target_value
                 .get(current_key)
-                .ok_or(anyhow!(err()))?;
+                .ok_or_else(err)?;
             last_has_index = i + 1;
         } else if str == "#" {
             has_sharp = true;
             target_value = target_value
                 .get(current_key)
-                .ok_or(anyhow!(err()))?;
+                .ok_or_else(err)?;
             last_has_index = i + 1;
             // 数组形式只返回数组本身，后续值获取交给回调函数处理
             // 例如data#a.b只会返回data的值
@@ -40,12 +43,12 @@ pub fn find_value(key: &String, data: &Value) -> Result<Value> {
         // 这是a.b -> b.c形式
         target_value = target_value
             .get(&key[last_has_index..key.len()])
-            .ok_or(anyhow!(err()))?;
+            .ok_or_else(err)?;
     } else {
         // 这是a -> b形式
         target_value = target_value
             .get(key)
-            .ok_or(anyhow!(err()))?;
+            .ok_or_else(err)?;
     }
     Ok(target_value.clone())
 }
@@ -55,10 +58,14 @@ pub fn generate_new_map<'a>(
     new_data: &'a mut Value,
     old_data: &'a Value,
 ) -> Result<()> {
-    let err = format!(
-        "数据格式与转换规则不匹配 data: {old_data} map_rules: {:?}",
-        map_rules
-    );
+    let err = || -> Error {
+        let err_str = format!(
+            "数据格式与转换规则不匹配 data: {old_data} map_rules: {:?}",
+            map_rules
+        );
+        error!("{}", err_str);
+        anyhow!(err_str)
+    };
 
     for map_rule in map_rules {
         let mut temp_data = &mut *new_data;
@@ -78,7 +85,7 @@ pub fn generate_new_map<'a>(
                 if temp_data.as_object_mut().unwrap().get(&key).is_none() {
                     temp_data
                         .as_object_mut()
-                        .ok_or(anyhow!(err.clone()))?
+                        .ok_or_else(err)?
                         .insert(key.clone(), json!({}));
                 }
                 temp_data = temp_data.as_object_mut().unwrap().get_mut(&key).unwrap();
@@ -88,7 +95,7 @@ pub fn generate_new_map<'a>(
                 has_sharp = true;
                 let temp_data =  temp_data
                     .as_object_mut()
-                    .ok_or(anyhow!(err.clone()))?;
+                    .ok_or_else(err)?;
 
                 let current_item = temp_data.get_mut(&key);
 
@@ -187,7 +194,7 @@ pub fn generate_new_map<'a>(
             // 这是a -> b形式
             temp_data
                 .as_object_mut()
-                .ok_or(anyhow!(err.clone()))?
+                .ok_or_else(err)?
                 .insert(target.clone(), find_value(origin, old_data)?);
         }
     }
