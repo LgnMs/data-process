@@ -172,13 +172,13 @@ impl Export for Http {
 
         for key in key_vec {
             let rel_key = &key[2..key.len() - 1];
-            let value = find_value(&rel_key.to_string(), &self.data)?;
+            let value = find_value(rel_key, &self.data)?;
             if let Some(index) = rel_key.chars().position(|c| c == '#' ) {
                 let data_list =  value.as_array().unwrap();
                 let template = get_sql_string(&mut result_vec, Some(data_list));
 
                 for old_item in data_list {
-                    let item = find_value(&rel_key[index+1..].to_string(), old_item)?;
+                    let item = find_value(&rel_key[index+1..], old_item)?;
                     let sql_str = template.replace(&key, item.as_str().unwrap());
                     result_vec.push(sql_str);
                 }

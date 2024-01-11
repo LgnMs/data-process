@@ -1,8 +1,12 @@
+
+use std::borrow::Borrow;
+
 use serde_json::{Value, Map, json};
 use anyhow::{anyhow, Result, Error};
 use tracing::error;
 
-pub fn find_value(key: &String, data: &Value) -> Result<Value> {
+pub fn find_value<T: Borrow<str>>(key_o: T, data: &Value) -> Result<Value> {
+    let key: &str = key_o.borrow();
     let mut target_value = &data.clone();
     let mut last_has_index = 0;
     let mut has_dot = false;
@@ -102,13 +106,13 @@ pub fn generate_new_map<'a>(
                 
                 if current_item.is_none() {
                     let init_insert = || -> Result<Value> {
-                        let new_origin_data = find_value(origin, old_data)?;
+                        let new_origin_data = find_value(origin.borrow(), old_data)?;
 
                         if let Some(x) = new_origin_data.as_array() {
                             let last_key = origin[origin.as_str().find("#").unwrap()+1..].to_string();
                             let mut array = vec![];
                             for item in x {
-                                let current_value = find_value(&last_key, item)?;
+                                let current_value = find_value(last_key.borrow(), item)?;
                                 let target_last_key = target[i+1..].to_string();
                                 if target_last_key.contains('.') || target_last_key.contains('#') {
                                     let mut val = json!({});
@@ -135,7 +139,7 @@ pub fn generate_new_map<'a>(
                 } else if let Some(item) = current_item {
                     let modify = |e: &mut Value| -> Result<()> {
                         let current_array = e.as_array_mut().unwrap();
-                        let new_origin_data = find_value(origin, old_data)?;
+                        let new_origin_data = find_value(origin.borrow(), old_data)?;
                         
                         // 当获取到的原始数据是array形式，就循环根据规则进行映射
                         if let Some(x) = new_origin_data.as_array() {
@@ -144,7 +148,7 @@ pub fn generate_new_map<'a>(
                                 let item = x.get(j).unwrap();
                                 // 因为current_array初始化时的数量是由原始数据中的获取到的数组数量决定的，所以他们的索引值一定一一对应
                                 let current_array_item = current_array.get_mut(j).unwrap();
-                                let current_value = find_value(&last_key, item)?;
+                                let current_value = find_value(last_key.borrow(), item)?;
 
                                 // current_array_item.as_object_mut().unwrap().insert(target[i+1..].to_string(), current_value);
                                 let target_last_key = target[i+1..].to_string();
@@ -188,14 +192,14 @@ pub fn generate_new_map<'a>(
                 .unwrap()
                 .insert(
                     target.get(last_has_index..target.len()).unwrap().to_owned(),
-                    find_value(origin, old_data)?,
+                    find_value(origin.borrow(), old_data)?,
                 );
         } else {
             // 这是a -> b形式
             temp_data
                 .as_object_mut()
                 .ok_or_else(err)?
-                .insert(target.clone(), find_value(origin, old_data)?);
+                .insert(target.clone(), find_value(origin.borrow(), old_data)?);
         }
     }
 
