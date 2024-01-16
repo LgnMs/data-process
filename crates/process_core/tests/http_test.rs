@@ -1,4 +1,3 @@
-
 use anyhow::Result;
 use process_core::{http::*, process::*};
 use reqwest::Method;
@@ -20,10 +19,14 @@ async fn test_http() -> Result<()> {
             HttpConfig {
                 method: Method::POST,
                 headers: Some(vec![
-                    ("x-acs-apiCaller-uid".to_string(), "SMS8yzJuWOYPNxuK".to_string()),
+                    (
+                        "x-acs-apiCaller-uid".to_string(),
+                        "SMS8yzJuWOYPNxuK".to_string(),
+                    ),
                     ("Content-Type".to_string(), "application/json".to_string()),
                 ]),
-                body: Some(r#"
+                body: Some(
+                    r#"
                     {
                         "start_time": "2024-01-01 00:00:00",
                         "end_time": "2024-01-05 23:00:00",
@@ -31,20 +34,31 @@ async fn test_http() -> Result<()> {
                             "pagesize": 50,
                         "token": "9652d515-238a-11ed-b8ed-005056bfedb1"
                     }
-                "#.to_string())
-            }
+                "#
+                    .to_string(),
+                ),
+            },
         )
         .await?
         .add_map_rules(vec![
             ["code".to_string(), "code2".to_string()],
             ["data.result#pkid".to_string(), "res.data#id".to_string()],
-            ["data.result#citycode".to_string(), "res.data#citycode".to_string()],
-            ["data.result#avg_no2_degree".to_string(), "res.data#no2".to_string()],
+            [
+                "data.result#citycode".to_string(),
+                "res.data#citycode".to_string(),
+            ],
+            [
+                "data.result#avg_no2_degree".to_string(),
+                "res.data#no2".to_string(),
+            ],
         ])
         .serde()?;
     println!("Http: {:?}", http);
     let export1 = http
-        .set_template_string("INSERT INTO table_name (column1, column2) VALUES (${res.data#id}, ${res.data#no2})".to_string())
+        .set_template_string(
+            "INSERT INTO table_name (column1, column2) VALUES (${res.data#id}, ${res.data#no2})"
+                .to_string(),
+        )
         .export()?;
     println!("export: {export1}");
     Ok(())

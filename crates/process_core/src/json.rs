@@ -1,8 +1,7 @@
-
 use std::borrow::Borrow;
 
-use serde_json::{Value, Map, json};
-use anyhow::{anyhow, Result, Error};
+use anyhow::{anyhow, Error, Result};
+use serde_json::{json, Map, Value};
 use tracing::error;
 
 pub fn find_value<T: Borrow<str>>(key_o: T, data: &Value) -> Result<Value> {
@@ -24,15 +23,11 @@ pub fn find_value<T: Borrow<str>>(key_o: T, data: &Value) -> Result<Value> {
 
         if str == "." {
             has_dot = true;
-            target_value = target_value
-                .get(current_key)
-                .ok_or_else(err)?;
+            target_value = target_value.get(current_key).ok_or_else(err)?;
             last_has_index = i + 1;
         } else if str == "#" {
             has_sharp = true;
-            target_value = target_value
-                .get(current_key)
-                .ok_or_else(err)?;
+            target_value = target_value.get(current_key).ok_or_else(err)?;
             last_has_index = i + 1;
             // 数组形式只返回数组本身，后续值获取交给回调函数处理
             // 例如data#a.b只会返回data的值
@@ -50,9 +45,7 @@ pub fn find_value<T: Borrow<str>>(key_o: T, data: &Value) -> Result<Value> {
             .ok_or_else(err)?;
     } else {
         // 这是a -> b形式
-        target_value = target_value
-            .get(key)
-            .ok_or_else(err)?;
+        target_value = target_value.get(key).ok_or_else(err)?;
     }
     Ok(target_value.clone())
 }
@@ -97,40 +90,37 @@ pub fn generate_new_map<'a>(
             }
             if str == "#" {
                 has_sharp = true;
-                let temp_data =  temp_data
-                    .as_object_mut()
-                    .ok_or_else(err)?;
+                let temp_data = temp_data.as_object_mut().ok_or_else(err)?;
 
                 let current_item = temp_data.get_mut(&key);
 
-                
                 if current_item.is_none() {
                     let init_insert = || -> Result<Value> {
                         let new_origin_data = find_value(origin.borrow(), old_data)?;
 
                         if let Some(x) = new_origin_data.as_array() {
-                            let last_key = origin[origin.as_str().find("#").unwrap()+1..].to_string();
+                            let last_key =
+                                origin[origin.as_str().find("#").unwrap() + 1..].to_string();
                             let mut array = vec![];
                             for item in x {
                                 let current_value = find_value(last_key.borrow(), item)?;
-                                let target_last_key = target[i+1..].to_string();
+                                let target_last_key = target[i + 1..].to_string();
                                 if target_last_key.contains('.') || target_last_key.contains('#') {
                                     let mut val = json!({});
-                                    let map_rules = vec![
-                                        [last_key.clone(), target_last_key.clone()],
-                                    ];
+                                    let map_rules =
+                                        vec![[last_key.clone(), target_last_key.clone()]];
                                     generate_new_map(&map_rules, &mut val, &item)?;
                                     array.push(val);
                                 } else {
                                     let mut map = Map::new();
-                                    map.insert(target[i+1..].to_string(), current_value);
+                                    map.insert(target[i + 1..].to_string(), current_value);
                                     array.push(json!(map));
                                 }
                             }
                             Ok(json!(array))
                         } else {
                             let mut map = Map::new();
-                            map.insert(target[i+1..].to_string(), new_origin_data);
+                            map.insert(target[i + 1..].to_string(), new_origin_data);
                             Ok(json!([map]))
                         }
                     };
@@ -140,10 +130,11 @@ pub fn generate_new_map<'a>(
                     let modify = |e: &mut Value| -> Result<()> {
                         let current_array = e.as_array_mut().unwrap();
                         let new_origin_data = find_value(origin.borrow(), old_data)?;
-                        
+
                         // 当获取到的原始数据是array形式，就循环根据规则进行映射
                         if let Some(x) = new_origin_data.as_array() {
-                            let last_key = origin[origin.as_str().find("#").unwrap()+1..].to_string();
+                            let last_key =
+                                origin[origin.as_str().find("#").unwrap() + 1..].to_string();
                             for j in 0..x.len() {
                                 let item = x.get(j).unwrap();
                                 // 因为current_array初始化时的数量是由原始数据中的获取到的数组数量决定的，所以他们的索引值一定一一对应
@@ -151,24 +142,30 @@ pub fn generate_new_map<'a>(
                                 let current_value = find_value(last_key.borrow(), item)?;
 
                                 // current_array_item.as_object_mut().unwrap().insert(target[i+1..].to_string(), current_value);
-                                let target_last_key = target[i+1..].to_string();
+                                let target_last_key = target[i + 1..].to_string();
                                 if target_last_key.contains('.') || target_last_key.contains('#') {
                                     let mut val = json!({});
-                                    let map_rules = vec![
-                                        [last_key.clone(), target_last_key.clone()],
-                                    ];
+                                    let map_rules =
+                                        vec![[last_key.clone(), target_last_key.clone()]];
                                     generate_new_map(&map_rules, &mut val, &item).unwrap();
-                                    current_array_item.as_object_mut().unwrap().append(val.as_object_mut().unwrap());
+                                    current_array_item
+                                        .as_object_mut()
+                                        .unwrap()
+                                        .append(val.as_object_mut().unwrap());
                                 } else {
-                                    current_array_item.as_object_mut().unwrap().insert(target_last_key.clone(), current_value);
+                                    current_array_item
+                                        .as_object_mut()
+                                        .unwrap()
+                                        .insert(target_last_key.clone(), current_value);
                                 }
-                                
                             }
-                        } 
-                        else // 当获取到的原始数据不是形式，直接写入新创建的数组中
+                        } else
+                        // 当获取到的原始数据不是形式，直接写入新创建的数组中
                         {
                             for item in current_array {
-                                item.as_object_mut().unwrap().insert(target[i+1..].to_string(), new_origin_data.clone());
+                                item.as_object_mut()
+                                    .unwrap()
+                                    .insert(target[i + 1..].to_string(), new_origin_data.clone());
                             }
                         }
                         Ok(())
@@ -187,13 +184,10 @@ pub fn generate_new_map<'a>(
             // 已经在上面的判断中处理完毕
         } else if has_dot {
             // 这是a.b -> b.c形式
-            temp_data
-                .as_object_mut()
-                .unwrap()
-                .insert(
-                    target.get(last_has_index..target.len()).unwrap().to_owned(),
-                    find_value(origin.borrow(), old_data)?,
-                );
+            temp_data.as_object_mut().unwrap().insert(
+                target.get(last_has_index..target.len()).unwrap().to_owned(),
+                find_value(origin.borrow(), old_data)?,
+            );
         } else {
             // 这是a -> b形式
             temp_data

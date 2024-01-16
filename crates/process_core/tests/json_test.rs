@@ -163,7 +163,6 @@ fn serde_json_array_test() {
         })
     );
 
-
     let old_data2 = json!({
         "test": 1,
         "data": [
