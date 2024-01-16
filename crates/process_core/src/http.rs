@@ -20,7 +20,7 @@ pub struct Http {
     /// 将数组0的数据映射给数组1的
     pub map_rules: Vec<[String; 2]>,
     /// 导出字符模板
-    /// ```
+    /// ```js
     /// 例如：data = { data: [{"id: 1, "name": "name1"}, {"id: 2, "name": "name2"}] }
     /// "INSERT INTO table_name (column1, column2) VALUES (${data#id}, ${data#name})" ->
     /// ["INSERT INTO table_name (column1, column2) VALUES (1, name1)", "INSERT INTO table_name (column1, column2) VALUES (2, name2)"]
