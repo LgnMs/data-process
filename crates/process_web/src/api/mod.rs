@@ -1,9 +1,26 @@
+#[macro_use]
+pub mod macros;
+pub mod common;
+pub mod collect_config;
+
 use std::env;
 
 use anyhow::Result;
-use axum::{routing::get, Router};
+use axum::{
+    Extension, Json
+};
 use sea_orm::*;
 use tracing::Level;
+use aide::{
+    axum::{
+        routing::{get, post},
+        ApiRouter, IntoApiResponse,
+    },
+    openapi::{Info, OpenApi},
+};
+use axum::response::Html;
+
+use crate::api::common::AppState;
 
 #[tokio::main]
 pub async fn start() -> Result<()> {
@@ -28,16 +45,41 @@ pub async fn start() -> Result<()> {
         .await
         .expect("Database connection failed");
 
+    let state = AppState { conn };
     // build our application with a route
-    let app = Router::new()
-        // `GET /` goes to `root`
-        .route("/", get(root));
+    let app = ApiRouter::new()
+        .route("/swagger", get(|| async { Html(axum_swagger_ui::swagger_ui("/api.json")) }))
+        .route("/", axum::routing::get(|| async { "Hello, World!" }))
+        .route("/api.json", get(serve_api))
+        .nest("/collect_config", collect_config::set_routes())
+        .with_state(state);
 
+    let mut api = OpenApi {
+        info: Info {
+            description: Some("an example API".to_string()),
+            ..Info::default()
+        },
+        ..OpenApi::default()
+    };
+
+    println!("listener on {server_url}");
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app
+            // Generate the documentation.
+            .finish_api(&mut api)
+            // Expose the documentation to the handlers.
+            .layer(Extension(api))
+            .into_make_service(),
+    ).await?;
+
     Ok(())
 }
 
-async fn root() -> &'static str {
-    "Hello, World!"
+// Note that this clones the document on each request.
+// To be more efficient, we could wrap it into an Arc,
+// or even store it as a serialized string.
+async fn serve_api(Extension(api): Extension<OpenApi>) -> impl IntoApiResponse {
+    Json(api)
 }
