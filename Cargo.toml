@@ -15,6 +15,3 @@ members = [
   "crates/*"
 ]
 
-[[example]]
-name = "josn"
-path = "examples/json.rs"
