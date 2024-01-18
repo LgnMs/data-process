@@ -1,7 +1,7 @@
 use axum::Json;
+use schemars::JsonSchema;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
 
 pub type ResJson<T> = Json<ResTemplate<T>>;
 
@@ -23,7 +23,7 @@ pub struct Pagination<T> {
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Id {
-    pub id: i32
+    pub id: i32,
 }
 
 #[derive(Clone)]

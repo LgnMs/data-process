@@ -1,24 +1,22 @@
 #[macro_use]
 pub mod macros;
+mod collect_config;
+mod collect_log;
 pub mod common;
-pub mod collect_config;
 
 use std::env;
+use std::sync::Arc;
 
-use anyhow::Result;
-use axum::{
-    Extension, Json
-};
-use sea_orm::*;
-use tracing::Level;
 use aide::{
-    axum::{
-        routing::{get, post},
-        ApiRouter, IntoApiResponse,
-    },
+    axum::{routing::get, ApiRouter, IntoApiResponse},
     openapi::{Info, OpenApi},
 };
+use anyhow::Result;
 use axum::response::Html;
+use axum::{Extension, Json};
+use migration::{Migrator, MigratorTrait};
+use sea_orm::*;
+use tracing::Level;
 
 use crate::api::common::AppState;
 
@@ -27,7 +25,7 @@ pub async fn start() -> Result<()> {
     tracing_subscriber::fmt()
         // all spans/events with a level higher than TRACE (e.g, info, warn, etc.)
         // will be written to stdout.
-        .with_max_level(Level::TRACE)
+        .with_max_level(Level::DEBUG)
         .with_line_number(true)
         .with_file(true)
         // sets this to be the default, global subscriber for this application.
@@ -45,18 +43,23 @@ pub async fn start() -> Result<()> {
         .await
         .expect("Database connection failed");
 
-    let state = AppState { conn };
+    Migrator::up(&conn, None).await?;
+
+    let state = Arc::new(AppState { conn });
     // build our application with a route
     let app = ApiRouter::new()
-        .route("/swagger", get(|| async { Html(axum_swagger_ui::swagger_ui("/api.json")) }))
-        .route("/", axum::routing::get(|| async { "Hello, World!" }))
+        .route(
+            "/swagger",
+            get(|| async { Html(axum_swagger_ui::swagger_ui("/api.json")) }),
+        )
         .route("/api.json", get(serve_api))
         .nest("/collect_config", collect_config::set_routes())
+        .nest("/collect_log", collect_log::set_routes())
         .with_state(state);
 
     let mut api = OpenApi {
         info: Info {
-            description: Some("an example API".to_string()),
+            description: Some("API".to_string()),
             ..Info::default()
         },
         ..OpenApi::default()
@@ -72,7 +75,8 @@ pub async fn start() -> Result<()> {
             // Expose the documentation to the handlers.
             .layer(Extension(api))
             .into_make_service(),
-    ).await?;
+    )
+    .await?;
 
     Ok(())
 }

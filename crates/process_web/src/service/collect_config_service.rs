@@ -1,5 +1,5 @@
-use sea_orm::*;
 use sea_orm::ActiveValue::{Set, Unchanged};
+use sea_orm::*;
 use tracing::debug;
 
 use crate::entity::collect_config;
@@ -30,7 +30,7 @@ impl CollectConfigService {
 
     pub async fn add(
         db: &DbConn,
-        data: collect_config::Model
+        data: collect_config::Model,
     ) -> Result<collect_config::Model, DbErr> {
         CollectConfigService::save(db, None, data).await
     }
@@ -38,7 +38,7 @@ impl CollectConfigService {
     pub async fn update_by_id(
         db: &DbConn,
         id: i32,
-        data: collect_config::Model
+        data: collect_config::Model,
     ) -> Result<collect_config::Model, DbErr> {
         CollectConfigService::save(db, Some(id), data).await
     }
@@ -46,7 +46,7 @@ impl CollectConfigService {
     pub async fn save(
         db: &DbConn,
         id: Option<i32>,
-        data: collect_config::Model
+        data: collect_config::Model,
     ) -> Result<collect_config::Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
         let mut active_data = collect_config::ActiveModel {
@@ -69,13 +69,9 @@ impl CollectConfigService {
         } else {
             active_data.insert(db).await
         }
-
     }
 
-    pub async fn delete(
-        db: &DbConn,
-        id: i32
-    ) -> Result<DeleteResult, DbErr> {
+    pub async fn delete(db: &DbConn, id: i32) -> Result<DeleteResult, DbErr> {
         let collect_config: collect_config::ActiveModel = collect_config::Entity::find_by_id(id)
             .one(db)
             .await?
