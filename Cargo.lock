@@ -844,8 +844,8 @@ name = "data_process_center"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "process_web",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
