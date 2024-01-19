@@ -3,7 +3,6 @@
 ///         error!("Error: {}", anyhow!(err));
 ///     }
 /// }
-
 pub mod api;
 pub mod entity;
 pub mod service;
