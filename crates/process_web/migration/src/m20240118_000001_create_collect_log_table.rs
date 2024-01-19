@@ -1,4 +1,4 @@
-use crate::m20240118_000001_create_collect_config_table::CollectConfig;
+use crate::m20240119_000001_create_collect_config_table::CollectConfig;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -22,11 +22,17 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(CollectLog::RunningLog).string().not_null())
+                    .col(
+                        ColumnDef::new(CollectLog::RunningLog)
+                            .string()
+                            .not_null()
+                            .comment("采集日志"),
+                    )
                     .col(
                         ColumnDef::new(CollectLog::CollectConfigId)
                             .integer()
-                            .not_null(),
+                            .not_null()
+                            .comment("采集配置项FK—ID"),
                     )
                     .foreign_key(
                         ForeignKey::create()

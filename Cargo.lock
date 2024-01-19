@@ -2178,6 +2178,7 @@ dependencies = [
  "axum-swagger-ui",
  "dotenvy",
  "migration",
+ "process_core",
  "schemars",
  "sea-orm",
  "serde",

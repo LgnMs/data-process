@@ -11,48 +11,44 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(CollectConfig::Table)
-                    .comment("数据采集配置")
+                    .table(SyncConfig::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(CollectConfig::Id)
+                        ColumnDef::new(SyncConfig::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(CollectConfig::Url)
+                        ColumnDef::new(SyncConfig::DataSource)
                             .string()
                             .not_null()
-                            .comment("api地址"),
+                            .comment("数据源"),
                     )
                     .col(
-                        ColumnDef::new(CollectConfig::Method)
+                        ColumnDef::new(SyncConfig::SourceTableName)
                             .string()
                             .not_null()
-                            .comment("请求类型: GET, POST, ..."),
+                            .comment("数据源表名"),
                     )
                     .col(
-                        ColumnDef::new(CollectConfig::Headers)
-                            .string()
-                            .comment("请求头"),
-                    )
-                    .col(
-                        ColumnDef::new(CollectConfig::Body)
-                            .string()
-                            .comment("请求体"),
-                    )
-                    .col(
-                        ColumnDef::new(CollectConfig::MapRules)
-                            .string()
-                            .comment(r#"数据映射关系: [["code", "code2"]]"#),
-                    )
-                    .col(
-                        ColumnDef::new(CollectConfig::TemplateString)
+                        ColumnDef::new(SyncConfig::QuerySql)
                             .string()
                             .not_null()
-                            .comment("导出字符串模板"),
+                            .comment("查询SQL"),
+                    )
+                    .col(
+                        ColumnDef::new(SyncConfig::TargetType)
+                            .string()
+                            .not_null()
+                            .comment("同步数据目标类型"),
+                    )
+                    .col(
+                        ColumnDef::new(SyncConfig::TargetDataSource)
+                            .string()
+                            .not_null()
+                            .comment("同步数据目标源"),
                     )
                     .to_owned(),
             )
@@ -61,21 +57,19 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // Replace the sample below with your own migration scripts
-
         manager
-            .drop_table(Table::drop().table(CollectConfig::Table).to_owned())
+            .drop_table(Table::drop().table(SyncConfig::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum CollectConfig {
+enum SyncConfig {
     Table,
     Id,
-    Url,
-    Method,
-    Headers,
-    Body,
-    MapRules,
-    TemplateString,
+    DataSource,
+    SourceTableName,
+    QuerySql,
+    TargetType,
+    TargetDataSource,
 }
