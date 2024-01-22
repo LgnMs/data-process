@@ -4,3 +4,4 @@ pub mod prelude;
 
 pub mod collect_config;
 pub mod collect_log;
+pub mod sync_config;

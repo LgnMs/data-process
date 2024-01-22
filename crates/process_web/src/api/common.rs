@@ -1,5 +1,6 @@
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::Json;
-use schemars::JsonSchema;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 
@@ -7,13 +8,13 @@ pub type ResJson<T> = Json<ResTemplate<T>>;
 
 pub type ResJsonWithPagination<T> = ResJson<Pagination<Vec<T>>>;
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Serialize, Deserialize)]
 pub struct ResTemplate<T> {
     pub message: String,
     pub data: Option<T>,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Serialize, Deserialize)]
 pub struct Pagination<T> {
     pub total: u64,
     pub list: T,
@@ -21,7 +22,7 @@ pub struct Pagination<T> {
     pub page_size: u64,
 }
 
-#[derive(Deserialize, JsonSchema)]
+#[derive(Deserialize)]
 pub struct Id {
     pub id: i32,
 }
@@ -29,4 +30,34 @@ pub struct Id {
 #[derive(Clone)]
 pub struct AppState {
     pub(crate) conn: DatabaseConnection,
+}
+
+// Make our own error that wraps `anyhow::Error`.
+#[derive(Debug, Serialize)]
+pub struct AppError {
+    msg: String,
+}
+
+// Tell axum how to convert `AppError` into a response.
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Something went wrong: {}", self.msg),
+        )
+            .into_response()
+    }
+}
+
+// This enables using `?` on functions that return `Result<_, anyhow::Error>` to turn them into
+// `Result<_, AppError>`. That way you don't need to do that manually.
+impl<E> From<E> for AppError
+where
+    E: Into<anyhow::Error>,
+{
+    fn from(err: E) -> Self {
+        Self {
+            msg: err.into().to_string(),
+        }
+    }
 }

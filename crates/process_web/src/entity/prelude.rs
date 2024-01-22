@@ -2,3 +2,4 @@
 
 pub use super::collect_config::Entity as CollectConfig;
 pub use super::collect_log::Entity as CollectLog;
+pub use super::sync_config::Entity as SyncConfig;
