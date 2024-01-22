@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::extract::{Path, State};
-use axum::{http::StatusCode, Json};
+use axum::Json;
 use axum::{
     routing::{get, post},
     Router,
