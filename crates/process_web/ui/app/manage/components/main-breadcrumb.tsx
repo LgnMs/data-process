@@ -1,7 +1,9 @@
-import { Breadcrumb } from 'antd'
+import { Breadcrumb } from "antd";
 
 export function MainBreadcrumb() {
-  return <Breadcrumb style={{ margin: '16px 0' }}>
-  <Breadcrumb.Item>Home</Breadcrumb.Item>
-</Breadcrumb>
+  return (
+    <Breadcrumb style={{ margin: "16px 0" }}>
+      <Breadcrumb.Item>Home</Breadcrumb.Item>
+    </Breadcrumb>
+  );
 }

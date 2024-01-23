@@ -1,54 +1,58 @@
-import React, { ReactNode, useState } from 'react';
-import { Layout, Menu, Space } from 'antd'
-import { usePathname, useRouter } from 'next/navigation'
-import { useMainContext } from '@/contexts/main';
-import { SettingOutlined, LineChartOutlined } from '@ant-design/icons'
+import React, { ReactNode, useState } from "react";
+import { Layout, Menu, Space } from "antd";
+import { usePathname, useRouter } from "next/navigation";
+import { useMainContext } from "@/contexts/main";
+import { SettingOutlined, LineChartOutlined } from "@ant-design/icons";
 
 const { Sider } = Layout;
 
 interface IMainSiderProps {
-  onCollapse: (value: boolean) => void
+  onCollapse: (value: boolean) => void;
 }
 
-function MenuItem(props: {children: ReactNode; status?: string}) {
-  return <Space>{props.children} {props.status}</Space>
+function MenuItem(props: { children: ReactNode; status?: string }) {
+  return (
+    <Space>
+      {props.children} {props.status}
+    </Space>
+  );
 }
 
 const Menus = [
   {
-    key: '/manage/collection-setting',
-    icon: <SettingOutlined rev={undefined}/>,
+    key: "/manage/collection-setting",
+    icon: <SettingOutlined rev={undefined} />,
     label: <MenuItem>采集配置</MenuItem>,
   },
   {
-    key: '/manage/log',
+    key: "/manage/log",
     icon: <LineChartOutlined rev={undefined} />,
     label: <MenuItem>运行日志</MenuItem>,
-  }
-]
+  },
+];
 
 export function MainSider(props: IMainSiderProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const router = useRouter()
-  const pathname = usePathname()
-  const { state } = useMainContext()!
+  const router = useRouter();
+  const pathname = usePathname();
+  const { state } = useMainContext()!;
 
   function getKey(list: Array<any>, arr?: Array<any>) {
-    const keys = arr ? arr : []
-    list.forEach(item => {
+    const keys = arr ? arr : [];
+    list.forEach((item) => {
       if (`/${item.key}` === pathname) {
-        keys.push(item.key)
+        keys.push(item.key);
       } else {
         if (item.children) {
-          keys.push(item.key)
-          getKey(item.children, keys)
+          keys.push(item.key);
+          getKey(item.children, keys);
         }
       }
-    })
+    });
     return keys;
   }
 
-  const keys = getKey(Menus)
+  const keys = getKey(Menus);
 
   // /**
   //  * 权限过滤
@@ -75,21 +79,29 @@ export function MainSider(props: IMainSiderProps) {
   // }
 
   const onSelect = (value: any) => {
-    router.push(value.key)
-  }
+    router.push(value.key);
+  };
 
-  return <Sider width={200}
-    theme="light"
-    style={{ position: 'fixed', left: 0, top: '64px', height: 'calc(100vh - 64px)', overflow: 'auto' }}
-    breakpoint="xxl"
-    collapsible
-    collapsed={collapsed}
-    onCollapse={(value) => {
-      setCollapsed(value)
-      props.onCollapse(value)
-    }}
-  >
-    {/* { state.userInfo
+  return (
+    <Sider
+      width={200}
+      theme="light"
+      style={{
+        position: "fixed",
+        left: 0,
+        top: "64px",
+        height: "calc(100vh - 64px)",
+        overflow: "auto",
+      }}
+      breakpoint="xxl"
+      collapsible
+      collapsed={collapsed}
+      onCollapse={(value) => {
+        setCollapsed(value);
+        props.onCollapse(value);
+      }}
+    >
+      {/* { state.userInfo
       ? <Menu
           mode="inline"
           onSelect={onSelect}
@@ -100,13 +112,14 @@ export function MainSider(props: IMainSiderProps) {
         />
       : <Spin />
      } */}
-    <Menu
-      mode="inline"
-      onSelect={onSelect}
-      defaultSelectedKeys={[keys[keys.length - 1]]}
-      defaultOpenKeys={keys.slice(0, keys.length - 1)}
-      style={{ height: '100%', borderRight: 0 }}
-      items={Menus}
-    />
-  </Sider>
+      <Menu
+        mode="inline"
+        onSelect={onSelect}
+        defaultSelectedKeys={[keys[keys.length - 1]]}
+        defaultOpenKeys={keys.slice(0, keys.length - 1)}
+        style={{ height: "100%", borderRight: 0 }}
+        items={Menus}
+      />
+    </Sider>
+  );
 }

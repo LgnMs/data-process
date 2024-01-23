@@ -4,7 +4,6 @@ mod collect_config;
 mod collect_log;
 pub mod common;
 
-use aide::axum::IntoApiResponse;
 use anyhow::Result;
 use axum::Router;
 use migration::{Migrator, MigratorTrait};

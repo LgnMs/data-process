@@ -2,17 +2,24 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS)]
 #[sea_orm(table_name = "collect_config")]
+#[ts(export, export_to = "ui/api/models/CollectConfig.ts", rename = "CollectConfig")]
 pub struct Model {
     pub url: String,
+    pub name: String,
+    pub desc: Option<String>,
     pub method: String,
+    #[ts(type = "any")]
     pub headers: Option<Json>,
     pub body: Option<String>,
+    #[ts(type = "any")]
     pub map_rules: Option<Json>,
     pub template_string: String,
     #[sea_orm(primary_key)]
+    #[serde(skip_deserializing)]
     pub id: i32,
     pub current_key: Option<i32>,
     pub page_size_key: Option<i32>,

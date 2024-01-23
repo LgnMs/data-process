@@ -22,11 +22,6 @@ pub struct Pagination<T> {
     pub page_size: u64,
 }
 
-#[derive(Deserialize)]
-pub struct Id {
-    pub id: i32,
-}
-
 #[derive(Clone)]
 pub struct AppState {
     pub(crate) conn: DatabaseConnection,
@@ -60,4 +55,11 @@ where
             msg: err.into().to_string(),
         }
     }
+}
+
+#[derive(Deserialize)]
+pub struct PaginationPayload<T> {
+    pub current: u64,
+    pub page_size: u64,
+    pub data: Option<T>
 }

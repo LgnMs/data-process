@@ -10,7 +10,7 @@ use serde::Deserialize;
 use std::sync::Arc;
 
 use crate::api::common::{
-    AppError, AppState, Id, Pagination, ResJson, ResJsonWithPagination, ResTemplate,
+    AppError, AppState, Pagination, ResJson, ResJsonWithPagination, ResTemplate,
 };
 use crate::entity::collect_log::Model;
 use crate::service::collect_log_service::CollectLogService;
@@ -21,7 +21,7 @@ pub fn set_routes() -> Router<Arc<AppState>> {
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))
-        .route("/delete/:id", get(delete));
+        .route("/delete/:id", get(del));
 
     routes
 }
@@ -34,9 +34,9 @@ struct QueryList {
 
 async fn find_by_id(
     state: State<Arc<AppState>>,
-    Path(id): Path<Id>,
+    Path(id):Path<i32>,
 ) -> Result<ResJson<Model>, AppError> {
-    let res = CollectLogService::find_by_id(&state.conn, id.id).await;
+    let res = CollectLogService::find_by_id(&state.conn, id).await;
 
     data_response!(res)
 }
@@ -60,19 +60,19 @@ async fn add(
 
 async fn update_by_id(
     state: State<Arc<AppState>>,
-    Path(id): Path<Id>,
+    Path(id): Path<i32>,
     Json(payload): Json<Model>,
 ) -> Result<ResJson<Model>, AppError> {
-    let res = CollectLogService::update_by_id(&state.conn, id.id, payload).await;
+    let res = CollectLogService::update_by_id(&state.conn, id, payload).await;
 
     data_response!(res)
 }
 
-async fn delete(
+async fn del(
     state: State<Arc<AppState>>,
-    Path(id): Path<Id>,
+    Path(id):Path<i32>,
 ) -> Result<ResJson<bool>, AppError> {
-    let res = CollectLogService::delete(&state.conn, id.id).await;
+    let res = CollectLogService::delete(&state.conn, id).await;
 
     bool_response!(res)
 }

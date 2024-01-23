@@ -51,11 +51,17 @@ impl CollectConfigService {
         debug!("data: {:?}, id: {:?}", data, id);
         let mut active_data = collect_config::ActiveModel {
             url: Set(data.url),
+            name: Set(data.name),
+            desc: Set(data.desc),
             method: Set(data.method),
             headers: Set(data.headers),
             body: Set(data.body),
             map_rules: Set(data.map_rules),
             template_string: Set(data.template_string),
+            current_key: Set(data.current_key),
+            page_size_key: Set(data.page_size_key),
+            loop_request_by_pagination: Set(data.loop_request_by_pagination),
+            cache_table_name: Set(data.cache_table_name),
             ..Default::default()
         };
         if let Some(id) = id {

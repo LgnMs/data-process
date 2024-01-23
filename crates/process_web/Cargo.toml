@@ -17,6 +17,7 @@ serde = { version = "1.0.193", features = ["derive"] }
 aide = { version = "0.13.1", features = ["axum"] }
 schemars = { version = "0.8.10", features = ["uuid1"] }
 axum-swagger-ui = "0.3.0"
+ts-rs = "7.1"
 
 migration = { path = "migration" }
 process_core = { path = "../process_core" }

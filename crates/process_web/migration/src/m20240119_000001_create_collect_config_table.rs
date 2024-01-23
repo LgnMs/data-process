@@ -22,6 +22,17 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(
+                        ColumnDef::new(CollectConfig::Name)
+                            .string()
+                            .not_null()
+                            .comment("名称"),
+                    )
+                    .col(
+                        ColumnDef::new(CollectConfig::Desc)
+                            .string()
+                            .comment("描述"),
+                    )
+                    .col(
                         ColumnDef::new(CollectConfig::Url)
                             .string()
                             .not_null()
@@ -94,6 +105,8 @@ impl MigrationTrait for Migration {
 pub enum CollectConfig {
     Table,
     Id,
+    Name,
+    Desc,
     Url,
     Method,
     Headers,

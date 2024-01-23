@@ -1,53 +1,45 @@
 use anyhow::Result;
 use axum::extract::{Path, State};
-use axum::{http::StatusCode, Json};
+use axum::{Json};
 use axum::{
     routing::{get, post},
     Router,
 };
 use process_core::http::HttpConfig;
 use process_core::process::{Export, Receive, Serde};
-use schemars::JsonSchema;
 use schemars::_serde_json::Value;
-use serde::Deserialize;
 use std::sync::Arc;
 
 use crate::api::common::{
-    AppError, AppState, Id, Pagination, ResJson, ResJsonWithPagination, ResTemplate,
+    AppError, AppState, Pagination, ResJson, ResJsonWithPagination, ResTemplate, PaginationPayload
 };
 use crate::entity::collect_config::Model;
 use crate::service::collect_config_service::CollectConfigService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
-        .route("/find_by_id/:id", post(find_by_id))
+        .route("/find_by_id/:id", get(find_by_id))
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))
-        .route("/delete/:id", get(delete))
+        .route("/del/:id", get(del))
         .route("/execute/:id", get(execute));
 
     routes
 }
 
-#[derive(Deserialize, JsonSchema)]
-struct QueryList {
-    current: u64,
-    page_size: u64,
-}
-
 async fn find_by_id(
     state: State<Arc<AppState>>,
-    Path(id): Path<Id>,
+    Path(id): Path<i32>,
 ) -> Result<ResJson<Model>, AppError> {
-    let res = CollectConfigService::find_by_id(&state.conn, id.id).await;
+    let res = CollectConfigService::find_by_id(&state.conn, id).await;
 
     data_response!(res)
 }
 
 async fn list(
     state: State<Arc<AppState>>,
-    Json(payload): Json<QueryList>,
+    Json(payload): Json<PaginationPayload<Model>>,
 ) -> Result<ResJsonWithPagination<Model>, AppError> {
     let res = CollectConfigService::list(&state.conn, payload.current, payload.page_size).await;
 
@@ -64,30 +56,29 @@ async fn add(
 
 async fn update_by_id(
     state: State<Arc<AppState>>,
-    Path(id): Path<Id>,
+    Path(id): Path<i32>,
     Json(payload): Json<Model>,
 ) -> Result<ResJson<Model>, AppError> {
-    let res = CollectConfigService::update_by_id(&state.conn, id.id, payload).await;
+    let res = CollectConfigService::update_by_id(&state.conn, id, payload).await;
 
     data_response!(res)
 }
 
-async fn delete(
+async fn del(
     state: State<Arc<AppState>>,
-    Path(id): Path<Id>,
+    Path(id): Path<i32>,
 ) -> Result<ResJson<bool>, AppError> {
-    let res = CollectConfigService::delete(&state.conn, id.id).await;
+    let res = CollectConfigService::delete(&state.conn, id).await;
 
     bool_response!(res)
 }
 
-#[axum::debug_handler]
 /// 执行id所配置的采集任务
 pub async fn execute(
     state: State<Arc<AppState>>,
-    Path(id): Path<Id>,
+    Path(id): Path<i32>,
 ) -> Result<ResJson<String>, AppError> {
-    let data = CollectConfigService::find_by_id(&state.conn, id.id).await?;
+    let data = CollectConfigService::find_by_id(&state.conn, id).await?;
     let mut http = process_core::http::Http::new();
     let mut headers = None;
 
