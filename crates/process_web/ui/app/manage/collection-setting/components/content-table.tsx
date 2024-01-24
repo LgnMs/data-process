@@ -3,18 +3,13 @@ import { Button, Divider, Popconfirm, Space, Table, Typography } from "antd";
 import useSWR from "swr";
 
 import * as CollectConfig from "@/api/collect_config";
-import { useState } from "react";
+import {Dispatch, SetStateAction, useState} from "react";
 import { PaginationPayload } from "@/api/common";
 import { CollectConfig as ICollectConfig } from "@/api/models/CollectConfig";
+import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/page";
 
-export default function ContentTable() {
-  const [pagination, setPagination] = useState<
-    PaginationPayload<ICollectConfig>
-  >({
-    current: 1,
-    page_size: 10,
-    data: null,
-  });
+interface IContentTableProps extends ICommonCollectionSettingProps {}
+export default function ContentTable({ pagination, setPagination }: IContentTableProps) {
 
   const { data, isLoading } = useSWR(
     [CollectConfig.LIST, pagination],
@@ -64,10 +59,18 @@ export default function ContentTable() {
       loading={isLoading}
       columns={columns}
       dataSource={dataSource}
+      rowKey="id"
       pagination={{
         current: pagination.current,
         pageSize: pagination.page_size,
         total,
+      }}
+      onChange={({ current, pageSize }) => {
+        setPagination({
+          ...pagination,
+          current: current as number,
+          page_size: pageSize as number,
+        })
       }}
     />
   );

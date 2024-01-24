@@ -23,7 +23,7 @@ impl CollectConfigService {
             .order_by_asc(collect_config::Column::Id)
             .paginate(db, page_size);
 
-        let num_pages = paginator.num_pages().await?;
+        let num_pages = paginator.num_items().await?;
 
         paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
     }
