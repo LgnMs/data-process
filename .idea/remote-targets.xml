@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <targets>
+      <target name="root@192.168.10.83:22" type="ssh/sftp" uuid="4b2e2661-9bac-4805-b960-08a76e3163a3">
+        <config>
+          <option name="projectRootOnTarget" value="/home/ide-remote-build/data_process_center" />
+          <option name="serverName" value="root@192.168.10.83:22 agent" />
+          <option name="useRsync" value="true" />
+        </config>
+        <ContributedStateBase type="RsLanguageRuntime">
+          <config>
+            <option name="cargoPath" value="/usr/local/bin/cargo " />
+            <option name="cargoVersion" value="/bin/bash: -c: line 0: syntax error near unexpected token `('" />
+            <option name="rustcPath" value="/usr/local/bin/rustc " />
+            <option name="rustcVersion" value="/bin/bash: -c: line 0: syntax error near unexpected token `('" />
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>
