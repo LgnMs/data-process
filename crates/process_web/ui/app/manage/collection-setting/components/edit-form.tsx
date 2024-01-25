@@ -5,6 +5,7 @@ import {CloseOutlined, MinusCircleOutlined, PlusOutlined} from "@ant-design/icon
 import FormItemLabelTips from "@/app/manage/components/form-item-label-tips";
 import * as CollectConfig from "@/api/collect_config";
 import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/page";
+import { useMainContext } from "@/contexts/main";
 
 interface IEditFormProps extends ICommonCollectionSettingProps {
     open: boolean
@@ -13,6 +14,7 @@ interface IEditFormProps extends ICommonCollectionSettingProps {
 export default function EditForm(props: IEditFormProps) {
     const { mutate } = useSWRConfig();
     const [form] = Form.useForm();
+    const { state } = useMainContext()!;
 
     async function onSubmit() {
         const values = await form.validateFields();
@@ -37,17 +39,21 @@ export default function EditForm(props: IEditFormProps) {
             body: JSON.stringify(body)
         }
 
-        console.log(data)
         const res = await CollectConfig.add(data)
 
         if (res.data) {
-            await mutate([CollectConfig.LIST, props.pagination])
+            await mutate([CollectConfig.LIST, state.collectConfig.pagination])
 
             message.success("添加成功");
 
-            props.close()
+            close()
         }
 
+    }
+
+    function close() {
+        props.close()
+        form.resetFields()
     }
 
     return <Drawer
@@ -56,10 +62,11 @@ export default function EditForm(props: IEditFormProps) {
             width={800}
             extra={
                 <Space>
-                    <Button>取消</Button>
+                    <Button onClick={close}>取消</Button>
                     <Button onClick={onSubmit} type="primary">提交</Button>
                 </Space>
             }
+            onClose={close}
     >
         <Form layout="vertical"  form={form} labelAlign="left" labelWrap>
             <Row gutter={16}>

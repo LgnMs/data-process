@@ -46,6 +46,7 @@ impl CollectLogService {
         data: collect_log::Model,
     ) -> Result<collect_log::Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
+        let now = chrono::Local::now().naive_utc();
         let mut active_data = collect_log::ActiveModel {
             running_log: Set(data.running_log),
             collect_config_id: Set(data.collect_config_id),
@@ -58,8 +59,11 @@ impl CollectLogService {
                 .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
 
             active_data.id = Unchanged(db_data.id);
+            active_data.update_time = Set(now);
             active_data.update(db).await
         } else {
+            active_data.create_time = Set(now);
+            active_data.update_time = Set(now);
             active_data.insert(db).await
         }
     }

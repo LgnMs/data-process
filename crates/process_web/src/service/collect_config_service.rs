@@ -20,7 +20,7 @@ impl CollectConfigService {
         page_size: u64,
     ) -> Result<(Vec<collect_config::Model>, u64), DbErr> {
         let paginator = collect_config::Entity::find()
-            .order_by_asc(collect_config::Column::Id)
+            .order_by_desc(collect_config::Column::Id)
             .paginate(db, page_size);
 
         let num_pages = paginator.num_items().await?;
@@ -49,6 +49,8 @@ impl CollectConfigService {
         data: collect_config::Model,
     ) -> Result<collect_config::Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
+        let now = chrono::Local::now().naive_utc();
+
         let mut active_data = collect_config::ActiveModel {
             url: Set(data.url),
             name: Set(data.name),
@@ -71,8 +73,11 @@ impl CollectConfigService {
                 .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
 
             active_data.id = Unchanged(db_data.id);
+            active_data.update_time = Set(now);
             active_data.update(db).await
         } else {
+            active_data.create_time = Set(now);
+            active_data.update_time = Set(now);
             active_data.insert(db).await
         }
     }

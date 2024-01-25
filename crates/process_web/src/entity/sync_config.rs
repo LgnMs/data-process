@@ -16,6 +16,10 @@ pub struct Model {
     pub query_sql: String,
     pub target_type: String,
     pub target_data_source: String,
+    #[serde(skip_deserializing)]
+    pub update_time: DateTime,
+    #[serde(skip_deserializing)]
+    pub create_time: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

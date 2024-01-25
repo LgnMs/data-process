@@ -25,6 +25,10 @@ pub struct Model {
     pub page_size_key: Option<i32>,
     pub loop_request_by_pagination: Option<bool>,
     pub cache_table_name: Option<String>,
+    #[serde(skip_deserializing)]
+    pub update_time: DateTime,
+    #[serde(skip_deserializing)]
+    pub create_time: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -6,7 +6,7 @@ import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/pag
 
 interface IHeaderFormProps extends ICommonCollectionSettingProps {}
 
-export default function HeaderForm(props: IHeaderFormProps) {
+export default function HeaderForm() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -27,7 +27,7 @@ export default function HeaderForm(props: IHeaderFormProps) {
             icon={<PlusOutlined rev={undefined} />}
           />
 
-        <EditForm {...props} open={open} close={() => setOpen(false)} />
+        <EditForm open={open} close={() => setOpen(false)} />
         </Space>
       </Form.Item>
     </Form>

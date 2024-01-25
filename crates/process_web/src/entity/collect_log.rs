@@ -13,6 +13,10 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub collect_config_id: Option<i32>,
+    #[serde(skip_deserializing)]
+    pub update_time: DateTime,
+    #[serde(skip_deserializing)]
+    pub create_time: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

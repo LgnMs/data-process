@@ -26,23 +26,12 @@ export function useCollectionSetting(
   };
 }
 
-export interface ICommonCollectionSettingProps {
-    pagination: PaginationPayload<ICollectConfig>,
-    setPagination: Dispatch<SetStateAction<PaginationPayload<ICollectConfig>>>
-}
+export interface ICommonCollectionSettingProps {}
 
 export default function pages() {
       const {
         token: { colorBgContainer },
       } = theme.useToken();
-
-    const [pagination, setPagination] = useState<
-        PaginationPayload<ICollectConfig>
-    >({
-        current: 1,
-        page_size: 10,
-        data: null,
-    });
 
       return (
         <Layout>
@@ -54,11 +43,11 @@ export default function pages() {
               borderLeft: "1px solid #f5f5f5",
             }}
           >
-            <HeaderForm pagination={pagination} setPagination={setPagination}/>
+            <HeaderForm/>
           </Header>
           <Content>
             <TableContainer>
-              <ContentTable pagination={pagination} setPagination={setPagination}/>
+              <ContentTable/>
             </TableContainer>
           </Content>
         </Layout>

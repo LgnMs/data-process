@@ -64,7 +64,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum SyncConfig {
+pub enum SyncConfig {
     Table,
     Id,
     DataSource,
@@ -72,4 +72,6 @@ enum SyncConfig {
     QuerySql,
     TargetType,
     TargetDataSource,
+    UpdateTime,
+    CreateTime,
 }

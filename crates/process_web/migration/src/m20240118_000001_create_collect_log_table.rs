@@ -55,9 +55,11 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum CollectLog {
+pub enum CollectLog {
     Table,
     Id,
     RunningLog,
     CollectConfigId,
+    UpdateTime,
+    CreateTime,
 }

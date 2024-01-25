@@ -7,9 +7,12 @@ import {Dispatch, SetStateAction, useState} from "react";
 import { PaginationPayload } from "@/api/common";
 import { CollectConfig as ICollectConfig } from "@/api/models/CollectConfig";
 import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/page";
+import { useMainContext } from "@/contexts/main";
 
 interface IContentTableProps extends ICommonCollectionSettingProps {}
-export default function ContentTable({ pagination, setPagination }: IContentTableProps) {
+export default function ContentTable() {
+  const { state, dispatch } = useMainContext()!;
+  const pagination = state.collectConfig.pagination;
 
   const { data, isLoading } = useSWR(
     [CollectConfig.LIST, pagination],
@@ -66,10 +69,13 @@ export default function ContentTable({ pagination, setPagination }: IContentTabl
         total,
       }}
       onChange={({ current, pageSize }) => {
-        setPagination({
-          ...pagination,
-          current: current as number,
-          page_size: pageSize as number,
+        dispatch({
+          type: 'collectConfig.setPagination',
+          pagination: {
+            ...pagination,
+            current: current as number,
+            page_size: pageSize as number,
+          }
         })
       }}
     />

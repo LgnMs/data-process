@@ -6,6 +6,12 @@ import {
   useEffect,
   useReducer,
 } from "react";
+import {
+  CollectConfigAction,
+  CollectConfigReducer,
+  CollectConfigState,
+  initCollectConfigState
+} from "@/contexts/collectCofnigContext";
 
 export interface IRoleInfo {
   id: string;
@@ -19,13 +25,15 @@ interface MainState {
   roles: string[];
   permissions: string[];
   userInfo: Record<string, any> | null;
+  collectConfig: CollectConfigState
 }
 
 type MainAction =
   | { type: "setToken"; token: MainState["token"] }
   | { type: "setRoles"; roles: MainState["roles"] }
   | { type: "setPermissions"; permissions: MainState["permissions"] }
-  | { type: "setUserInfo"; userInfo: MainState["userInfo"] };
+  | { type: "setUserInfo"; userInfo: MainState["userInfo"] }
+  | CollectConfigAction;
 
 function reducer(state: MainState, action: MainAction) {
   if (action.type === "setToken") {
@@ -52,6 +60,13 @@ function reducer(state: MainState, action: MainAction) {
       userInfo: action.userInfo,
     };
   }
+  if (action.type.indexOf("collectConfig") > -1) {
+    return {
+      ...state,
+      collectConfig: CollectConfigReducer(state.collectConfig, action)
+    }
+  }
+
   throw Error("Unknown action");
 }
 
@@ -71,6 +86,7 @@ export function MainContextProvider(props: { children: ReactNode }) {
     roles: [],
     permissions: [],
     userInfo: null,
+    collectConfig: initCollectConfigState
   });
 
   return (
