@@ -67,12 +67,12 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(CollectConfig::CurrentKey)
-                            .integer()
+                            .string()
                             .comment("body中的页码键值，设定这两个值后表示该接口为分页接口"),
                     )
                     .col(
                         ColumnDef::new(CollectConfig::PageSizeKey)
-                            .integer()
+                            .string()
                             .comment("body中分页大小键值"),
                     )
                     .col(

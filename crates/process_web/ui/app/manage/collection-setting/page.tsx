@@ -8,6 +8,8 @@ import {CollectConfig as ICollectConfig, CollectConfig} from "@/api/models/Colle
 import useSWR from "swr";
 import { list, LIST } from "@/api/collect_config";
 import {Dispatch, SetStateAction, useState} from "react";
+import EditForm from "@/app/manage/collection-setting/components/edit-form";
+import { useMainContext } from "@/contexts/main";
 
 const { Header, Content } = Layout;
 
@@ -32,6 +34,7 @@ export default function pages() {
       const {
         token: { colorBgContainer },
       } = theme.useToken();
+      const { state, dispatch } = useMainContext()!
 
       return (
         <Layout>
@@ -50,6 +53,13 @@ export default function pages() {
               <ContentTable/>
             </TableContainer>
           </Content>
+
+          <EditForm open={state.collectConfig.editFormOpen} close={() => {
+            dispatch({
+              type: 'collectConfig.setEditFormOpen',
+              editFormOpen: false
+            });
+          }} />
         </Layout>
       );
 }

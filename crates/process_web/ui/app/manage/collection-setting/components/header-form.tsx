@@ -3,11 +3,13 @@ import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import {useState} from "react";
 import EditForm from "@/app/manage/collection-setting/components/edit-form";
 import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/page";
+import { useMainContext } from "@/contexts/main";
 
 interface IHeaderFormProps extends ICommonCollectionSettingProps {}
 
 export default function HeaderForm() {
-  const [open, setOpen] = useState(false);
+
+  const { dispatch } = useMainContext()!
 
   return (
     <Form name="basic" layout="inline">
@@ -23,11 +25,15 @@ export default function HeaderForm() {
           />
           <Button
             type="primary"
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              dispatch({
+                type: 'collectConfig.setEditFormOpen',
+                editFormOpen: true
+              });
+            }}
             icon={<PlusOutlined rev={undefined} />}
           />
 
-        <EditForm open={open} close={() => setOpen(false)} />
         </Space>
       </Form.Item>
     </Form>

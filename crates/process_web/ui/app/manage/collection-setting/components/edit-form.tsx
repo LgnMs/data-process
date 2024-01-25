@@ -1,11 +1,12 @@
 import {useSWRConfig} from "swr";
 import {Button, Col, Drawer, Form, Input, InputNumber, message, Radio, Row, Space} from "antd";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {CloseOutlined, MinusCircleOutlined, PlusOutlined} from "@ant-design/icons";
 import FormItemLabelTips from "@/app/manage/components/form-item-label-tips";
 import * as CollectConfig from "@/api/collect_config";
 import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
+import { clone } from "lodash";
 
 interface IEditFormProps extends ICommonCollectionSettingProps {
     open: boolean
@@ -14,11 +15,14 @@ interface IEditFormProps extends ICommonCollectionSettingProps {
 export default function EditForm(props: IEditFormProps) {
     const { mutate } = useSWRConfig();
     const [form] = Form.useForm();
-    const { state } = useMainContext()!;
+    const { state, dispatch } = useMainContext()!;
+    const [mode, setMode] = useState<'edit'|'add'>('add');
 
     async function onSubmit() {
-        const values = await form.validateFields();
+        await form.validateFields();
+        const values = form.getFieldsValue(true)
 
+        console.log(values)
         const headers: Record<string, string> = {}
 
         values.headers?.forEach((item: any) => {
@@ -39,12 +43,18 @@ export default function EditForm(props: IEditFormProps) {
             body: JSON.stringify(body)
         }
 
-        const res = await CollectConfig.add(data)
+
+        let res;
+        if (mode === 'add') {
+            res = await CollectConfig.add(data)
+        } else {
+            res = await CollectConfig.update_by_id(data.id, data)
+        }
 
         if (res.data) {
             await mutate([CollectConfig.LIST, state.collectConfig.pagination])
 
-            message.success("添加成功");
+            message.success("操作成功");
 
             close()
         }
@@ -54,10 +64,46 @@ export default function EditForm(props: IEditFormProps) {
     function close() {
         props.close()
         form.resetFields()
+        dispatch({
+            type: 'collectConfig.setEditFormData',
+            editFormData: null
+        })
     }
 
+    useEffect(() => {
+        if (state.collectConfig.editFormOpen) {
+            if (state.collectConfig.editFormData) {
+
+                const data: any = clone(state.collectConfig.editFormData);
+
+                if (data.headers) {
+                    data.headers = Object.keys(data.headers).map((key) => {
+                        return { key, value: data.headers[key] }
+                    })
+                }
+                if (data.body) {
+                    const obj = JSON.parse(data.body);
+                    data.body =  Object.keys(obj).map(key => {
+                        return { key, value: obj[key] }
+                    })
+                }
+                if (data.map_rules) {
+                    data.map_rules =  data.map_rules.map((item: Array<string>) => {
+                        return { key: item[0], value: item[1] }
+                    })
+                }
+
+                form.setFieldsValue(data)
+                setMode('edit')
+            } else {
+                setMode('add')
+            }
+        }
+
+    }, [state.collectConfig.editFormOpen])
+
     return <Drawer
-            title="采集配置"
+            title={`${mode === 'add' ? '新增' : '编辑'}采集配置`}
             open={props.open}
             width={800}
             extra={

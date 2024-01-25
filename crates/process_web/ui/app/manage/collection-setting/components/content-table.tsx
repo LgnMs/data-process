@@ -1,5 +1,5 @@
 "use client";
-import { Button, Divider, Popconfirm, Space, Table, Typography } from "antd";
+import { Button, Divider, message, Popconfirm, Space, Table, Typography } from "antd";
 import useSWR from "swr";
 
 import * as CollectConfig from "@/api/collect_config";
@@ -14,7 +14,7 @@ export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
   const pagination = state.collectConfig.pagination;
 
-  const { data, isLoading } = useSWR(
+  const { data, isLoading, mutate } = useSWR(
     [CollectConfig.LIST, pagination],
     ([url, pagination]) => CollectConfig.list(pagination)
   );
@@ -38,8 +38,23 @@ export default function ContentTable() {
       render: (_: any, record: ICollectConfig) => {
         return (
           <Space>
-            <Typography.Link>查看</Typography.Link>
-            <Popconfirm title="确定要删除吗？">
+            <Typography.Link onClick={() => {
+              dispatch({
+                type: 'collectConfig.setEditFormOpen',
+                editFormOpen: true
+              });
+              dispatch({
+                type: 'collectConfig.setEditFormData',
+                editFormData: record
+              });
+            }}>查看</Typography.Link>
+            <Popconfirm title="确定要删除吗？" onConfirm={async () => {
+                const res = await CollectConfig.del(record.id!)
+                if (res.data) {
+                  message.success('删除成功')
+                  await mutate();
+                }
+            }}>
               <Typography.Link>删除</Typography.Link>
             </Popconfirm>
           </Space>

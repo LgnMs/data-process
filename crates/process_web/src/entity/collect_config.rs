@@ -21,8 +21,8 @@ pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: i32,
-    pub current_key: Option<i32>,
-    pub page_size_key: Option<i32>,
+    pub current_key: Option<String>,
+    pub page_size_key: Option<String>,
     pub loop_request_by_pagination: Option<bool>,
     pub cache_table_name: Option<String>,
     #[serde(skip_deserializing)]
