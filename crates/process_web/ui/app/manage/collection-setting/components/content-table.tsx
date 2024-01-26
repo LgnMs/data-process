@@ -1,15 +1,11 @@
 "use client";
-import { Button, Divider, message, Popconfirm, Space, Table, Typography } from "antd";
+import { message, Popconfirm, Space, Table, Typography } from "antd";
 import useSWR from "swr";
 
 import * as CollectConfig from "@/api/collect_config";
-import {Dispatch, SetStateAction, useState} from "react";
-import { PaginationPayload } from "@/api/common";
 import { CollectConfig as ICollectConfig } from "@/api/models/CollectConfig";
-import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
 
-interface IContentTableProps extends ICommonCollectionSettingProps {}
 export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
   const pagination = state.collectConfig.pagination;

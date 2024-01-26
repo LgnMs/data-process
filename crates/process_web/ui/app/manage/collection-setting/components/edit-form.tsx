@@ -1,7 +1,7 @@
 import {useSWRConfig} from "swr";
-import {Button, Col, Drawer, Form, Input, InputNumber, message, Radio, Row, Space} from "antd";
+import {Button, Col, Drawer, Form, Input, message, Radio, Row, Space} from "antd";
 import React, { useEffect, useState } from "react";
-import {CloseOutlined, MinusCircleOutlined, PlusOutlined} from "@ant-design/icons";
+import {CloseOutlined, PlusOutlined} from "@ant-design/icons";
 import FormItemLabelTips from "@/app/manage/components/form-item-label-tips";
 import * as CollectConfig from "@/api/collect_config";
 import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/page";
