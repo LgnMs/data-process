@@ -15,7 +15,7 @@ async fn test_http() -> Result<()> {
         .init();
     let mut http = Http::new()
         .receive(
-            "http://10.20.198.88:8899/XXZX/api_4d9bd6a24a7b97961".into(),
+            "http://127.0.0.1:8000/mock/test_data_2".into(),
             HttpConfig {
                 method: Method::POST,
                 headers: Some(vec![
@@ -26,15 +26,7 @@ async fn test_http() -> Result<()> {
                     ("Content-Type".to_string(), "application/json".to_string()),
                 ]),
                 body: Some(
-                    r#"
-                    {
-                        "start_time": "2024-01-01 00:00:00",
-                        "end_time": "2024-01-05 23:00:00",
-                        "citycode": "513300",
-                            "pagesize": 50,
-                        "token": "9652d515-238a-11ed-b8ed-005056bfedb1"
-                    }
-                "#
+                    r#"{"current":1,"page_size":1}"#
                     .to_string(),
                 ),
             },

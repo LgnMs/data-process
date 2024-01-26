@@ -54,9 +54,9 @@ impl Http {
 
 #[async_trait]
 impl Receive<HttpConfig, Result<Http>> for Http {
-    async fn receive(&mut self, url: String, paramters: HttpConfig) -> Result<Http> {
+    async fn receive(&mut self, url: String, parameters: HttpConfig) -> Result<Http> {
         let mut headers = header::HeaderMap::new();
-        let headers_vec = paramters.headers.as_ref().unwrap();
+        let headers_vec = parameters.headers.as_ref().unwrap();
 
         for x in headers_vec {
             let name = HeaderName::from_bytes(x.0.as_bytes());
@@ -74,15 +74,15 @@ impl Receive<HttpConfig, Result<Http>> for Http {
             .build()?;
 
         debug!(
-            "准备发起请求: client: {:?}\n url: {:?}\n paramters: {:?}",
-            client, url, paramters
+            "准备发起请求: client: {:?}\n url: {:?}\n parameters: {:?}",
+            client, url, parameters
         );
 
-        let res = match paramters.method {
+        let res = match parameters.method {
             Method::POST => {
                 client
-                    .request(paramters.method, url)
-                    .body(paramters.body.unwrap_or("".to_string()))
+                    .request(parameters.method, url)
+                    .body(parameters.body.unwrap_or("".to_string()))
                     .send()
                     .await?
                     .json()
@@ -90,13 +90,15 @@ impl Receive<HttpConfig, Result<Http>> for Http {
             }
             _ => {
                 client
-                    .request(paramters.method, url)
+                    .request(parameters.method, url)
                     .send()
                     .await?
                     .json()
                     .await?
             }
         };
+
+        debug!("返回数据: {:?}\n ", res);
 
         self.data = res;
 
@@ -121,7 +123,7 @@ impl Serde for Http {
 type SQLString = String;
 
 impl Export for Http {
-    type Target = Result<SQLString>;
+    type Target = Result<Vec<SQLString>>;
 
     fn export(&mut self) -> Self::Target {
         let template_sql = self
@@ -189,6 +191,6 @@ impl Export for Http {
             }
         }
 
-        Ok(json!(result_vec).to_string())
+        Ok(result_vec)
     }
 }

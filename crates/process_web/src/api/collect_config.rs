@@ -1,6 +1,7 @@
+use std::collections::HashMap;
 use anyhow::Result;
 use axum::extract::{Path, State};
-use axum::{Json};
+use axum::Json;
 use axum::{
     routing::{get, post},
     Router,
@@ -9,9 +10,10 @@ use process_core::http::HttpConfig;
 use process_core::process::{Export, Receive, Serde};
 use schemars::_serde_json::Value;
 use std::sync::Arc;
+use serde_json::json;
 
 use crate::api::common::{
-    AppError, AppState, Pagination, ResJson, ResJsonWithPagination, ResTemplate, PaginationPayload
+    AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
 };
 use crate::entity::collect_config::Model;
 use crate::service::collect_config_service::CollectConfigService;
@@ -64,10 +66,7 @@ async fn update_by_id(
     data_response!(res)
 }
 
-async fn del(
-    state: State<Arc<AppState>>,
-    Path(id): Path<i32>,
-) -> Result<ResJson<bool>, AppError> {
+async fn del(state: State<Arc<AppState>>, Path(id): Path<i32>) -> Result<ResJson<bool>, AppError> {
     let res = CollectConfigService::delete(&state.conn, id).await;
 
     bool_response!(res)
@@ -77,12 +76,62 @@ async fn del(
 pub async fn execute(
     state: State<Arc<AppState>>,
     Path(id): Path<i32>,
-) -> Result<ResJson<String>, AppError> {
+) -> Result<ResJson<Vec<String>>, AppError> {
     let data = CollectConfigService::find_by_id(&state.conn, id).await?;
+
+    let res = process_data(&data).await;
+
+    data_response!(res)
+}
+
+pub async fn process_data(data: &Model) -> Result<Vec<String>> {
+
+
+    if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
+        if loop_request_by_pagination {
+            let mut sholud_stop = false;
+            let current_key = data.current_key.clone().unwrap();
+            let page_size_key = data.page_size_key.clone().unwrap();
+            let body = serde_json::from_str::<Value>(data.body.clone().unwrap().as_str()).unwrap();
+
+            let mut loop_times = 0;
+
+            let mut data_res = vec![];
+            while !sholud_stop {
+                let mut map = HashMap::new();
+
+                for (key, value) in body.as_object().unwrap() {
+                    if key == &current_key {
+                        let current = value.as_i64().unwrap() + loop_times * body[&page_size_key].as_i64().unwrap();
+                        map.insert(key ,json!(current));
+                    } else {
+                        map.insert(key, value.clone());
+                    }
+                }
+                println!("map: {:?}", map);
+
+                let (has_next_page, res) = process_data_req(&data, Some(json!(map).to_string())).await.unwrap();
+
+                sholud_stop = !has_next_page;
+                data_res = [data_res, res.unwrap()].concat();
+                loop_times += 1;
+            }
+
+
+            return Ok(data_res);
+
+        }
+    }
+
+    let (_, res) = process_data_req(data, data.body.clone()).await.unwrap();
+    res
+}
+
+pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(bool, Result<Vec<String>>)> {
     let mut http = process_core::http::Http::new();
     let mut headers = None;
 
-    let get_map_rules = |value: Option<Value>| {
+    let get_map_rules = |value: Option<&Value>| {
         // [["a", "b"]]
         if let Some(rules) = value {
             return rules
@@ -90,10 +139,9 @@ pub async fn execute(
                 .unwrap()
                 .iter()
                 .map(|x| {
-                    let temp = x.as_array().unwrap();
                     [
-                        temp.get(0).unwrap().to_string(),
-                        temp.get(1).unwrap().to_string(),
+                        x[0].as_str().unwrap().to_string(),
+                        x[1].as_str().unwrap().to_string(),
                     ]
                 })
                 .collect();
@@ -101,30 +149,50 @@ pub async fn execute(
         vec![]
     };
 
-    if let Some(h) = data.headers {
+    if let Some(h) = &data.headers {
         let temp = h
             .as_object()
             .unwrap()
             .iter()
-            .map(|(key, value)| (key.clone(), value.to_string()))
+            .map(|(key, value)| (key.clone(), value.as_str().unwrap().to_string()))
             .collect::<Vec<(String, String)>>();
         headers = Some(temp)
     }
 
-    let http_receive = http
+    let mut http_receive = http
         .receive(
-            data.url,
+            data.url.clone(),
             HttpConfig {
-                method: data.method.parse().unwrap(),
+                method: data.method.clone().parse().unwrap(),
                 headers,
-                body: data.body,
+                body: body.clone(),
             },
         )
-        .await?
-        .add_map_rules(get_map_rules(data.map_rules))
-        .serde()?
-        .set_template_string(data.template_string)
+        .await?;
+
+    let mut has_next_page = true;
+    // TODO 增加分页返回字段key值，判断分页数据是否返回完毕
+    if let Some(array) = http_receive.data["data"]["result"].as_array() {
+        if array.is_empty() {
+            has_next_page = false;
+            return Ok((has_next_page, Ok(vec![])));
+        }
+    } else {
+        has_next_page = false;
+        return Ok((has_next_page, Ok(vec![])));
+    }
+
+    if data.map_rules.is_some() {
+        if let Some(x) = &data.map_rules {
+            if !x.as_array().unwrap().is_empty() {
+                http_receive = http_receive.add_map_rules(get_map_rules(Some(x)))
+                    .serde()?;
+            }
+        }
+    }
+    let res = http_receive.set_template_string(data.template_string.clone())
         .export();
 
-    data_response!(http_receive)
+
+    Ok((has_next_page, res))
 }

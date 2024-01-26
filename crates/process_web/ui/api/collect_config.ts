@@ -50,6 +50,6 @@ export async function del(id: number): Promise<ResJson<boolean>> {
 }
 
 export const EXECUTE = `${PREFIX}/execute/`;
-export async function execute(id: number): Promise<ResJson<string>> {
+export async function execute(id: number): Promise<ResJson<string[]>> {
   return http_get(`${PREFIX}/execute/${id}`);
 }

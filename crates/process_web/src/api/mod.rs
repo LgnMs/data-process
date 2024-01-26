@@ -3,6 +3,7 @@ pub mod macros;
 mod collect_config;
 mod collect_log;
 pub mod common;
+mod mock;
 
 use anyhow::Result;
 use axum::Router;
@@ -10,6 +11,7 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::*;
 use std::env;
 use std::sync::Arc;
+use axum::http::{StatusCode, Uri};
 use tracing::Level;
 
 use crate::api::common::AppState;
@@ -44,6 +46,8 @@ pub async fn start() -> Result<()> {
     let app = Router::new()
         .nest("/collect_config", collect_config::set_routes())
         .nest("/collect_log", collect_log::set_routes())
+        .nest("/mock", mock::set_routes())
+        .fallback(fallback)
         .with_state(state);
 
     println!("listener on {server_url}");
@@ -51,4 +55,8 @@ pub async fn start() -> Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn fallback(uri: Uri) -> (StatusCode, String) {
+    (StatusCode::NOT_FOUND, format!("No route for {uri}"))
 }

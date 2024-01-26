@@ -6,7 +6,11 @@ use ts_rs::TS;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS)]
 #[sea_orm(table_name = "collect_config")]
-#[ts(export, export_to = "ui/api/models/CollectConfig.ts", rename = "CollectConfig")]
+#[ts(
+    export,
+    export_to = "ui/api/models/CollectConfig.ts",
+    rename = "CollectConfig"
+)]
 pub struct Model {
     pub url: String,
     pub name: String,

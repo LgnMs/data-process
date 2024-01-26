@@ -1,5 +1,5 @@
-use sea_orm_migration::prelude::*;
 use crate::m20240118_000001_create_collect_log_table::CollectLog;
+use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -14,18 +14,17 @@ impl MigrationTrait for Migration {
                 Table::alter()
                     .table(CollectLog::Table)
                     .add_column(
-                            ColumnDef::new(CollectLog::UpdateTime)
-                                .timestamp()
-                                .not_null(),
+                        ColumnDef::new(CollectLog::UpdateTime)
+                            .timestamp()
+                            .not_null(),
                     )
                     .add_column(
                         ColumnDef::new(CollectLog::CreateTime)
                             .timestamp()
                             .not_null(),
                     )
-                    .to_owned()
+                    .to_owned(),
             )
             .await
     }
 }
-

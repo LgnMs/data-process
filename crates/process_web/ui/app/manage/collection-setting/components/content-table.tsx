@@ -57,6 +57,10 @@ export default function ContentTable() {
             }}>
               <Typography.Link>删除</Typography.Link>
             </Popconfirm>
+            <Typography.Link onClick={async () => {
+              await CollectConfig.execute(record.id!)
+              message.success('执行成功')
+            }}>执行</Typography.Link>
           </Space>
         );
       },

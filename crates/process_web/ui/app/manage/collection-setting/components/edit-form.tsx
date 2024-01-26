@@ -31,9 +31,20 @@ export default function EditForm(props: IEditFormProps) {
 
         const map_rules = values.map_rules?.map((item: any) => [item.key, item.value])
 
-        const body: Record<string, string> = {}
+        const body: Record<string, string | number | boolean> = {}
         values.body?.forEach((item: any) => {
-            body[item.key] = item.value
+            if (Number.isNaN(Number(item.value))) {
+                if (item.value === 'true') {
+                    body[item.key] = true
+                } else if (item.value === 'false') {
+                    body[item.key] = false
+                } else {
+                    body[item.key] = item.value
+                }
+            } else {
+                body[item.key] = Number(item.value)
+            }
+
         })
 
         const data = {

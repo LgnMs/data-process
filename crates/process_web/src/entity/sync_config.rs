@@ -6,7 +6,11 @@ use ts_rs::TS;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS)]
 #[sea_orm(table_name = "sync_config")]
-#[ts(export, export_to = "ui/api/models/SyncConfig.ts", rename="SyncConfig")]
+#[ts(
+    export,
+    export_to = "ui/api/models/SyncConfig.ts",
+    rename = "SyncConfig"
+)]
 pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]

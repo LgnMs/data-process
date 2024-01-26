@@ -34,7 +34,7 @@ struct QueryList {
 
 async fn find_by_id(
     state: State<Arc<AppState>>,
-    Path(id):Path<i32>,
+    Path(id): Path<i32>,
 ) -> Result<ResJson<Model>, AppError> {
     let res = CollectLogService::find_by_id(&state.conn, id).await;
 
@@ -68,10 +68,7 @@ async fn update_by_id(
     data_response!(res)
 }
 
-async fn del(
-    state: State<Arc<AppState>>,
-    Path(id):Path<i32>,
-) -> Result<ResJson<bool>, AppError> {
+async fn del(state: State<Arc<AppState>>, Path(id): Path<i32>) -> Result<ResJson<bool>, AppError> {
     let res = CollectLogService::delete(&state.conn, id).await;
 
     bool_response!(res)

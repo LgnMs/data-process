@@ -27,11 +27,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .comment("名称"),
                     )
-                    .col(
-                        ColumnDef::new(CollectConfig::Desc)
-                            .string()
-                            .comment("描述"),
-                    )
+                    .col(ColumnDef::new(CollectConfig::Desc).string().comment("描述"))
                     .col(
                         ColumnDef::new(CollectConfig::Url)
                             .string()

@@ -1,5 +1,23 @@
 use process_core::json::generate_new_map;
-use serde_json::json;
+use serde_json::{json, Value};
+
+#[test]
+fn json_use() {
+    let json_string = "{\"a\": 1, \"b\": 2}";
+    let json_string2 = r#"{"a": 1, "b": 2}"#;
+    let json_string3 = "{\"current\":1,\"page_size\":1}";
+    let json_string4 = r#"{"current":1,"page_size":1}"#;
+
+    assert_eq!(json_string, json_string2);
+    assert_eq!(json_string3, json_string4);
+
+    let mut json = serde_json::from_slice::<Value>(json_string4.as_bytes()).unwrap();
+    for i in json.as_object().unwrap() {
+        println!("{:?}", i);
+    }
+    json["current"] = 2.into();
+    println!("{}", json);
+}
 
 #[test]
 fn serde_json_test() {

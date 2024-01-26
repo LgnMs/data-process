@@ -61,5 +61,5 @@ where
 pub struct PaginationPayload<T> {
     pub current: u64,
     pub page_size: u64,
-    pub data: Option<T>
+    pub data: Option<T>,
 }
