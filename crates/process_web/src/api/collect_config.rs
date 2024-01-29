@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use anyhow::Result;
+use std::borrow::Borrow;
+use anyhow::{anyhow, Result};
 use axum::extract::{Path, State};
 use axum::Json;
 use axum::{
@@ -11,6 +12,7 @@ use process_core::process::{Export, Receive, Serde};
 use schemars::_serde_json::Value;
 use std::sync::Arc;
 use serde_json::json;
+use process_core::json::find_value;
 
 use crate::api::common::{
     AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
@@ -85,36 +87,45 @@ pub async fn execute(
 }
 
 pub async fn process_data(data: &Model) -> Result<Vec<String>> {
-
-
     if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
         if loop_request_by_pagination {
             let mut sholud_stop = false;
-            let current_key = data.current_key.clone().unwrap();
-            let page_size_key = data.page_size_key.clone().unwrap();
+            let current_key = data.current_key.as_ref().ok_or(anyhow!("请指定current_key"))?;
+            let page_size_key = data.page_size_key.as_ref().ok_or(anyhow!("请指定page_size_key"))?;
+            let max_number_of_result_data = data.max_number_of_result_data.ok_or(anyhow!("请指定max_number_of_result_data"))?;
+            let max_count_of_request = data.max_count_of_request.ok_or(anyhow!("请指定max_count_of_request"))?;
             let body = serde_json::from_str::<Value>(data.body.clone().unwrap().as_str()).unwrap();
 
-            let mut loop_times = 0;
+            let mut loop_counts = 0;
 
             let mut data_res = vec![];
+
             while !sholud_stop {
                 let mut map = HashMap::new();
 
                 for (key, value) in body.as_object().unwrap() {
-                    if key == &current_key {
-                        let current = value.as_i64().unwrap() + loop_times * body[&page_size_key].as_i64().unwrap();
+                    if key == current_key {
+                        let current = value.as_i64().unwrap() + loop_counts * body[&page_size_key].as_i64().unwrap();
                         map.insert(key ,json!(current));
                     } else {
                         map.insert(key, value.clone());
                     }
                 }
-                println!("map: {:?}", map);
 
                 let (has_next_page, res) = process_data_req(&data, Some(json!(map).to_string())).await.unwrap();
 
                 sholud_stop = !has_next_page;
                 data_res = [data_res, res.unwrap()].concat();
-                loop_times += 1;
+                loop_counts += 1;
+
+                if data_res.len() >= max_number_of_result_data as usize {
+                    sholud_stop = true;
+                }
+
+                if loop_counts >= max_count_of_request as i64 {
+                    sholud_stop = true;
+                }
+
             }
 
 
@@ -171,9 +182,16 @@ pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(boo
         .await?;
 
     let mut has_next_page = true;
-    // TODO 增加分页返回字段key值，判断分页数据是否返回完毕
-    if let Some(array) = http_receive.data["data"]["result"].as_array() {
-        if array.is_empty() {
+    let filed_of_result_data = data.filed_of_result_data.as_ref().unwrap();
+
+
+    if let Ok(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data) {
+        if let Some(array) = found_data.as_array() {
+            if array.is_empty() {
+                has_next_page = false;
+                return Ok((has_next_page, Ok(vec![])));
+            }
+        } else {
             has_next_page = false;
             return Ok((has_next_page, Ok(vec![])));
         }
@@ -181,6 +199,7 @@ pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(boo
         has_next_page = false;
         return Ok((has_next_page, Ok(vec![])));
     }
+
 
     if data.map_rules.is_some() {
         if let Some(x) = &data.map_rules {

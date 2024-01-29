@@ -113,6 +113,9 @@ pub enum CollectConfig {
     PageSizeKey,
     LoopRequestByPagination,
     CacheTableName,
+    MaxNumberOfResultData,
+    FiledOfResultData,
+    MaxCountOfRequest,
     UpdateTime,
     CreateTime,
 }

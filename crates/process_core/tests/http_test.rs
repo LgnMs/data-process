@@ -52,6 +52,6 @@ async fn test_http() -> Result<()> {
                 .to_string(),
         )
         .export()?;
-    println!("export: {export1}");
+    println!("export: {:?}", export1);
     Ok(())
 }

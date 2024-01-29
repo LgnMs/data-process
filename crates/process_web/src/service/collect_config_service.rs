@@ -64,6 +64,9 @@ impl CollectConfigService {
             page_size_key: Set(data.page_size_key),
             loop_request_by_pagination: Set(data.loop_request_by_pagination),
             cache_table_name: Set(data.cache_table_name),
+            max_number_of_result_data: Set(data.max_number_of_result_data),
+            filed_of_result_data: Set(data.filed_of_result_data),
+            max_count_of_request: Set(data.max_count_of_request),
             ..Default::default()
         };
         if let Some(id) = id {

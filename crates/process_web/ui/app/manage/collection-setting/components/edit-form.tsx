@@ -1,5 +1,5 @@
 import {useSWRConfig} from "swr";
-import {Button, Col, Drawer, Form, Input, message, Radio, Row, Space} from "antd";
+import { Button, Col, Drawer, Form, Input, InputNumber, message, Radio, Row, Space } from "antd";
 import React, { useEffect, useState } from "react";
 import {CloseOutlined, PlusOutlined} from "@ant-design/icons";
 import FormItemLabelTips from "@/app/manage/components/form-item-label-tips";
@@ -113,6 +113,25 @@ export default function EditForm(props: IEditFormProps) {
 
     }, [state.collectConfig.editFormOpen])
 
+    function setDefaultForPostHeaders(method: "GET" | "POST") {
+        let headers: Array<{key: string, value: string}> | undefined = form.getFieldValue("headers");
+        if (headers === undefined) {
+            headers = [];
+        }
+
+        const jsonHeaderIndex = headers.findIndex(header => header.key === "Content-Type" && header.value === "application/json");
+
+        if (jsonHeaderIndex === -1 && method === "POST") {
+            headers.push({key: "Content-Type", value: "application/json"})
+        }
+
+        if (jsonHeaderIndex > -1 && method === "GET") {
+            headers.splice(jsonHeaderIndex, 1);
+        }
+
+        form.setFieldValue("headers", headers);
+    }
+
     return <Drawer
             title={`${mode === 'add' ? '新增' : '编辑'}采集配置`}
             open={props.open}
@@ -125,7 +144,18 @@ export default function EditForm(props: IEditFormProps) {
             }
             onClose={close}
     >
-        <Form layout="vertical"  form={form} labelAlign="left" labelWrap>
+        <Form layout="vertical"
+          form={form}
+          labelAlign="left"
+          labelWrap
+          onFieldsChange={(changedFields) => {
+              changedFields.forEach(item => {
+                  if (item.name[0] === "method") {
+                      setDefaultForPostHeaders(item.value)
+                  }
+              })
+          }}
+        >
             <Row gutter={16}>
                 <Col span={8}>
                     <Form.Item label="名称" name="name" rules={[{ required: true }]}>
@@ -184,12 +214,41 @@ export default function EditForm(props: IEditFormProps) {
                                         <Input placeholder="请输入"/>
                                     </Form.Item>
                                 </Col>
+                                <Col span={8}>
+                                    <Form.Item
+                                        label={<FormItemLabelTips tips="返回数据的最大数量限制，一旦已保存的数据超过该值便不会再发起请求">最大数据量</FormItemLabelTips>}
+                                        name="max_number_of_result_data"
+                                        rules={[{ required: true }]}
+                                        initialValue={100}
+                                    >
+                                        <InputNumber placeholder="请输入"/>
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Form.Item
+                                        label={<FormItemLabelTips tips={`返回数据中应检测的list的字段名，例如{"data": "result":[]}的键值是data.result`}>返回数据集合键值</FormItemLabelTips>}
+                                        name="filed_of_result_data"
+                                        rules={[{ required: true }]}
+                                    >
+                                        <Input placeholder="请输入"/>
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Form.Item
+                                        label={<FormItemLabelTips tips={`最大请求次数`}>最大请求次数</FormItemLabelTips>}
+                                        name="max_count_of_request"
+                                        rules={[{ required: true }]}
+                                    >
+                                        <InputNumber placeholder="请输入"/>
+                                    </Form.Item>
+                                </Col>
                             </>
                         ) : null
                     }
                 </Form.Item>
+
                 <Col span={24}>
-                    <Form.Item label={<FormItemLabelTips tips="Request headers 目前post请求会自动设置：Content-Type: application/json">请求头</FormItemLabelTips>}>
+                    <Form.Item label={<FormItemLabelTips tips="Request headers">请求头</FormItemLabelTips>}>
                         <FormArrayList name="headers" />
                     </Form.Item>
                 </Col>
@@ -224,36 +283,38 @@ export default function EditForm(props: IEditFormProps) {
     </Drawer>
 }
 
-function FormArrayList(props: { name: string, buttonText?: string }) {
-    return <Form.List name={props.name}>
-            {(fields, { add, remove }, { errors }) => (
-                <div style={{display: 'flex', flexDirection: 'column', rowGap: 16}}>
-                    {fields.map((field, index) => (
-                        <Space key={field.key}>
-                            <Form.Item noStyle name={[field.name, 'key']}>
-                                <Input placeholder="key" />
-                            </Form.Item>
-                            <Form.Item noStyle name={[field.name, 'value']}>
-                                <Input placeholder="value" />
-                            </Form.Item>
-                            <CloseOutlined
-                                onClick={() => {
-                                    remove(field.name);
-                                }}
-                                rev={undefined}
-                            />
-                        </Space>
-                    ))}
-                    <Button
-                        type="dashed"
-                        onClick={() => add()}
-                        style={{width: '380px'}}
-                        icon={<PlusOutlined rev={undefined}/>}
-                    >
-                        {props.buttonText ? props.buttonText : '添加'}
-                    </Button>
-                    <Form.ErrorList errors={errors}/>
-                </div>
-            )}
+function FormArrayList(props: { name: string, buttonText?: string, initialValue?: any[] }) {
+    return <Form.List name={props.name} initialValue={props.initialValue}>
+            {(fields, { add, remove }, { errors }) => {
+                return (
+                      <div style={{display: 'flex', flexDirection: 'column', rowGap: 16}}>
+                        {fields.map((field, index) => (
+                            <Space key={field.key}>
+                                <Form.Item noStyle name={[field.name, 'key']}>
+                                    <Input placeholder="key" />
+                                </Form.Item>
+                                <Form.Item noStyle name={[field.name, 'value']}>
+                                    <Input placeholder="value" />
+                                </Form.Item>
+                                <CloseOutlined
+                                    onClick={() => {
+                                        remove(field.name);
+                                    }}
+                                    rev={undefined}
+                                />
+                            </Space>
+                        ))}
+                        <Button
+                            type="dashed"
+                            onClick={() => add()}
+                            style={{width: '380px'}}
+                            icon={<PlusOutlined rev={undefined}/>}
+                        >
+                            {props.buttonText ? props.buttonText : '添加'}
+                        </Button>
+                        <Form.ErrorList errors={errors}/>
+                    </div>
+                )
+            }}
         </Form.List>
 }
