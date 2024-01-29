@@ -1,18 +1,20 @@
 use std::collections::HashMap;
 use std::borrow::Borrow;
+use std::sync::Arc;
+
 use anyhow::{anyhow, Result};
-use axum::extract::{Path, State};
-use axum::Json;
 use axum::{
     routing::{get, post},
     Router,
+    Json,
+    extract::{Path, State}
 };
 use process_core::http::HttpConfig;
 use process_core::process::{Export, Receive, Serde};
-use schemars::_serde_json::Value;
-use std::sync::Arc;
-use serde_json::json;
 use process_core::json::find_value;
+use schemars::_serde_json::Value;
+use serde_json::json;
+use tracing::debug;
 
 use crate::api::common::{
     AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
@@ -100,6 +102,7 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
 
             let mut data_res = vec![];
 
+            debug!("开始进行分页请求，current_key:{current_key}, page_size_key: {page_size_key}, max_number_of_result_data: {max_number_of_result_data}, max_count_of_request: {max_count_of_request}");
             while !sholud_stop {
                 let mut map = HashMap::new();
 
@@ -127,6 +130,7 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
                 }
 
             }
+            debug!("分页请求结束");
 
 
             return Ok(data_res);
@@ -183,7 +187,6 @@ pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(boo
 
     let mut has_next_page = true;
     let filed_of_result_data = data.filed_of_result_data.as_ref().unwrap();
-
 
     if let Ok(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data) {
         if let Some(array) = found_data.as_array() {
