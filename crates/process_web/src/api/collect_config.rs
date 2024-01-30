@@ -14,7 +14,7 @@ use process_core::process::{Export, Receive, Serde};
 use process_core::json::find_value;
 use schemars::_serde_json::Value;
 use serde_json::json;
-use tracing::debug;
+use tracing::{debug, error};
 
 use crate::api::common::{
     AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
@@ -55,7 +55,7 @@ async fn add(
     state: State<Arc<AppState>>,
     Json(payload): Json<Model>,
 ) -> Result<ResJson<Model>, AppError> {
-    let res = CollectConfigService::add(&state.conn, payload).await;
+    let res = CollectConfigService::add(&state.conn, &state.cache_conn, payload).await;
 
     data_response!(res)
 }
@@ -65,7 +65,7 @@ async fn update_by_id(
     Path(id): Path<i32>,
     Json(payload): Json<Model>,
 ) -> Result<ResJson<Model>, AppError> {
-    let res = CollectConfigService::update_by_id(&state.conn, id, payload).await;
+    let res = CollectConfigService::update_by_id(&state.conn, &state.cache_conn, id, payload).await;
 
     data_response!(res)
 }
@@ -80,12 +80,26 @@ async fn del(state: State<Arc<AppState>>, Path(id): Path<i32>) -> Result<ResJson
 pub async fn execute(
     state: State<Arc<AppState>>,
     Path(id): Path<i32>,
-) -> Result<ResJson<Vec<String>>, AppError> {
+) -> Result<ResJson<bool>, AppError> {
     let data = CollectConfigService::find_by_id(&state.conn, id).await?;
+    tokio::spawn(async move {
+        let res = process_data(&data).await;
+        match res {
+            Ok(list) => {
+                match CollectConfigService::cache_data(&state.cache_conn, &list).await {
+                    Ok(bl) => {},
+                    Err(err) => error!("{}", err)
+                };
+            },
+            Err(err) => {
+                error!("{}", err.to_string());
+            }
+        }
+    });
+    // https://docs.rs/tokio/1.35.1/tokio/task/index.html#yield_now
+    tokio::task::yield_now().await;
 
-    let res = process_data(&data).await;
-
-    data_response!(res)
+    Ok(Json(res_template_ok!(Some(true))))
 }
 
 pub async fn process_data(data: &Model) -> Result<Vec<String>> {
@@ -115,10 +129,11 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
                     }
                 }
 
-                let (has_next_page, res) = process_data_req(&data, Some(json!(map).to_string())).await.unwrap();
+                let (has_next_page, res) = process_data_req(&data, Some(json!(map).to_string())).await?;
+                let new_vec = res?;
 
                 sholud_stop = !has_next_page;
-                data_res = [data_res, res.unwrap()].concat();
+                data_res = [data_res, new_vec].concat();
                 loop_counts += 1;
 
                 if data_res.len() >= max_number_of_result_data as usize {
@@ -130,8 +145,7 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
                 }
 
             }
-            debug!("分页请求结束");
-
+            debug!("分页请求结束, {:?}", data_res);
 
             return Ok(data_res);
 
@@ -139,6 +153,7 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
     }
 
     let (_, res) = process_data_req(data, data.body.clone()).await.unwrap();
+
     res
 }
 
@@ -180,7 +195,7 @@ pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(boo
             HttpConfig {
                 method: data.method.clone().parse().unwrap(),
                 headers,
-                body: body.clone(),
+                body,
             },
         )
         .await?;
@@ -212,9 +227,9 @@ pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(boo
             }
         }
     }
+
     let res = http_receive.set_template_string(data.template_string.clone())
         .export();
-
 
     Ok((has_next_page, res))
 }

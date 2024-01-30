@@ -29,6 +29,16 @@ impl MigrationTrait for Migration {
                             .string()
                             .comment(r#"最大请求次数"#)
                     )
+                    .add_column(
+                        ColumnDef::new(CollectConfig::DbColumnsConfig)
+                            .json()
+                            .comment(r#"数据库列配置"#)
+                    )
+                    .add_column(
+                        ColumnDef::new(CollectConfig::DelFlag)
+                            .integer()
+                            .comment(r#"1 已删除 0 未删除"#)
+                    )
                     .to_owned(),
             )
             .await

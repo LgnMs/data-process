@@ -1,5 +1,5 @@
 import {useSWRConfig} from "swr";
-import { Button, Col, Drawer, Form, Input, InputNumber, message, Radio, Row, Space } from "antd";
+import { Button, Col, Drawer, Form, Input, InputNumber, message, Radio, Row, Select, Space } from "antd";
 import React, { useEffect, useState } from "react";
 import {CloseOutlined, PlusOutlined} from "@ant-design/icons";
 import FormItemLabelTips from "@/app/manage/components/form-item-label-tips";
@@ -22,7 +22,6 @@ export default function EditForm(props: IEditFormProps) {
         await form.validateFields();
         const values = form.getFieldsValue(true)
 
-        console.log(values)
         const headers: Record<string, string> = {}
 
         values.headers?.forEach((item: any) => {
@@ -171,7 +170,7 @@ export default function EditForm(props: IEditFormProps) {
                     </Form.Item>
                 </Col>
                 <Col span={8}>
-                    <Form.Item label="缓存表" name="cache_table_name" rules={[{ required: true }]}>
+                    <Form.Item label="数据暂存表" name="cache_table_name" rules={[{ required: true }]}>
                         <Input placeholder='请输入' />
                     </Form.Item>
                 </Col>
@@ -264,9 +263,51 @@ export default function EditForm(props: IEditFormProps) {
                         <FormArrayList name="map_rules" />
                     </Form.Item>
                 </Col>
+
                 <Col span={24}>
                     <Form.Item
-                        label={<FormItemLabelTips tips="例如：INSERT INTO table_name (column1, column2) VALUES (${data#id}, ${data#name})">导出字符模板</FormItemLabelTips>}
+                      label={<FormItemLabelTips tips="配置数据库表中的列, key是列名，value是返回或转换后的数据中值的键名。" >列配置</FormItemLabelTips>}
+                      rules={[{ required: true }]}
+                      extra={"列配置变更后表结构会重新生成，旧表会被备份"}
+                    >
+                        <FormArrayList name="db_columns_config" isColumnConfig/>
+                    </Form.Item>
+                </Col>
+                <Col span={24}>
+                    <Form.Item
+                        label={
+                            <FormItemLabelTips
+                              tips="例如：INSERT INTO table_name (column1, column2) VALUES (${data#id}, ${data#name})"
+                            >
+                                插入SQL
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  onClick={async () => {
+                                      const db_columns_config = form.getFieldValue("db_columns_config");
+                                      const cache_table_name = form.getFieldValue("cache_table_name");
+                                      if (!db_columns_config) {
+                                          await message.error("请先配置列配置")
+                                          return
+                                      }
+                                      if (!cache_table_name) {
+                                          await message.error("请先配置缓存表")
+                                          return
+                                      }
+                                      let template_str = `INSERT INTO ${cache_table_name}`;
+                                      const columns: string[] = [];
+                                      const columns_value: string[] = [];
+                                      db_columns_config.forEach((column: {key: string, value: string, type: string}) => {
+                                          columns.push(column.key)
+                                          columns_value.push(`'\${${column.value}}'`)
+                                      })
+                                      template_str += ` (${columns.join(", ")}) VALUES (${columns_value.join(", ")})`
+
+                                      form.setFieldValue("template_string", template_str);
+                                  }}
+                                >点击生成</Button>
+                            </FormItemLabelTips>
+                        }
                         name="template_string"
                         rules={[{ required: true }]}
                     >
@@ -283,8 +324,8 @@ export default function EditForm(props: IEditFormProps) {
     </Drawer>
 }
 
-function FormArrayList(props: { name: string, buttonText?: string, initialValue?: any[] }) {
-    return <Form.List name={props.name} initialValue={props.initialValue}>
+function FormArrayList(props: { name: string, buttonText?: string, initialValue?: any[], isColumnConfig?: boolean }) {
+    return <Form.List name={props.name} initialValue={props.initialValue} >
             {(fields, { add, remove }, { errors }) => {
                 return (
                       <div style={{display: 'flex', flexDirection: 'column', rowGap: 16}}>
@@ -296,6 +337,17 @@ function FormArrayList(props: { name: string, buttonText?: string, initialValue?
                                 <Form.Item noStyle name={[field.name, 'value']}>
                                     <Input placeholder="value" />
                                 </Form.Item>
+                                {
+                                    props.isColumnConfig && <Form.Item noStyle name={[field.name, 'type']} initialValue="varchar">
+                                      <Select
+                                        options={[
+                                            { value: 'varchar', label: '字符串 varchar' },
+                                            { value: 'integer', label: '数字 integer' },
+                                            { value: 'timestamp', label: '日期 timestamp' },
+                                        ]}
+                                      ></Select>
+                                  </Form.Item>
+                                }
                                 <CloseOutlined
                                     onClick={() => {
                                         remove(field.name);

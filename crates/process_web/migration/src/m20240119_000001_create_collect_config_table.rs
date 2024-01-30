@@ -116,6 +116,8 @@ pub enum CollectConfig {
     MaxNumberOfResultData,
     FiledOfResultData,
     MaxCountOfRequest,
+    DbColumnsConfig,
     UpdateTime,
     CreateTime,
+    DelFlag
 }

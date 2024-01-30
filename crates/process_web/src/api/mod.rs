@@ -28,9 +28,10 @@ pub async fn start() -> Result<()> {
         .init();
 
     env::set_var("RUST_LOG", "debug");
-
     dotenvy::dotenv().ok();
+
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+    let cache_db_url = env::var("CACHE_DATABASE_URL").expect("CACHE_DATABASE_URL is not set in .env file");
     let host = env::var("HOST").expect("HOST is not set in .env file");
     let port: String = env::var("PORT").expect("PORT is not set in .env file");
     let server_url = format!("{host}:{port}");
@@ -39,9 +40,14 @@ pub async fn start() -> Result<()> {
         .await
         .expect("Database connection failed");
 
+    let cache_conn = Database::connect(cache_db_url)
+        .await
+        .expect("Cache Database connection failed");
+
+    // 执行数据库未迁移过任务 在crates/process_web/migration中查看
     Migrator::up(&conn, None).await?;
 
-    let state = Arc::new(AppState { conn });
+    let state = Arc::new(AppState { conn, cache_conn });
     // build our application with a route
     let app = Router::new()
         .nest("/collect_config", collect_config::set_routes())

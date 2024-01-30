@@ -32,10 +32,14 @@ pub struct Model {
     pub filed_of_result_data:Option<String>,
     pub max_count_of_request: Option<i32>,
     pub cache_table_name: Option<String>,
+    #[ts(type = "any")]
+    pub db_columns_config: Option<Json>,
     #[serde(skip_deserializing)]
     pub update_time: DateTime,
     #[serde(skip_deserializing)]
     pub create_time: DateTime,
+    #[serde(skip_deserializing)]
+    pub del_flag: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

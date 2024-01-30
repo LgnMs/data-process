@@ -160,34 +160,28 @@ impl Export for Http {
 
         let mut result_vec: Vec<String> = vec![];
 
-        let get_sql_string = |list: &mut Vec<String>, data_list: Option<&Vec<Value>>| {
-            if list.len() == 0 {
-                return template_sql.clone();
-            } else {
-                let first = list.first().unwrap().clone();
-                if data_list.is_some() && data_list.unwrap().len() >= list.len() {
-                    list.clear();
-                }
-                return first;
-            }
-        };
-
         for key in key_vec {
             let rel_key = &key[2..key.len() - 1];
             let value = find_value(rel_key, &self.data)?;
             if let Some(index) = rel_key.chars().position(|c| c == '#') {
                 let data_list = value.as_array().unwrap();
-                let template = get_sql_string(&mut result_vec, Some(data_list));
 
+                let mut j = 0;
                 for old_item in data_list {
                     let item = find_value(&rel_key[index + 1..], old_item)?;
-                    let sql_str = template.replace(&key, item.as_str().unwrap());
-                    result_vec.push(sql_str);
+                    if let Some(template) = result_vec.get(j) {
+                        result_vec[j] = template.replace(&key, item.as_str().unwrap());
+                    } else {
+                        result_vec.push(template_sql.replace(&key, item.as_str().unwrap()))
+                    }
+                    j += 1;
                 }
             } else {
-                let mut sql_str = get_sql_string(&mut result_vec, None);
-                sql_str = sql_str.replace(&key, value.as_str().unwrap());
-                result_vec.push(sql_str);
+                if let Some(template) = result_vec.get_mut(0) {
+                    result_vec[0] = template.replace(&key, value.as_str().unwrap());
+                } else {
+                    result_vec.push(template_sql.replace(&key, value.as_str().unwrap()))
+                }
             }
         }
 

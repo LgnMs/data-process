@@ -25,6 +25,10 @@ export default function ContentTable() {
       dataIndex: "name",
     },
     {
+      title: "缓存表",
+      dataIndex: "cache_table_name",
+    },
+    {
       title: "描述",
       dataIndex: "desc",
     },

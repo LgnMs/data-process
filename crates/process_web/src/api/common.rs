@@ -25,11 +25,13 @@ pub struct Pagination<T> {
 #[derive(Clone)]
 pub struct AppState {
     pub(crate) conn: DatabaseConnection,
+    pub(crate) cache_conn: DatabaseConnection,
 }
 
 // Make our own error that wraps `anyhow::Error`.
 #[derive(Debug, Serialize)]
 pub struct AppError {
+    // 路由需要错误信息也能被序列化
     msg: String,
 }
 
@@ -52,7 +54,7 @@ where
 {
     fn from(err: E) -> Self {
         Self {
-            msg: err.into().to_string(),
+            msg: err.into().to_string()
         }
     }
 }
