@@ -34,6 +34,7 @@ pub struct Model {
     pub cache_table_name: Option<String>,
     #[ts(type = "any")]
     pub db_columns_config: Option<Json>,
+    pub cron: Option<String>,
     #[serde(skip_deserializing)]
     pub update_time: DateTime,
     #[serde(skip_deserializing)]

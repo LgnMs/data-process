@@ -13,19 +13,34 @@ use std::env;
 use std::sync::Arc;
 use axum::http::{StatusCode, Uri};
 use tracing::Level;
+use tracing_appender::rolling;
+use tracing_subscriber::fmt::writer::MakeWriterExt;
 
 use crate::api::common::AppState;
 
-#[tokio::main]
-pub async fn start() -> Result<()> {
+fn setup_log() {
+    // Log all `tracing` events to files prefixed with `debug`. Since these
+    // files will be written to very frequently, roll the log file every minute.
+    let debug_file = rolling::daily("./logs", "debug");
+    // Log warnings and errors to a separate file. Since we expect these events
+    // to occur less frequently, roll that file on a daily basis instead.
+    let warn_file = rolling::daily("./logs", "warnings").with_max_level(tracing::Level::WARN);
+    let all_files = debug_file.and(warn_file);
+
     tracing_subscriber::fmt()
         // all spans/events with a level higher than TRACE (e.g, info, warn, etc.)
         // will be written to stdout.
+        .with_writer(all_files)
         .with_max_level(Level::DEBUG)
         .with_line_number(true)
         .with_file(true)
-        // sets this to be the default, global subscriber for this application.
         .init();
+}
+
+#[tokio::main]
+pub async fn start() -> Result<()> {
+
+    setup_log();
 
     env::set_var("RUST_LOG", "debug");
     dotenvy::dotenv().ok();

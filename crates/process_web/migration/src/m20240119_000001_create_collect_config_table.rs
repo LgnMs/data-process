@@ -83,6 +83,12 @@ impl MigrationTrait for Migration {
                             .default(false)
                             .comment("暂存数据库表名，存储接收并处理后的数据"),
                     )
+                    .col(
+                        ColumnDef::new(CollectConfig::Cron)
+                            .boolean()
+                            .default("")
+                            .comment("任务调度时间 Cron表达式"),
+                    )
                     .to_owned(),
             )
             .await
@@ -117,6 +123,7 @@ pub enum CollectConfig {
     FiledOfResultData,
     MaxCountOfRequest,
     DbColumnsConfig,
+    Cron,
     UpdateTime,
     CreateTime,
     DelFlag

@@ -81,6 +81,7 @@ pub async fn execute(
     state: State<Arc<AppState>>,
     Path(id): Path<i32>,
 ) -> Result<ResJson<bool>, AppError> {
+    // TODO 创建一条采集任务，然后调度执行。
     let data = CollectConfigService::find_by_id(&state.conn, id).await?;
     tokio::spawn(async move {
         let res = process_data(&data).await;

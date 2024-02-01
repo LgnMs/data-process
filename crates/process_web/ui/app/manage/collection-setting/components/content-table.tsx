@@ -34,7 +34,7 @@ export default function ContentTable() {
     },
     {
       title: "操作",
-      width: 130,
+      width: 150,
       render: (_: any, record: ICollectConfig) => {
         return (
           <Space>
@@ -60,7 +60,7 @@ export default function ContentTable() {
             <Typography.Link onClick={async () => {
               await CollectConfig.execute(record.id!)
               message.success('执行成功')
-            }}>执行</Typography.Link>
+            }}>立即执行</Typography.Link>
           </Space>
         );
       },

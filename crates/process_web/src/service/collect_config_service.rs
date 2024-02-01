@@ -73,6 +73,7 @@ impl CollectConfigService {
             max_number_of_result_data: Set(data.max_number_of_result_data),
             filed_of_result_data: Set(data.filed_of_result_data),
             max_count_of_request: Set(data.max_count_of_request),
+            cron: Set(data.cron),
             db_columns_config: Set(data.db_columns_config.clone()),
             ..Default::default()
         };

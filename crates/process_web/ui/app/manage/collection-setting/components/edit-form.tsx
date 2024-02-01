@@ -7,6 +7,7 @@ import * as CollectConfig from "@/api/collect_config";
 import {ICommonCollectionSettingProps} from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
 import { clone } from "lodash";
+import CronEdit from "@/app/manage/components/cron-edit";
 
 interface IEditFormProps extends ICommonCollectionSettingProps {
     open: boolean
@@ -18,7 +19,7 @@ export default function EditForm(props: IEditFormProps) {
     const { state, dispatch } = useMainContext()!;
     const [mode, setMode] = useState<'edit'|'add'>('add');
     const [columnConfigChange, setColumnConfigChange] = useState(false);
-
+    const [autoExec, setAutoExec] = useState(0);
     async function onSubmit() {
 
         if (columnConfigChange) {
@@ -120,6 +121,10 @@ export default function EditForm(props: IEditFormProps) {
                     })
                 }
 
+                if (data.cron) {
+                    setAutoExec(1);
+                }
+
                 form.setFieldsValue(data)
                 setMode('edit')
             } else {
@@ -179,7 +184,7 @@ export default function EditForm(props: IEditFormProps) {
             {(fields, { add, remove }, { errors }) => {
                 return (
                   <div style={{display: 'flex', flexDirection: 'column', rowGap: 16}}>
-                      {fields.map((field, index) => (
+                      {fields.map((field) => (
                         <Space key={field.key}>
                             <Form.Item noStyle name={[field.name, 'key']}>
                                 <Input placeholder="key" />
@@ -242,7 +247,6 @@ export default function EditForm(props: IEditFormProps) {
           labelAlign="left"
           labelWrap
           onFieldsChange={(changedFields) => {
-              console.log(changedFields)
               changedFields.forEach(item => {
                   if (item.name[0] === "method") {
                       setDefaultForPostHeaders(item.value)
@@ -377,7 +381,7 @@ export default function EditForm(props: IEditFormProps) {
                             <FormItemLabelTips
                               tips="例如：INSERT INTO table_name (column1, column2) VALUES (${data#id}, ${data#name})"
                             >
-                                插入SQL
+                                插入SQL&nbsp;
                                 <Button
                                   type="primary"
                                   size="small"
@@ -389,6 +393,30 @@ export default function EditForm(props: IEditFormProps) {
                         rules={[{ required: true }]}
                     >
                         <Input.TextArea placeholder="请输入" />
+                    </Form.Item>
+                </Col>
+                <Col span={24}>
+                    <Form.Item label={
+                        <div>
+                            执行周期&nbsp;
+                            <Radio.Group value={autoExec} onChange={(e) => {
+                                if (e.target.value === 0) {
+                                    form.setFieldValue("cron", null);
+                                } else {
+                                    form.setFieldValue("cron", "0 0 * * *");
+                                    // 0 0 0 ? * ?
+                                }
+                                setAutoExec(e.target.value)
+                            }}>
+                                <Radio value={0}>不执行</Radio>
+                                <Radio value={1}>自动执行</Radio>
+                            </Radio.Group>
+                        </div>
+                    } name="cron" >
+                        {
+                            autoExec === 1 && <CronEdit />
+                        }
+
                     </Form.Item>
                 </Col>
                 <Col span={24}>
