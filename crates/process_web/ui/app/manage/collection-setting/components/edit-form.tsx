@@ -1,5 +1,5 @@
 import {useSWRConfig} from "swr";
-import { Button, Col, Drawer, Form, Input, InputNumber, message, Radio, Row, Select, Space } from "antd";
+import { Button, Col, Drawer, Form, Input, InputNumber, message, Radio, Row, Select, Space, Modal } from "antd";
 import React, { useEffect, useState } from "react";
 import {CloseOutlined, PlusOutlined} from "@ant-design/icons";
 import FormItemLabelTips from "@/app/manage/components/form-item-label-tips";
@@ -17,8 +17,25 @@ export default function EditForm(props: IEditFormProps) {
     const [form] = Form.useForm();
     const { state, dispatch } = useMainContext()!;
     const [mode, setMode] = useState<'edit'|'add'>('add');
+    const [columnConfigChange, setColumnConfigChange] = useState(false);
 
     async function onSubmit() {
+
+        if (columnConfigChange) {
+           await new Promise((resolve) => {
+                Modal.confirm({
+                    title: "列配置发生了变化，是否重新生成SQL",
+                    onOk() {
+                        generateSql()
+                        resolve(true)
+                    },
+                    onCancel() {
+                        resolve(true)
+                    }
+                })
+            })
+        }
+
         await form.validateFields();
         const values = form.getFieldsValue(true)
 
@@ -131,6 +148,83 @@ export default function EditForm(props: IEditFormProps) {
         form.setFieldValue("headers", headers);
     }
 
+    async function generateSql() {
+        if (columnConfigChange) {
+            setColumnConfigChange(false);
+        }
+        const db_columns_config = form.getFieldValue("db_columns_config");
+        const cache_table_name = form.getFieldValue("cache_table_name");
+        if (!db_columns_config) {
+            await message.error("请先配置列配置")
+            return
+        }
+        if (!cache_table_name) {
+            await message.error("请先配置缓存表")
+            return
+        }
+        let template_str = `INSERT INTO ${cache_table_name}`;
+        const columns: string[] = [];
+        const columns_value: string[] = [];
+        db_columns_config.forEach((column: {key: string, value: string, type: string}) => {
+            columns.push(column.key)
+            columns_value.push(`'\${${column.value}}'`)
+        })
+        template_str += ` (${columns.join(", ")}) VALUES (${columns_value.join(", ")})`
+
+        form.setFieldValue("template_string", template_str);
+    }
+
+    function FormArrayList(props: { name: string, buttonText?: string, initialValue?: any[], isColumnConfig?: boolean }) {
+        return <Form.List name={props.name} initialValue={props.initialValue} >
+            {(fields, { add, remove }, { errors }) => {
+                return (
+                  <div style={{display: 'flex', flexDirection: 'column', rowGap: 16}}>
+                      {fields.map((field, index) => (
+                        <Space key={field.key}>
+                            <Form.Item noStyle name={[field.name, 'key']}>
+                                <Input placeholder="key" />
+                            </Form.Item>
+                            <Form.Item noStyle name={[field.name, 'value']}>
+                                <Input placeholder="value" />
+                            </Form.Item>
+                            {
+                              props.isColumnConfig && <Form.Item noStyle name={[field.name, 'type']} initialValue="varchar">
+                                  <Select
+                                    options={[
+                                        { value: 'varchar', label: '字符串 varchar' },
+                                        { value: 'integer', label: '数字 integer' },
+                                        { value: 'timestamp', label: '日期 timestamp' },
+                                    ]}
+                                  ></Select>
+                              </Form.Item>
+                            }
+                            <CloseOutlined
+                              onClick={() => {
+                                  remove(field.name);
+                                  setColumnConfigChange(true);
+                              }}
+                              rev={undefined}
+                            />
+                        </Space>
+                      ))}
+                      <Button
+                        type="dashed"
+                        onClick={() => {
+                            add();
+                            setColumnConfigChange(true);
+                        }}
+                        style={{width: '380px'}}
+                        icon={<PlusOutlined rev={undefined}/>}
+                      >
+                          {props.buttonText ? props.buttonText : '添加'}
+                      </Button>
+                      <Form.ErrorList errors={errors}/>
+                  </div>
+                )
+            }}
+        </Form.List>
+    }
+
     return <Drawer
             title={`${mode === 'add' ? '新增' : '编辑'}采集配置`}
             open={props.open}
@@ -148,9 +242,13 @@ export default function EditForm(props: IEditFormProps) {
           labelAlign="left"
           labelWrap
           onFieldsChange={(changedFields) => {
+              console.log(changedFields)
               changedFields.forEach(item => {
                   if (item.name[0] === "method") {
                       setDefaultForPostHeaders(item.value)
+                  }
+                  if (item.name[0] === "db_columns_config") {
+                      setColumnConfigChange(true)
                   }
               })
           }}
@@ -283,28 +381,7 @@ export default function EditForm(props: IEditFormProps) {
                                 <Button
                                   type="primary"
                                   size="small"
-                                  onClick={async () => {
-                                      const db_columns_config = form.getFieldValue("db_columns_config");
-                                      const cache_table_name = form.getFieldValue("cache_table_name");
-                                      if (!db_columns_config) {
-                                          await message.error("请先配置列配置")
-                                          return
-                                      }
-                                      if (!cache_table_name) {
-                                          await message.error("请先配置缓存表")
-                                          return
-                                      }
-                                      let template_str = `INSERT INTO ${cache_table_name}`;
-                                      const columns: string[] = [];
-                                      const columns_value: string[] = [];
-                                      db_columns_config.forEach((column: {key: string, value: string, type: string}) => {
-                                          columns.push(column.key)
-                                          columns_value.push(`'\${${column.value}}'`)
-                                      })
-                                      template_str += ` (${columns.join(", ")}) VALUES (${columns_value.join(", ")})`
-
-                                      form.setFieldValue("template_string", template_str);
-                                  }}
+                                  onClick={generateSql}
                                 >点击生成</Button>
                             </FormItemLabelTips>
                         }
@@ -322,51 +399,4 @@ export default function EditForm(props: IEditFormProps) {
             </Row>
         </Form>
     </Drawer>
-}
-
-function FormArrayList(props: { name: string, buttonText?: string, initialValue?: any[], isColumnConfig?: boolean }) {
-    return <Form.List name={props.name} initialValue={props.initialValue} >
-            {(fields, { add, remove }, { errors }) => {
-                return (
-                      <div style={{display: 'flex', flexDirection: 'column', rowGap: 16}}>
-                        {fields.map((field, index) => (
-                            <Space key={field.key}>
-                                <Form.Item noStyle name={[field.name, 'key']}>
-                                    <Input placeholder="key" />
-                                </Form.Item>
-                                <Form.Item noStyle name={[field.name, 'value']}>
-                                    <Input placeholder="value" />
-                                </Form.Item>
-                                {
-                                    props.isColumnConfig && <Form.Item noStyle name={[field.name, 'type']} initialValue="varchar">
-                                      <Select
-                                        options={[
-                                            { value: 'varchar', label: '字符串 varchar' },
-                                            { value: 'integer', label: '数字 integer' },
-                                            { value: 'timestamp', label: '日期 timestamp' },
-                                        ]}
-                                      ></Select>
-                                  </Form.Item>
-                                }
-                                <CloseOutlined
-                                    onClick={() => {
-                                        remove(field.name);
-                                    }}
-                                    rev={undefined}
-                                />
-                            </Space>
-                        ))}
-                        <Button
-                            type="dashed"
-                            onClick={() => add()}
-                            style={{width: '380px'}}
-                            icon={<PlusOutlined rev={undefined}/>}
-                        >
-                            {props.buttonText ? props.buttonText : '添加'}
-                        </Button>
-                        <Form.ErrorList errors={errors}/>
-                    </div>
-                )
-            }}
-        </Form.List>
 }

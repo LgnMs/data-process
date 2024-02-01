@@ -1,3 +1,4 @@
+use chrono::Local;
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
@@ -54,7 +55,7 @@ impl CollectConfigService {
         data: collect_config::Model,
     ) -> Result<collect_config::Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
-        let now = chrono::Local::now().naive_utc();
+        let now = Local::now().naive_local();
 
         let mut active_data = collect_config::ActiveModel {
             url: Set(data.url),
@@ -128,11 +129,24 @@ impl CollectConfigService {
 
     pub async fn create_table(cache_db: &DbConn, db_columns_config: &serde_json::Value, table_name: &String,) -> Result<bool, DbErr> {
         if let Some(db_columns_config) = db_columns_config.as_array() {
+            // TODO 适配MYSQL
             let mut template_str = format!("CREATE TABLE IF NOT EXISTS {table_name}");
-            let mut column_str = vec![];
+            let mut column_str = Vec::with_capacity(db_columns_config.len() + 1);
+            let mut have_id_key = false;
+
             for item in db_columns_config {
-                column_str.push(format!("{} {} NULL", item["key"], item["type"]));
+                if item["key"] == "id" {
+                    column_str.insert(0, format!("{} {} NOT NULL", item["key"], item["type"]));
+                    have_id_key = true;
+                } else {
+                    column_str.push(format!("{} {} NULL", item["key"], item["type"]));
+                }
             }
+
+            if !have_id_key {
+                column_str.insert(0, r#"id serial NOT NULL"#.to_string());
+            }
+            column_str.push(format!("CONSTRAINT {table_name}_{:?}_pk PRIMARY KEY (id)", Local::now().naive_local().timestamp()));
             template_str = format!("{} ({});", template_str, column_str.join(", "));
 
             cache_db
@@ -148,7 +162,7 @@ impl CollectConfigService {
         Ok(true)
     }
     pub async fn update_table_struct(cache_db: &DbConn, db_columns_config: &serde_json::Value, table_name: &String,) -> Result<bool, DbErr> {
-        let now = chrono::Local::now().naive_utc().timestamp();
+        let now = Local::now().naive_utc().timestamp();
         let alert_sql = format!("ALTER TABLE {table_name} rename to {table_name}_{now}");
         match cache_db
             .execute(Statement::from_string(cache_db.get_database_backend(), alert_sql,))

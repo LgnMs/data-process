@@ -169,10 +169,11 @@ impl Export for Http {
                 let mut j = 0;
                 for old_item in data_list {
                     let item = find_value(&rel_key[index + 1..], old_item)?;
+
                     if let Some(template) = result_vec.get(j) {
-                        result_vec[j] = template.replace(&key, item.as_str().unwrap());
+                        result_vec[j] = template.replace(&key, item.as_str().unwrap_or("null"));
                     } else {
-                        result_vec.push(template_sql.replace(&key, item.as_str().unwrap()))
+                        result_vec.push(template_sql.replace(&key, item.as_str().unwrap_or("null")))
                     }
                     j += 1;
                 }

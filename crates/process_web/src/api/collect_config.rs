@@ -87,7 +87,7 @@ pub async fn execute(
         match res {
             Ok(list) => {
                 match CollectConfigService::cache_data(&state.cache_conn, &list).await {
-                    Ok(bl) => {},
+                    Ok(_) => {},
                     Err(err) => error!("{}", err)
                 };
             },
@@ -103,6 +103,8 @@ pub async fn execute(
 }
 
 pub async fn process_data(data: &Model) -> Result<Vec<String>> {
+    let body = format_body_string(data.body.as_ref());
+
     if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
         if loop_request_by_pagination {
             let mut sholud_stop = false;
@@ -110,7 +112,7 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
             let page_size_key = data.page_size_key.as_ref().ok_or(anyhow!("请指定page_size_key"))?;
             let max_number_of_result_data = data.max_number_of_result_data.ok_or(anyhow!("请指定max_number_of_result_data"))?;
             let max_count_of_request = data.max_count_of_request.ok_or(anyhow!("请指定max_count_of_request"))?;
-            let body = serde_json::from_str::<Value>(data.body.clone().unwrap().as_str()).unwrap();
+            let body = serde_json::from_str::<Value>(body.unwrap().as_str()).unwrap();
 
             let mut loop_counts = 0;
 
@@ -152,9 +154,45 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
         }
     }
 
-    let (_, res) = process_data_req(data, data.body.clone()).await.unwrap();
+    let (_, res) = process_data_req(data, body.clone()).await.unwrap();
 
     res
+}
+
+/// 查找body字符串中`${xxx}`格式值进行转换
+/// 目前只支持日期字符串
+pub fn format_body_string(body: Option<&String>) -> Option<String> {
+    if body.is_none() {
+        return None;
+    }
+
+    let mut body_str = body.unwrap().as_str();
+
+    let mut value_map = HashMap::new();
+
+    while let Some(i) = body_str.find("${") {
+        body_str = &body_str[i..];
+
+        if let Some(j) = body_str.find("}") {
+            let params_str = &body_str[2..j];
+            if params_str.contains("now") {
+                let date = get_datetime_by_string(params_str).unwrap_or("".to_string());
+                value_map.insert(date, &body_str[0..j+1]);
+            }
+            body_str = &body_str[j..];
+          } else {
+            break;
+        }
+
+    }
+
+    let mut new_str = body.unwrap().clone();
+
+    for (key, value) in value_map {
+        new_str = new_str.replace(value, key.as_str());
+    }
+
+    Some(new_str)
 }
 
 pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(bool, Result<Vec<String>>)> {
@@ -233,3 +271,92 @@ pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(boo
 
     Ok((has_next_page, res))
 }
+
+
+pub fn get_date(str: &str) -> Result<chrono::Duration> {
+    let number = str[..str.len() - 1].parse::<i64>()?;
+    if str.contains("d") {
+        return Ok(chrono::Duration::days(number));
+    }
+    if str.contains("h") {
+        return Ok(chrono::Duration::hours(number));
+    }
+    if str.contains("m") {
+        return Ok(chrono::Duration::minutes(number))
+    }
+    if str.contains("s") {
+        return Ok(chrono::Duration::seconds(number))
+    }
+    Err(anyhow!("未发现匹配的字符"))
+}
+
+/// 根据特定字符串获取当地时间日期，支持加减法计算
+/// 例如："now+1d-24h-60m+60s.%Y-%m-%d %H:%M:%S"
+///
+///  1. now必须指定
+///  2. 1d表示1天，1h表示1小时，1m表示1分钟，1s表示1秒
+///  3. `.`前面是日期计算字符串，`.`后面是格式化字符串，参考：`<https://docs.rs/chrono/latest/chrono/format/strftime/index.html>`
+///
+///     `%Y-%m-%d %H:%M:%S`输出"2024-01-31 15:12:48"格式的日期
+///
+/// ```
+///     use process_web::api::collect_config::*;
+///
+///     let time_strimg = get_datetime_by_string(&r#"now+1d-24h-60m+60s.%Y-%m-%d %H:%M:%S"#.to_string());
+///
+///     println!("time_strimg {:?}", time_strimg);
+/// ```
+pub fn get_datetime_by_string(value_str: &str) -> Result<String> {
+    let split_str: Vec<&str> = value_str.split('.').collect();
+
+    if split_str.len() > 0 {
+        let date_str = split_str[0];
+
+        if !date_str.contains("now") {
+            return Err(anyhow!("请指定now"));
+        }
+
+        let mut date = chrono::Local::now();
+        let mut last_i = 0;
+        let mut pre_str = "";
+        let mut current_sign = "";
+
+        for i in 0..date_str.len() {
+            let char = &date_str[i..i+1];
+            if char == "-" || char == "+" {
+                if pre_str == "" {
+                    pre_str = &date_str[last_i..i];
+                    current_sign = char;
+                    last_i = i + 1;
+                    continue;
+                }
+
+                pre_str = &date_str[last_i..i];
+                if current_sign == "-" {
+                    date = date - get_date(pre_str)?;
+                } else if current_sign == "+" {
+                    date = date + get_date(pre_str)?;
+                }
+
+                last_i = i + 1;
+                current_sign = char;
+            }
+        }
+
+        pre_str = &date_str[last_i..];
+        if current_sign == "-" {
+            date = date - get_date(pre_str)?;
+        } else if current_sign == "+" {
+            date = date + get_date(pre_str)?;
+        }
+
+        if split_str.len() > 1 {
+            let format_str = split_str[1];
+            return Ok(date.naive_local().format(format_str).to_string());
+        }
+        return Ok(date.naive_local().to_string());
+    }
+
+    Err(anyhow!("无法解析字符串"))
+}
+

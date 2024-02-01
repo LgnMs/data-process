@@ -1,9 +1,9 @@
 #[macro_use]
 pub mod macros;
-mod collect_config;
-mod collect_log;
+pub mod collect_config;
+pub mod collect_log;
 pub mod common;
-mod mock;
+pub mod mock;
 
 use anyhow::Result;
 use axum::Router;
