@@ -27,21 +27,32 @@ fn setup_log() {
     let warn_file = rolling::daily("./logs", "warnings").with_max_level(tracing::Level::WARN);
     let all_files = debug_file.and(warn_file);
 
-    tracing_subscriber::fmt()
-        // all spans/events with a level higher than TRACE (e.g, info, warn, etc.)
-        // will be written to stdout.
-        .with_writer(all_files)
-        .with_max_level(Level::DEBUG)
-        .with_line_number(true)
-        .with_file(true)
-        .init();
+    let builder =  tracing_subscriber::fmt();
+
+    match env::var("APP_ENV") {
+        Ok(v) if v == "prod" => {
+            builder
+                .with_writer(all_files)
+                .with_max_level(Level::DEBUG)
+                .with_line_number(true)
+                .with_file(true)
+                .init();
+
+            println!("日志存储于./logs");
+        },
+        _ => {
+            builder
+                .with_max_level(Level::DEBUG)
+                .with_line_number(true)
+                .with_file(true)
+                .init();
+        },
+    };
+
 }
 
 #[tokio::main]
 pub async fn start() -> Result<()> {
-
-    setup_log();
-
     env::set_var("RUST_LOG", "debug");
     dotenvy::dotenv().ok();
 
@@ -50,6 +61,8 @@ pub async fn start() -> Result<()> {
     let host = env::var("HOST").expect("HOST is not set in .env file");
     let port: String = env::var("PORT").expect("PORT is not set in .env file");
     let server_url = format!("{host}:{port}");
+
+    setup_log();
 
     let conn = Database::connect(db_url)
         .await

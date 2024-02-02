@@ -13,7 +13,6 @@ use process_core::http::HttpConfig;
 use process_core::process::{Export, Receive, Serde};
 use process_core::json::find_value;
 use schemars::_serde_json::Value;
-use serde_json::json;
 use tracing::{debug, error};
 
 use crate::api::common::{
@@ -104,35 +103,58 @@ pub async fn execute(
 }
 
 pub async fn process_data(data: &Model) -> Result<Vec<String>> {
-    let body = format_body_string(data.body.as_ref());
+    let body_string = format_body_string(data.body.as_ref());
 
     if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
         if loop_request_by_pagination {
             let mut sholud_stop = false;
-            let current_key = data.current_key.as_ref().ok_or(anyhow!("请指定current_key"))?;
-            let page_size_key = data.page_size_key.as_ref().ok_or(anyhow!("请指定page_size_key"))?;
             let max_number_of_result_data = data.max_number_of_result_data.ok_or(anyhow!("请指定max_number_of_result_data"))?;
             let max_count_of_request = data.max_count_of_request.ok_or(anyhow!("请指定max_count_of_request"))?;
-            let body = serde_json::from_str::<Value>(body.unwrap().as_str()).unwrap();
+            let body = serde_json::from_str::<Value>(body_string.clone().unwrap().as_str()).unwrap();
 
             let mut loop_counts = 0;
 
             let mut data_res = vec![];
 
-            debug!("开始进行分页请求，current_key:{current_key}, page_size_key: {page_size_key}, max_number_of_result_data: {max_number_of_result_data}, max_count_of_request: {max_count_of_request}");
+            debug!("开始进行分页请求，max_number_of_result_data: {max_number_of_result_data}, max_count_of_request: {max_count_of_request}");
             while !sholud_stop {
-                let mut map = HashMap::new();
 
-                for (key, value) in body.as_object().unwrap() {
-                    if key == current_key {
-                        let current = value.as_i64().unwrap() + loop_counts * body[&page_size_key].as_i64().unwrap();
-                        map.insert(key ,json!(current));
-                    } else {
-                        map.insert(key, value.clone());
+                let mut body_string = body_string.clone().unwrap_or_default();
+                let mut new_string = body_string.as_str();
+                let mut map_str = HashMap::new();
+
+                while let Some(l_i) = new_string.find("${") {
+                    new_string = &new_string[l_i..];
+
+                    if let Some(r_i) = new_string.find("}") {
+                        let current_str = &new_string[..r_i+1];
+                        let mut parmater_str = new_string[2..r_i].to_string();
+
+                        // 对表达式中的值进行计算_loop_counts
+                        if parmater_str.contains("_loop_counts") {
+                            parmater_str = parmater_str.replace("_loop_counts", loop_counts.to_string().as_str());
+
+                            for (key, value) in body.as_object().unwrap() {
+                                if parmater_str.contains(key) {
+                                    parmater_str = parmater_str.replace(key, value.to_string().as_str());
+                                }
+                            }
+                            parmater_str = math_parse::MathParse::parse(parmater_str.as_str())
+                                .unwrap()
+                                .solve_float(None)
+                                .unwrap_or(0.0)
+                                .to_string();
+                        }
+                        map_str.insert(parmater_str, current_str.to_string());
+                        new_string = &new_string[r_i..];
                     }
                 }
+                for (value, value2) in map_str {
+                    body_string = body_string.replace(value2.as_str(), &value);
+                }
 
-                let (has_next_page, res) = process_data_req(&data, Some(json!(map).to_string())).await?;
+
+                let (has_next_page, res) = process_data_req(&data, Some(body_string.to_string())).await?;
                 let new_vec = res?;
 
                 sholud_stop = !has_next_page;
@@ -155,7 +177,7 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
         }
     }
 
-    let (_, res) = process_data_req(data, body.clone()).await.unwrap();
+    let (_, res) = process_data_req(data, body_string.clone()).await.unwrap();
 
     res
 }
@@ -176,10 +198,13 @@ pub fn format_body_string(body: Option<&String>) -> Option<String> {
 
         if let Some(j) = body_str.find("}") {
             let params_str = &body_str[2..j];
-            if params_str.contains("now") {
+            let current_str = &body_str[0..j+1];
+            if params_str.contains("_now") {
                 let date = get_datetime_by_string(params_str).unwrap_or("".to_string());
-                value_map.insert(date, &body_str[0..j+1]);
+                value_map.insert(date, current_str);
             }
+            //Tips 含_loop_counts的需要在循环请求中去获取参数，不在此处做处理
+
             body_str = &body_str[j..];
           } else {
             break;

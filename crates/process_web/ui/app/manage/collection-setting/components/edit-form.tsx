@@ -282,7 +282,7 @@ export default function EditForm(props: IEditFormProps) {
                     </Form.Item>
                 </Col>
                 <Col span={8}>
-                    <Form.Item label={<FormItemLabelTips tips="用于分页接口获取">是否循环请求</FormItemLabelTips>} name="loop_request_by_pagination">
+                    <Form.Item label={<FormItemLabelTips tips="指定页码和分页大小key后，会">是否循环请求</FormItemLabelTips>} name="loop_request_by_pagination">
                         <Radio.Group>
                             <Radio value={false}>否</Radio>
                             <Radio value={true}>是</Radio>
@@ -296,25 +296,6 @@ export default function EditForm(props: IEditFormProps) {
                     {({ getFieldValue }) =>
                         getFieldValue('loop_request_by_pagination') === true ? (
                             <>
-                                <Col span={8}>
-                                    <Form.Item
-                                        label={<FormItemLabelTips tips="请求参数中的页码字段">页码key</FormItemLabelTips>}
-                                        name="current_key"
-                                        rules={[{ required: true }]}
-                                    >
-
-                                        <Input placeholder="请输入"/>
-                                    </Form.Item>
-                                </Col>
-                                <Col span={8}>
-                                    <Form.Item
-                                        label={<FormItemLabelTips tips="请求参数中的分页大小字段">分页大小key</FormItemLabelTips>}
-                                        name="page_size_key"
-                                        rules={[{ required: true }]}
-                                    >
-                                        <Input placeholder="请输入"/>
-                                    </Form.Item>
-                                </Col>
                                 <Col span={8}>
                                     <Form.Item
                                         label={<FormItemLabelTips tips="返回数据的最大数量限制，一旦已保存的数据超过该值便不会再发起请求">最大数据量</FormItemLabelTips>}

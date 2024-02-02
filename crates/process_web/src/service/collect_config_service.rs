@@ -66,8 +66,6 @@ impl CollectConfigService {
             body: Set(data.body),
             map_rules: Set(data.map_rules),
             template_string: Set(data.template_string),
-            current_key: Set(data.current_key),
-            page_size_key: Set(data.page_size_key),
             loop_request_by_pagination: Set(data.loop_request_by_pagination),
             cache_table_name: Set(data.cache_table_name.clone()),
             max_number_of_result_data: Set(data.max_number_of_result_data),

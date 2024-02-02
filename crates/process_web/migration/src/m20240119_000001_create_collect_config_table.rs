@@ -62,16 +62,6 @@ impl MigrationTrait for Migration {
                             .comment("导出字符串模板"),
                     )
                     .col(
-                        ColumnDef::new(CollectConfig::CurrentKey)
-                            .string()
-                            .comment("body中的页码键值，设定这两个值后表示该接口为分页接口"),
-                    )
-                    .col(
-                        ColumnDef::new(CollectConfig::PageSizeKey)
-                            .string()
-                            .comment("body中分页大小键值"),
-                    )
-                    .col(
                         ColumnDef::new(CollectConfig::LoopRequestByPagination)
                             .boolean()
                             .default(false)
@@ -115,8 +105,6 @@ pub enum CollectConfig {
     Body,
     MapRules,
     TemplateString,
-    CurrentKey,
-    PageSizeKey,
     LoopRequestByPagination,
     CacheTableName,
     MaxNumberOfResultData,

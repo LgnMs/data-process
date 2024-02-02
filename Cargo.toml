@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 tracing = "0.1"
+dotenvy = "0.15.7"
 
 process_web = { path = "crates/process_web" }
 
