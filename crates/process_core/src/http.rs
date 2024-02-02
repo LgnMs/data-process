@@ -39,6 +39,12 @@ impl Http {
     pub fn new() -> Self {
         Self::default()
     }
+    pub fn set_data(&mut self, data: Value) -> &mut Self {
+        self.data = data;
+
+        self
+    }
+
     pub fn add_map_rules(&mut self, map_rules: Vec<[String; 2]>) -> &mut Self {
         self.map_rules = map_rules;
 
