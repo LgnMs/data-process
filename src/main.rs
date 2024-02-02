@@ -1,5 +1,5 @@
-use std::{env, fmt};
 use anyhow::anyhow;
+use std::{env, fmt};
 use tracing::error;
 
 pub mod scheduler;
@@ -25,7 +25,7 @@ fn main() {
         _ => AppEnv::Dev,
     };
 
-    println!("Running in {app_env} mode", );
+    println!("Running in {app_env} mode",);
 
     match app_env {
         AppEnv::Dev => {

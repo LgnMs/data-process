@@ -26,8 +26,8 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub loop_request_by_pagination: Option<bool>,
-    pub max_number_of_result_data:Option<i32>,
-    pub filed_of_result_data:Option<String>,
+    pub max_number_of_result_data: Option<i32>,
+    pub filed_of_result_data: Option<String>,
     pub max_count_of_request: Option<i32>,
     pub cache_table_name: Option<String>,
     #[ts(type = "any")]

@@ -114,5 +114,5 @@ pub enum CollectConfig {
     Cron,
     UpdateTime,
     CreateTime,
-    DelFlag
+    DelFlag,
 }

@@ -25,10 +25,7 @@ async fn test_http() -> Result<()> {
                     ),
                     ("Content-Type".to_string(), "application/json".to_string()),
                 ]),
-                body: Some(
-                    r#"{"current":1,"page_size":1}"#
-                    .to_string(),
-                ),
+                body: Some(r#"{"current":1,"page_size":1}"#.to_string()),
             },
         )
         .await?

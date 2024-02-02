@@ -86,7 +86,12 @@ impl CollectConfigService {
 
             if let Some(db_columns_config) = data.db_columns_config.as_ref() {
                 if db_data.db_columns_config != data.db_columns_config {
-                    Self::update_table_struct(cache_db, db_columns_config, data.cache_table_name.as_ref().unwrap()).await?;
+                    Self::update_table_struct(
+                        cache_db,
+                        db_columns_config,
+                        data.cache_table_name.as_ref().unwrap(),
+                    )
+                    .await?;
                 }
             }
 
@@ -95,18 +100,24 @@ impl CollectConfigService {
             active_data.create_time = Set(now);
             active_data.update_time = Set(now);
             if let Some(db_columns_config) = data.db_columns_config.as_ref() {
-                Self::create_table(cache_db, db_columns_config, data.cache_table_name.as_ref().unwrap()).await?;
+                Self::create_table(
+                    cache_db,
+                    db_columns_config,
+                    data.cache_table_name.as_ref().unwrap(),
+                )
+                .await?;
             }
             active_data.insert(db).await
         }
     }
 
     pub async fn delete(db: &DbConn, id: i32) -> Result<collect_config::Model, DbErr> {
-        let mut collect_config: collect_config::ActiveModel = collect_config::Entity::find_by_id(id)
-            .one(db)
-            .await?
-            .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
-            .map(Into::into)?;
+        let mut collect_config: collect_config::ActiveModel =
+            collect_config::Entity::find_by_id(id)
+                .one(db)
+                .await?
+                .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
+                .map(Into::into)?;
 
         collect_config.del_flag = Set(1);
 
@@ -115,18 +126,21 @@ impl CollectConfigService {
 
     pub async fn cache_data(cache_db: &DbConn, list: &Vec<String>) -> Result<bool, DbErr> {
         for item in list {
-            cache_db.execute(
-                Statement::from_string(
+            cache_db
+                .execute(Statement::from_string(
                     cache_db.get_database_backend(),
-                    item
-                )
-            )
-            .await?;
+                    item,
+                ))
+                .await?;
         }
         Ok(true)
     }
 
-    pub async fn create_table(cache_db: &DbConn, db_columns_config: &serde_json::Value, table_name: &String,) -> Result<bool, DbErr> {
+    pub async fn create_table(
+        cache_db: &DbConn,
+        db_columns_config: &serde_json::Value,
+        table_name: &String,
+    ) -> Result<bool, DbErr> {
         if let Some(db_columns_config) = db_columns_config.as_array() {
             // TODO 适配MYSQL
             let mut template_str = format!("CREATE TABLE IF NOT EXISTS {table_name}");
@@ -145,7 +159,10 @@ impl CollectConfigService {
             if !have_id_key {
                 column_str.insert(0, r#"id serial NOT NULL"#.to_string());
             }
-            column_str.push(format!("CONSTRAINT {table_name}_{:?}_pk PRIMARY KEY (id)", Local::now().naive_local().timestamp()));
+            column_str.push(format!(
+                "CONSTRAINT {table_name}_{:?}_pk PRIMARY KEY (id)",
+                Local::now().naive_local().timestamp()
+            ));
             template_str = format!("{} ({});", template_str, column_str.join(", "));
 
             cache_db
@@ -155,22 +172,32 @@ impl CollectConfigService {
                 ))
                 .await?;
         } else {
-            return Err(DbErr::Custom("db_columns_config无法解析为json数组".to_owned()));
+            return Err(DbErr::Custom(
+                "db_columns_config无法解析为json数组".to_owned(),
+            ));
         }
 
         Ok(true)
     }
-    pub async fn update_table_struct(cache_db: &DbConn, db_columns_config: &serde_json::Value, table_name: &String,) -> Result<bool, DbErr> {
+    pub async fn update_table_struct(
+        cache_db: &DbConn,
+        db_columns_config: &serde_json::Value,
+        table_name: &String,
+    ) -> Result<bool, DbErr> {
         let now = Local::now().naive_utc().timestamp();
         let alert_sql = format!("ALTER TABLE {table_name} rename to {table_name}_{now}");
         match cache_db
-            .execute(Statement::from_string(cache_db.get_database_backend(), alert_sql,))
-            .await {
+            .execute(Statement::from_string(
+                cache_db.get_database_backend(),
+                alert_sql,
+            ))
+            .await
+        {
             Err(err) => {
                 // TODO 识别为表不存在的错误
                 println!("{:?}", err);
-            },
-            _ => {},
+            }
+            _ => {}
         };
 
         Self::create_table(cache_db, db_columns_config, table_name).await

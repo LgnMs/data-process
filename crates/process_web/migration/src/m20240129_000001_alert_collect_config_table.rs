@@ -16,28 +16,32 @@ impl MigrationTrait for Migration {
                     .add_column(
                         ColumnDef::new(CollectConfig::MaxNumberOfResultData)
                             .integer()
-                            .comment("返回数据的最大数量限制，一旦已保存的数据超过该值便不会再发起请求")
-                            .default(1000)
+                            .comment(
+                                "返回数据的最大数量限制，一旦已保存的数据超过该值便不会再发起请求",
+                            )
+                            .default(1000),
                     )
                     .add_column(
                         ColumnDef::new(CollectConfig::FiledOfResultData)
                             .string()
-                            .comment(r#"返回数据中应检测的list的字段名，例如{"result": "data":[]}"#)
+                            .comment(
+                                r#"返回数据中应检测的list的字段名，例如{"result": "data":[]}"#,
+                            ),
                     )
                     .add_column(
                         ColumnDef::new(CollectConfig::MaxCountOfRequest)
                             .string()
-                            .comment(r#"最大请求次数"#)
+                            .comment(r#"最大请求次数"#),
                     )
                     .add_column(
                         ColumnDef::new(CollectConfig::DbColumnsConfig)
                             .json()
-                            .comment(r#"数据库列配置"#)
+                            .comment(r#"数据库列配置"#),
                     )
                     .add_column(
                         ColumnDef::new(CollectConfig::DelFlag)
                             .integer()
-                            .comment(r#"1 已删除 0 未删除"#)
+                            .comment(r#"1 已删除 0 未删除"#),
                     )
                     .to_owned(),
             )

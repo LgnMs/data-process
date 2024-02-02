@@ -1,17 +1,16 @@
-use std::collections::HashMap;
 use std::borrow::Borrow;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use axum::{
+    extract::{Path, State},
     routing::{get, post},
-    Router,
-    Json,
-    extract::{Path, State}
+    Json, Router,
 };
 use process_core::http::HttpConfig;
-use process_core::process::{Export, Receive, Serde};
 use process_core::json::find_value;
+use process_core::process::{Export, Receive, Serde};
 use schemars::_serde_json::Value;
 use tracing::{debug, error};
 
@@ -87,10 +86,10 @@ pub async fn execute(
         match res {
             Ok(list) => {
                 match CollectConfigService::cache_data(&state.cache_conn, &list).await {
-                    Ok(_) => {},
-                    Err(err) => error!("{}", err)
+                    Ok(_) => {}
+                    Err(err) => error!("{}", err),
                 };
-            },
+            }
             Err(err) => {
                 error!("{}", err.to_string());
             }
@@ -108,9 +107,14 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
     if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
         if loop_request_by_pagination {
             let mut sholud_stop = false;
-            let max_number_of_result_data = data.max_number_of_result_data.ok_or(anyhow!("请指定max_number_of_result_data"))?;
-            let max_count_of_request = data.max_count_of_request.ok_or(anyhow!("请指定max_count_of_request"))?;
-            let body = serde_json::from_str::<Value>(body_string.clone().unwrap().as_str()).unwrap();
+            let max_number_of_result_data = data
+                .max_number_of_result_data
+                .ok_or(anyhow!("请指定max_number_of_result_data"))?;
+            let max_count_of_request = data
+                .max_count_of_request
+                .ok_or(anyhow!("请指定max_count_of_request"))?;
+            let body =
+                serde_json::from_str::<Value>(body_string.clone().unwrap().as_str()).unwrap();
 
             let mut loop_counts = 0;
 
@@ -118,7 +122,6 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
 
             debug!("开始进行分页请求，max_number_of_result_data: {max_number_of_result_data}, max_count_of_request: {max_count_of_request}");
             while !sholud_stop {
-
                 let mut body_string = body_string.clone().unwrap_or_default();
                 let mut new_string = body_string.as_str();
                 let mut map_str = HashMap::new();
@@ -127,16 +130,18 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
                     new_string = &new_string[l_i..];
 
                     if let Some(r_i) = new_string.find("}") {
-                        let current_str = &new_string[..r_i+1];
+                        let current_str = &new_string[..r_i + 1];
                         let mut parmater_str = new_string[2..r_i].to_string();
 
                         // 对表达式中的值进行计算_loop_counts
                         if parmater_str.contains("_loop_counts") {
-                            parmater_str = parmater_str.replace("_loop_counts", loop_counts.to_string().as_str());
+                            parmater_str = parmater_str
+                                .replace("_loop_counts", loop_counts.to_string().as_str());
 
                             for (key, value) in body.as_object().unwrap() {
                                 if parmater_str.contains(key) {
-                                    parmater_str = parmater_str.replace(key, value.to_string().as_str());
+                                    parmater_str =
+                                        parmater_str.replace(key, value.to_string().as_str());
                                 }
                             }
                             parmater_str = math_parse::MathParse::parse(parmater_str.as_str())
@@ -153,8 +158,8 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
                     body_string = body_string.replace(value2.as_str(), &value);
                 }
 
-
-                let (has_next_page, res) = process_data_req(&data, Some(body_string.to_string())).await?;
+                let (has_next_page, res) =
+                    process_data_req(&data, Some(body_string.to_string())).await?;
                 let new_vec = res?;
 
                 sholud_stop = !has_next_page;
@@ -168,12 +173,10 @@ pub async fn process_data(data: &Model) -> Result<Vec<String>> {
                 if loop_counts >= max_count_of_request as i64 {
                     sholud_stop = true;
                 }
-
             }
             debug!("分页请求结束, {:?}", data_res);
 
             return Ok(data_res);
-
         }
     }
 
@@ -198,7 +201,7 @@ pub fn format_body_string(body: Option<&String>) -> Option<String> {
 
         if let Some(j) = body_str.find("}") {
             let params_str = &body_str[2..j];
-            let current_str = &body_str[0..j+1];
+            let current_str = &body_str[0..j + 1];
             if params_str.contains("_now") {
                 let date = get_datetime_by_string(params_str).unwrap_or("".to_string());
                 value_map.insert(date, current_str);
@@ -206,10 +209,9 @@ pub fn format_body_string(body: Option<&String>) -> Option<String> {
             //Tips 含_loop_counts的需要在循环请求中去获取参数，不在此处做处理
 
             body_str = &body_str[j..];
-          } else {
+        } else {
             break;
         }
-
     }
 
     let mut new_str = body.unwrap().clone();
@@ -221,7 +223,10 @@ pub fn format_body_string(body: Option<&String>) -> Option<String> {
     Some(new_str)
 }
 
-pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(bool, Result<Vec<String>>)> {
+pub async fn process_data_req(
+    data: &Model,
+    body: Option<String>,
+) -> Result<(bool, Result<Vec<String>>)> {
     let mut http = process_core::http::Http::new();
     let mut headers = None;
 
@@ -282,22 +287,20 @@ pub async fn process_data_req(data: &Model, body: Option<String>) -> Result<(boo
         return Ok((has_next_page, Ok(vec![])));
     }
 
-
     if data.map_rules.is_some() {
         if let Some(x) = &data.map_rules {
             if !x.as_array().unwrap().is_empty() {
-                http_receive = http_receive.add_map_rules(get_map_rules(Some(x)))
-                    .serde()?;
+                http_receive = http_receive.add_map_rules(get_map_rules(Some(x))).serde()?;
             }
         }
     }
 
-    let res = http_receive.set_template_string(data.template_string.clone())
+    let res = http_receive
+        .set_template_string(data.template_string.clone())
         .export();
 
     Ok((has_next_page, res))
 }
-
 
 pub fn get_date(str: &str) -> Result<chrono::Duration> {
     let number = str[..str.len() - 1].parse::<i64>()?;
@@ -308,10 +311,10 @@ pub fn get_date(str: &str) -> Result<chrono::Duration> {
         return Ok(chrono::Duration::hours(number));
     }
     if str.contains("m") {
-        return Ok(chrono::Duration::minutes(number))
+        return Ok(chrono::Duration::minutes(number));
     }
     if str.contains("s") {
-        return Ok(chrono::Duration::seconds(number))
+        return Ok(chrono::Duration::seconds(number));
     }
     Err(anyhow!("未发现匹配的字符"))
 }
@@ -348,7 +351,7 @@ pub fn get_datetime_by_string(value_str: &str) -> Result<String> {
         let mut current_sign = "";
 
         for i in 0..date_str.len() {
-            let char = &date_str[i..i+1];
+            let char = &date_str[i..i + 1];
             if char == "-" || char == "+" {
                 if pre_str == "" {
                     pre_str = &date_str[last_i..i];
@@ -385,4 +388,3 @@ pub fn get_datetime_by_string(value_str: &str) -> Result<String> {
 
     Err(anyhow!("无法解析字符串"))
 }
-

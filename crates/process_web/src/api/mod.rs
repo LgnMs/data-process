@@ -6,12 +6,12 @@ pub mod common;
 pub mod mock;
 
 use anyhow::Result;
+use axum::http::{StatusCode, Uri};
 use axum::Router;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::*;
 use std::env;
 use std::sync::Arc;
-use axum::http::{StatusCode, Uri};
 use tracing::Level;
 use tracing_appender::rolling;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
@@ -27,7 +27,7 @@ fn setup_log() {
     let warn_file = rolling::daily("./logs", "warnings").with_max_level(tracing::Level::WARN);
     let all_files = debug_file.and(warn_file);
 
-    let builder =  tracing_subscriber::fmt();
+    let builder = tracing_subscriber::fmt();
 
     match env::var("APP_ENV") {
         Ok(v) if v == "prod" => {
@@ -39,16 +39,15 @@ fn setup_log() {
                 .init();
 
             println!("日志存储于./logs");
-        },
+        }
         _ => {
             builder
                 .with_max_level(Level::DEBUG)
                 .with_line_number(true)
                 .with_file(true)
                 .init();
-        },
+        }
     };
-
 }
 
 #[tokio::main]
@@ -57,7 +56,8 @@ pub async fn start() -> Result<()> {
     dotenvy::dotenv().ok();
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
-    let cache_db_url = env::var("CACHE_DATABASE_URL").expect("CACHE_DATABASE_URL is not set in .env file");
+    let cache_db_url =
+        env::var("CACHE_DATABASE_URL").expect("CACHE_DATABASE_URL is not set in .env file");
     let host = env::var("HOST").expect("HOST is not set in .env file");
     let port: String = env::var("PORT").expect("PORT is not set in .env file");
     let server_url = format!("{host}:{port}");

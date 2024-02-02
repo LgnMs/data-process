@@ -54,7 +54,7 @@ where
 {
     fn from(err: E) -> Self {
         Self {
-            msg: err.into().to_string()
+            msg: err.into().to_string(),
         }
     }
 }
