@@ -13,12 +13,14 @@ use process_core::json::find_value;
 use process_core::process::{Export, Receive, Serde};
 use schemars::_serde_json::Value;
 use tracing::{debug, error};
-
+use uuid::Uuid;
 use crate::api::common::{
     AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
 };
 use crate::entity::collect_config::Model;
+use crate::entity::collect_log;
 use crate::service::collect_config_service::CollectConfigService;
+use crate::service::collect_log_service::CollectLogService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
@@ -79,26 +81,53 @@ pub async fn execute(
     state: State<Arc<AppState>>,
     Path(id): Path<i32>,
 ) -> Result<ResJson<bool>, AppError> {
-    // TODO 创建一条采集任务，然后调度执行。
     let data = CollectConfigService::find_by_id(&state.conn, id).await?;
-    tokio::spawn(async move {
-        let res = process_data(&data).await;
-        match res {
-            Ok(list) => {
-                match CollectConfigService::cache_data(&state.cache_conn, &list).await {
-                    Ok(_) => {}
-                    Err(err) => error!("{}", err),
-                };
-            }
-            Err(err) => {
-                error!("{}", err.to_string());
-            }
-        }
+
+    tokio::task::spawn(async {
+        execute_task(state, data).await;
     });
     // https://docs.rs/tokio/1.35.1/tokio/task/index.html#yield_now
     tokio::task::yield_now().await;
 
     Ok(Json(res_template_ok!(Some(true))))
+}
+
+pub async fn execute_task(
+    state: State<Arc<AppState>>,
+    data: Model
+){
+    let collect_log_id = Uuid::new_v4();
+    let mut collect_log = String::new();
+
+    let res = process_data(&data).await;
+    match res {
+        Ok(list) => {
+            match CollectConfigService::cache_data(&state.cache_conn, &list).await {
+                Ok(_) => {
+                    collect_log.push_str("采集任务执行成功!\n");
+                }
+                Err(err) => {
+                    let err_str = format!("{}", err);
+                    collect_log.push_str(err_str.as_str());
+                    error!("{err_str}");
+                },
+            };
+        }
+        Err(err) => {
+            let err_str = err.to_string();
+            collect_log.push_str(err_str.as_str());
+            error!("{err_str}");
+        }
+    }
+
+    let collect_log_model = collect_log::Model {
+        id: collect_log_id,
+        collect_config_id: Some(data.id),
+        update_time: Default::default(),
+        running_log: Some(collect_log),
+        create_time: Default::default(),
+    };
+    CollectLogService::add(&state.conn, collect_log_model).await.expect("任务日志添加失败");
 }
 
 pub async fn process_data(data: &Model) -> Result<Vec<String>> {

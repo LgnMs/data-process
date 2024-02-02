@@ -8,6 +8,7 @@ use axum::{
 use schemars::JsonSchema;
 use serde::Deserialize;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::api::common::{
     AppError, AppState, Pagination, ResJson, ResJsonWithPagination, ResTemplate,
@@ -34,7 +35,7 @@ struct QueryList {
 
 async fn find_by_id(
     state: State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<Uuid>,
 ) -> Result<ResJson<Model>, AppError> {
     let res = CollectLogService::find_by_id(&state.conn, id).await;
 
@@ -60,7 +61,7 @@ async fn add(
 
 async fn update_by_id(
     state: State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<Uuid>,
     Json(payload): Json<Model>,
 ) -> Result<ResJson<Model>, AppError> {
     let res = CollectLogService::update_by_id(&state.conn, id, payload).await;
@@ -68,7 +69,7 @@ async fn update_by_id(
     data_response!(res)
 }
 
-async fn del(state: State<Arc<AppState>>, Path(id): Path<i32>) -> Result<ResJson<bool>, AppError> {
+async fn del(state: State<Arc<AppState>>, Path(id): Path<Uuid>) -> Result<ResJson<bool>, AppError> {
     let res = CollectLogService::delete(&state.conn, id).await;
 
     bool_response!(res)

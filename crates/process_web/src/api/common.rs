@@ -22,7 +22,7 @@ pub struct Pagination<T> {
     pub page_size: u64,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AppState {
     pub(crate) conn: DatabaseConnection,
     pub(crate) cache_conn: DatabaseConnection,

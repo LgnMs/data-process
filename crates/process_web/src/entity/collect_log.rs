@@ -15,7 +15,7 @@ pub struct Model {
     pub running_log: Option<String>,
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
-    pub id: i32,
+    pub id: Uuid,
     pub collect_config_id: Option<i32>,
     #[serde(skip_deserializing)]
     pub update_time: DateTime,

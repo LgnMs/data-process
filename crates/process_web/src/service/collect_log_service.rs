@@ -1,13 +1,14 @@
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
+use uuid::Uuid;
 
 use crate::entity::collect_log;
 
 pub struct CollectLogService;
 
 impl CollectLogService {
-    pub async fn find_by_id(db: &DbConn, id: i32) -> Result<collect_log::Model, DbErr> {
+    pub async fn find_by_id(db: &DbConn, id: Uuid) -> Result<collect_log::Model, DbErr> {
         collect_log::Entity::find_by_id(id)
             .one(db)
             .await?
@@ -34,7 +35,7 @@ impl CollectLogService {
 
     pub async fn update_by_id(
         db: &DbConn,
-        id: i32,
+        id: Uuid,
         data: collect_log::Model,
     ) -> Result<collect_log::Model, DbErr> {
         CollectLogService::save(db, Some(id), data).await
@@ -42,7 +43,7 @@ impl CollectLogService {
 
     pub async fn save(
         db: &DbConn,
-        id: Option<i32>,
+        id: Option<Uuid>,
         data: collect_log::Model,
     ) -> Result<collect_log::Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
@@ -62,13 +63,14 @@ impl CollectLogService {
             active_data.update_time = Set(now);
             active_data.update(db).await
         } else {
+            active_data.id = Set(data.id);
             active_data.create_time = Set(now);
             active_data.update_time = Set(now);
             active_data.insert(db).await
         }
     }
 
-    pub async fn delete(db: &DbConn, id: i32) -> Result<DeleteResult, DbErr> {
+    pub async fn delete(db: &DbConn, id: Uuid) -> Result<DeleteResult, DbErr> {
         let collect_log: collect_log::ActiveModel = collect_log::Entity::find_by_id(id)
             .one(db)
             .await?

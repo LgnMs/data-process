@@ -24,3 +24,11 @@ math-parse = "1.0.2"
 
 migration = { path = "migration" }
 process_core = { path = "../process_core" }
+
+[dependencies.uuid]
+version = "1.7.0"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]
