@@ -69,13 +69,13 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(CollectConfig::CacheTableName)
-                            .boolean()
+                            .string()
                             .default(false)
                             .comment("暂存数据库表名，存储接收并处理后的数据"),
                     )
                     .col(
                         ColumnDef::new(CollectConfig::Cron)
-                            .boolean()
+                            .string()
                             .comment("任务调度时间 Cron表达式"),
                     )
                     .to_owned(),

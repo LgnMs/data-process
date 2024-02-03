@@ -41,6 +41,7 @@ impl MigrationTrait for Migration {
                     .add_column(
                         ColumnDef::new(CollectConfig::DelFlag)
                             .integer()
+                            .default(0)
                             .comment(r#"1 已删除 0 未删除"#),
                     )
                     .to_owned(),
