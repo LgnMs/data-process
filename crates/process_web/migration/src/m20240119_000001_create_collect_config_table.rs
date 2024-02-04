@@ -76,7 +76,6 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(CollectConfig::Cron)
                             .boolean()
-                            .default("")
                             .comment("任务调度时间 Cron表达式"),
                     )
                     .to_owned(),
