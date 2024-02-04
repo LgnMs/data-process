@@ -95,7 +95,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(CollectConfig::MaxCountOfRequest)
-                            .string()
+                            .integer()
                             .comment(r#"最大请求次数"#),
                     )
                     .col(
