@@ -99,6 +99,7 @@ pub async fn execute_task(
     let collect_log_id = Uuid::new_v4();
     let mut collect_log = String::new();
 
+    // TODO 完成采集任务状态的记录
     let res = process_data(&data).await;
     match res {
         Ok(list) => {
