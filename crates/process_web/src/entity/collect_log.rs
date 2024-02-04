@@ -4,7 +4,7 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS, Default)]
 #[sea_orm(table_name = "collect_log")]
 #[ts(
     export,
@@ -12,11 +12,14 @@ use ts_rs::TS;
     rename = "CollectLog"
 )]
 pub struct Model {
-    pub running_log: Option<String>,
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: Uuid,
+    #[serde(skip_deserializing)]
     pub collect_config_id: Option<i32>,
+    pub running_log: Option<String>,
+    #[serde(skip_deserializing)]
+    pub status: i32,
     #[serde(skip_deserializing)]
     pub update_time: DateTime,
     #[serde(skip_deserializing)]

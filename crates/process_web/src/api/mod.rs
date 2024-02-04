@@ -19,18 +19,14 @@ use tracing_subscriber::fmt::writer::MakeWriterExt;
 use crate::api::common::AppState;
 
 fn setup_log() {
-    // Log all `tracing` events to files prefixed with `debug`. Since these
-    // files will be written to very frequently, roll the log file every minute.
-    let debug_file = rolling::daily("./logs", "debug");
-    // Log warnings and errors to a separate file. Since we expect these events
-    // to occur less frequently, roll that file on a daily basis instead.
-    let warn_file = rolling::daily("./logs", "warnings").with_max_level(tracing::Level::WARN);
-    let all_files = debug_file.and(warn_file);
 
     let builder = tracing_subscriber::fmt();
 
     match env::var("APP_ENV") {
         Ok(v) if v == "prod" => {
+            let debug_file = rolling::daily("./logs", "debug");
+            let warn_file = rolling::daily("./logs", "warnings").with_max_level(tracing::Level::WARN);
+            let all_files = debug_file.and(warn_file);
             builder
                 .with_writer(all_files)
                 .with_max_level(Level::DEBUG)

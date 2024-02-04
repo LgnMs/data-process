@@ -1,7 +1,7 @@
 use chrono::Local;
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
-use tracing::debug;
+use tracing::{debug, error};
 
 use crate::entity::collect_config;
 
@@ -195,7 +195,7 @@ impl CollectConfigService {
         {
             Err(err) => {
                 // TODO 识别为表不存在的错误
-                println!("{:?}", err);
+                error!("DbErr {:?}", err);
             }
             _ => {}
         };

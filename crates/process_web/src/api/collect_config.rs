@@ -83,8 +83,21 @@ pub async fn execute(
 ) -> Result<ResJson<bool>, AppError> {
     let data = CollectConfigService::find_by_id(&state.conn, id).await?;
 
-    tokio::task::spawn(async {
-        execute_task(state, data).await;
+    let collect_log_id = Uuid::new_v4();
+    let collect_log_model = collect_log::Model {
+        id: collect_log_id,
+        collect_config_id: Some(data.id),
+        status: 0,
+        running_log: Some(String::new()),
+        ..Default::default()
+    };
+
+    if let Some(err) = CollectLogService::add(&state.conn, collect_log_model).await.err() {
+        error!("任务日志添加失败 {err}");
+    };
+
+    tokio::task::spawn(async move {
+        execute_task(state, data, collect_log_id).await;
     });
     // https://docs.rs/tokio/1.35.1/tokio/task/index.html#yield_now
     tokio::task::yield_now().await;
@@ -94,41 +107,49 @@ pub async fn execute(
 
 pub async fn execute_task(
     state: State<Arc<AppState>>,
-    data: Model
+    data: Model,
+    collect_log_id: Uuid
 ){
-    let collect_log_id = Uuid::new_v4();
-    let mut collect_log = String::new();
+    let mut status = 1;
+    let model = collect_log::Model { status, running_log: Some("开始执行采集任务".to_string()), ..Default::default() };
+    if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model).await.err() {
+        error!("status: {status} 运行中；日志更新失败: {err}");
+    };
 
-    // TODO 完成采集任务状态的记录
+    let mut collect_log_string = String::new();
+
+    collect_log_string.push_str("开始执行采集任务!\n");
+    collect_log_string.push_str(format!("采集配置： {:?}\n", data).as_str());
     let res = process_data(&data).await;
     match res {
         Ok(list) => {
+            collect_log_string.push_str(format!("成功生成SQL： {:?}\n", list).as_str());
             match CollectConfigService::cache_data(&state.cache_conn, &list).await {
                 Ok(_) => {
-                    collect_log.push_str("采集任务执行成功!\n");
+                    collect_log_string.push_str("采集任务执行成功!\n");
+                    status = 2;
                 }
                 Err(err) => {
-                    let err_str = format!("{}", err);
-                    collect_log.push_str(err_str.as_str());
-                    error!("{err_str}");
+                    let err_str = format!("{}\n", err);
+                    collect_log_string.push_str(err_str.as_str());
+                    status = 3;
+                    error!("status: {status} 运行失败；日志更新失败: {err_str}");
                 },
             };
         }
         Err(err) => {
-            let err_str = err.to_string();
-            collect_log.push_str(err_str.as_str());
-            error!("{err_str}");
+            let err_str = format!("{}\n", err);
+            collect_log_string.push_str(err_str.as_str());
+            status = 3;
+            error!("status: {status} 运行失败；日志更新失败: {err_str}");
         }
     }
 
-    let collect_log_model = collect_log::Model {
-        id: collect_log_id,
-        collect_config_id: Some(data.id),
-        update_time: Default::default(),
-        running_log: Some(collect_log),
-        create_time: Default::default(),
+    let model = collect_log::Model { status, running_log: Some(collect_log_string), ..Default::default() };
+    if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model).await.err() {
+        error!("status: {status} 运行完毕；日志更新失败: {err}");
     };
-    CollectLogService::add(&state.conn, collect_log_model).await.expect("任务日志添加失败");
+
 }
 
 pub async fn process_data(data: &Model) -> Result<Vec<String>> {
