@@ -50,6 +50,16 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .comment("同步数据目标源"),
                     )
+                    .col(
+                        ColumnDef::new(SyncConfig::UpdateTime)
+                            .timestamp()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(SyncConfig::CreateTime)
+                            .timestamp()
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await
