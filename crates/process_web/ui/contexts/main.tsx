@@ -10,7 +10,7 @@ import {
   CollectConfigAction,
   CollectConfigReducer,
   CollectConfigState,
-  initCollectConfigState
+  initCollectConfigState,
 } from "@/contexts/collectCofnigContext";
 
 export interface IRoleInfo {
@@ -25,7 +25,7 @@ interface MainState {
   roles: string[];
   permissions: string[];
   userInfo: Record<string, any> | null;
-  collectConfig: CollectConfigState
+  collectConfig: CollectConfigState;
 }
 
 type MainAction =
@@ -63,8 +63,8 @@ function reducer(state: MainState, action: MainAction) {
   if (action.type.indexOf("collectConfig") > -1) {
     return {
       ...state,
-      collectConfig: CollectConfigReducer(state.collectConfig, action)
-    }
+      collectConfig: CollectConfigReducer(state.collectConfig, action),
+    };
   }
 
   throw Error("Unknown action");
@@ -86,7 +86,7 @@ export function MainContextProvider(props: { children: ReactNode }) {
     roles: [],
     permissions: [],
     userInfo: null,
-    collectConfig: initCollectConfigState
+    collectConfig: initCollectConfigState,
   });
 
   return (

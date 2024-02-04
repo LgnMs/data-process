@@ -8,21 +8,19 @@ use ts_rs::TS;
 #[sea_orm(table_name = "collect_log")]
 #[ts(
     export,
-    export_to = "ui/api/models/CollectLog.ts",
+    export_to = "ui/api/models/auto-generates/CollectLog.ts",
     rename = "CollectLog"
 )]
 pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: Uuid,
-    #[serde(skip_deserializing)]
     pub collect_config_id: Option<i32>,
     pub running_log: Option<String>,
-    #[serde(skip_deserializing)]
     pub status: i32,
-    #[serde(skip_deserializing)]
+    #[ts(type = "any")]
     pub update_time: DateTime,
-    #[serde(skip_deserializing)]
+    #[ts(type = "any")]
     pub create_time: DateTime,
 }
 

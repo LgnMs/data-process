@@ -38,29 +38,40 @@ export default function ContentTable() {
       render: (_: any, record: ICollectConfig) => {
         return (
           <Space>
-            <Typography.Link onClick={() => {
-              dispatch({
-                type: 'collectConfig.setEditFormOpen',
-                editFormOpen: true
-              });
-              dispatch({
-                type: 'collectConfig.setEditFormData',
-                editFormData: record
-              });
-            }}>查看</Typography.Link>
-            <Popconfirm title="确定要删除吗？" onConfirm={async () => {
-                const res = await CollectConfig.del(record.id!)
+            <Typography.Link
+              onClick={() => {
+                dispatch({
+                  type: "collectConfig.setEditFormOpen",
+                  editFormOpen: true,
+                });
+                dispatch({
+                  type: "collectConfig.setEditFormData",
+                  editFormData: record,
+                });
+              }}
+            >
+              查看
+            </Typography.Link>
+            <Popconfirm
+              title="确定要删除吗？"
+              onConfirm={async () => {
+                const res = await CollectConfig.del(record.id!);
                 if (res.data) {
-                  message.success('删除成功')
+                  message.success("删除成功");
                   await mutate();
                 }
-            }}>
+              }}
+            >
               <Typography.Link>删除</Typography.Link>
             </Popconfirm>
-            <Typography.Link onClick={async () => {
-              await CollectConfig.execute(record.id!)
-              message.success('执行成功')
-            }}>立即执行</Typography.Link>
+            <Typography.Link
+              onClick={async () => {
+                await CollectConfig.execute(record.id!);
+                message.success("执行成功");
+              }}
+            >
+              立即执行
+            </Typography.Link>
           </Space>
         );
       },
@@ -89,13 +100,13 @@ export default function ContentTable() {
       }}
       onChange={({ current, pageSize }) => {
         dispatch({
-          type: 'collectConfig.setPagination',
+          type: "collectConfig.setPagination",
           pagination: {
             ...pagination,
             current: current as number,
             page_size: pageSize as number,
-          }
-        })
+          },
+        });
       }}
     />
   );

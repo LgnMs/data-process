@@ -8,7 +8,7 @@ use ts_rs::TS;
 #[sea_orm(table_name = "sync_config")]
 #[ts(
     export,
-    export_to = "ui/api/models/SyncConfig.ts",
+    export_to = "ui/api/models/auto-generates/SyncConfig.ts",
     rename = "SyncConfig"
 )]
 pub struct Model {
