@@ -76,7 +76,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
 
         let client = reqwest::Client::builder()
             .default_headers(headers)
-            .timeout(Duration::from_millis(5000))
+            .timeout(Duration::from_millis(30000))
             .build()?;
 
         debug!(
