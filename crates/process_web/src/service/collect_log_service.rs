@@ -3,6 +3,7 @@ use sea_orm::*;
 use tracing::debug;
 use uuid::Uuid;
 
+use crate::entity::collect_config;
 use crate::entity::collect_log;
 
 pub struct CollectLogService;
@@ -19,14 +20,25 @@ impl CollectLogService {
         db: &DbConn,
         page: u64,
         page_size: u64,
-    ) -> Result<(Vec<collect_log::Model>, u64), DbErr> {
-        let paginator = collect_log::Entity::find()
-            .order_by_asc(collect_log::Column::Id)
-            .paginate(db, page_size);
+    ) -> Result<(Vec<serde_json::Value>, u64), DbErr> {
+        let db_res = collect_log::Entity::find()
+            .find_also_related(collect_config::Entity)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .order_by_desc(collect_log::Column::UpdateTime)
+            .into_json()
+            .all(db)
+            .await?;
 
-        let num_pages = paginator.num_items().await?;
+        let mut list = vec![];
+        for (mut a, b) in db_res {
+            a["collect_config"] = b.unwrap();
+            list.push(a);
+        }
 
-        paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
+        let num_pages = collect_log::Entity::find().all(db).await?.len() as u64;
+
+        return Ok((list, num_pages));
     }
 
     pub async fn add(db: &DbConn, data: collect_log::Model) -> Result<collect_log::Model, DbErr> {
@@ -59,7 +71,11 @@ impl CollectLogService {
 
             active_data.id = Unchanged(db_data.id);
             active_data.status = Set(data.status);
-            let log = format!("{}\n{}", db_data.running_log.unwrap_or_default(), data.running_log.unwrap_or_default());
+            let log = format!(
+                "{}\n{}",
+                db_data.running_log.unwrap_or_default(),
+                data.running_log.unwrap_or_default()
+            );
             active_data.running_log = Set(Some(log));
             active_data.update_time = Set(now);
             active_data.update(db).await

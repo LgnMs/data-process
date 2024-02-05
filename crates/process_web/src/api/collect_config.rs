@@ -2,6 +2,13 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::api::common::{
+    AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
+};
+use crate::entity::collect_config::Model;
+use crate::entity::collect_log;
+use crate::service::collect_config_service::CollectConfigService;
+use crate::service::collect_log_service::CollectLogService;
 use anyhow::{anyhow, Result};
 use axum::{
     extract::{Path, State},
@@ -14,13 +21,6 @@ use process_core::process::{Export, Receive, Serde};
 use schemars::_serde_json::Value;
 use tracing::{debug, error};
 use uuid::Uuid;
-use crate::api::common::{
-    AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
-};
-use crate::entity::collect_config::Model;
-use crate::entity::collect_log;
-use crate::service::collect_config_service::CollectConfigService;
-use crate::service::collect_log_service::CollectLogService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
@@ -92,7 +92,10 @@ pub async fn execute(
         ..Default::default()
     };
 
-    if let Some(err) = CollectLogService::add(&state.conn, collect_log_model).await.err() {
+    if let Some(err) = CollectLogService::add(&state.conn, collect_log_model)
+        .await
+        .err()
+    {
         error!("任务日志添加失败 {err}");
     };
 
@@ -105,14 +108,17 @@ pub async fn execute(
     Ok(Json(res_template_ok!(Some(true))))
 }
 
-pub async fn execute_task(
-    state: State<Arc<AppState>>,
-    data: Model,
-    collect_log_id: Uuid
-){
+pub async fn execute_task(state: State<Arc<AppState>>, data: Model, collect_log_id: Uuid) {
     let mut status = 1;
-    let model = collect_log::Model { status, running_log: Some("开始执行采集任务!".to_string()), ..Default::default() };
-    if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model).await.err() {
+    let model = collect_log::Model {
+        status,
+        running_log: Some("开始执行采集任务!".to_string()),
+        ..Default::default()
+    };
+    if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model)
+        .await
+        .err()
+    {
         error!("status: {status} 运行中；日志更新失败: {err}");
     };
 
@@ -133,7 +139,7 @@ pub async fn execute_task(
                     collect_log_string.push_str(err_str.as_str());
                     status = 3;
                     error!("status: {status} 运行失败；日志更新失败: {err_str}");
-                },
+                }
             };
         }
         Err(err) => {
@@ -144,11 +150,17 @@ pub async fn execute_task(
         }
     }
 
-    let model = collect_log::Model { status, running_log: Some(collect_log_string), ..Default::default() };
-    if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model).await.err() {
+    let model = collect_log::Model {
+        status,
+        running_log: Some(collect_log_string),
+        ..Default::default()
+    };
+    if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model)
+        .await
+        .err()
+    {
         error!("status: {status} 运行完毕；日志更新失败: {err}");
     };
-
 }
 
 pub async fn process_data(data: &Model) -> Result<Vec<String>> {

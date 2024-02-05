@@ -31,13 +31,13 @@ export default function EditForm(props: IEditFormProps) {
   const [form] = Form.useForm();
   const { state, dispatch } = useMainContext()!;
   const [mode, setMode] = useState<"edit" | "add">("add");
-  const [columnConfigChange, setColumnConfigChange] = useState(false);
+  const [shouldUpdateSql, setShouldUpdateSql] = useState(false);
   const [autoExec, setAutoExec] = useState(0);
   async function onSubmit() {
-    if (columnConfigChange) {
+    if (shouldUpdateSql) {
       await new Promise((resolve) => {
         Modal.confirm({
-          title: "列配置发生了变化，是否重新生成SQL",
+          title: "配置发生了变化，是否重新生成SQL",
           onOk() {
             generateSql();
             resolve(true);
@@ -168,8 +168,8 @@ export default function EditForm(props: IEditFormProps) {
   }
 
   async function generateSql() {
-    if (columnConfigChange) {
-      setColumnConfigChange(false);
+    if (shouldUpdateSql) {
+      setShouldUpdateSql(false);
     }
     const db_columns_config = form.getFieldValue("db_columns_config");
     const cache_table_name = form.getFieldValue("cache_table_name");
@@ -236,7 +236,7 @@ export default function EditForm(props: IEditFormProps) {
                   <CloseOutlined
                     onClick={() => {
                       remove(field.name);
-                      setColumnConfigChange(true);
+                      setShouldUpdateSql(true);
                     }}
                     rev={undefined}
                   />
@@ -246,7 +246,7 @@ export default function EditForm(props: IEditFormProps) {
                 type="dashed"
                 onClick={() => {
                   add();
-                  setColumnConfigChange(true);
+                  setShouldUpdateSql(true);
                 }}
                 style={{ width: "380px" }}
                 icon={<PlusOutlined rev={undefined} />}
@@ -286,8 +286,8 @@ export default function EditForm(props: IEditFormProps) {
             if (item.name[0] === "method") {
               setDefaultForPostHeaders(item.value);
             }
-            if (item.name[0] === "db_columns_config") {
-              setColumnConfigChange(true);
+            if (item.name[0] === "db_columns_config" || item.name[0] === "cache_table_name") {
+              setShouldUpdateSql(true);
             }
           });
         }}

@@ -85,7 +85,7 @@ impl CollectConfigService {
             active_data.update_time = Set(now);
 
             if let Some(db_columns_config) = data.db_columns_config.as_ref() {
-                if db_data.db_columns_config != data.db_columns_config {
+                if db_data.db_columns_config != data.db_columns_config || db_data.cache_table_name != data.cache_table_name {
                     Self::update_table_struct(
                         cache_db,
                         db_columns_config,
@@ -93,6 +93,7 @@ impl CollectConfigService {
                     )
                     .await?;
                 }
+
             }
 
             active_data.update(db).await
@@ -185,7 +186,7 @@ impl CollectConfigService {
         table_name: &String,
     ) -> Result<bool, DbErr> {
         let now = Local::now().naive_utc().timestamp();
-        let alert_sql = format!("ALTER TABLE {table_name} rename to {table_name}_{now}");
+        let alert_sql = format!("ALTER TABLE {table_name} rename to __{table_name}_{now}");
         match cache_db
             .execute(Statement::from_string(
                 cache_db.get_database_backend(),

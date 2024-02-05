@@ -19,13 +19,13 @@ use tracing_subscriber::fmt::writer::MakeWriterExt;
 use crate::api::common::AppState;
 
 fn setup_log() {
-
     let builder = tracing_subscriber::fmt();
 
     match env::var("APP_ENV") {
         Ok(v) if v == "prod" => {
             let debug_file = rolling::daily("./logs", "debug");
-            let warn_file = rolling::daily("./logs", "warnings").with_max_level(tracing::Level::WARN);
+            let warn_file =
+                rolling::daily("./logs", "warnings").with_max_level(tracing::Level::WARN);
             let all_files = debug_file.and(warn_file);
             builder
                 .with_writer(all_files)

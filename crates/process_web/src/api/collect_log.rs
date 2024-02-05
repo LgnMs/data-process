@@ -45,7 +45,7 @@ async fn find_by_id(
 async fn list(
     state: State<Arc<AppState>>,
     Json(payload): Json<QueryList>,
-) -> Result<ResJsonWithPagination<Model>, AppError> {
+) -> Result<ResJsonWithPagination<serde_json::Value>, AppError> {
     let res = CollectLogService::list(&state.conn, payload.current, payload.page_size).await;
 
     pagination_response!(res, payload.current, payload.page_size)

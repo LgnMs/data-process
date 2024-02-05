@@ -1,5 +1,5 @@
 "use client";
-import { message, Popconfirm, Space, Table, Tag, Typography } from "antd";
+import { Space, Table, Tag, Typography } from "antd";
 import useSWR from "swr";
 
 import * as CollectLog from "@/api/collect_log";
@@ -22,7 +22,7 @@ export default function ContentTable() {
     ([url, pagination]) => CollectLog.list(pagination)
   );
 
-  const columns = [
+  const columns: any = [
     {
       title: "id",
       dataIndex: "id",
@@ -32,8 +32,17 @@ export default function ContentTable() {
       dataIndex: "collect_config_id",
     },
     {
+      title: "采集配置名称",
+      dataIndex: "collect_config.name",
+      render: (_: string, record: ICollectLog) => {
+        return record.collect_config.name
+      }
+    },
+    {
       title: "运行状态",
       dataIndex: "status",
+      width: 120,
+      align: "center",
       render: (text: number) => {
         switch (text) {
           case 0:
