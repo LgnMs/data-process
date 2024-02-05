@@ -5,7 +5,6 @@ import { useMainContext } from "@/contexts/main";
 import { SettingOutlined, LineChartOutlined } from "@ant-design/icons";
 
 const { Sider } = Layout;
-
 interface IMainSiderProps {
   onCollapse: (value: boolean) => void;
 }
@@ -25,7 +24,7 @@ const Menus = [
     label: <MenuItem>采集配置</MenuItem>,
   },
   {
-    key: "/manage/log",
+    key: "/manage/collection-log",
     icon: <LineChartOutlined rev={undefined} />,
     label: <MenuItem>运行日志</MenuItem>,
   },

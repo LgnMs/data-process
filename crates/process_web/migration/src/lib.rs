@@ -3,10 +3,6 @@ pub use sea_orm_migration::prelude::*;
 mod m20240118_000001_create_collect_log_table;
 mod m20240119_000001_create_collect_config_table;
 mod m20240119_023953_create_sync_config_table;
-mod m20240125_000001_alert_collect_config_table;
-mod m20240125_000001_alert_collect_log_table;
-mod m20240125_000001_alert_sync_config_table;
-mod m20240129_000001_alert_collect_config_table;
 
 pub struct Migrator;
 
@@ -17,10 +13,6 @@ impl MigratorTrait for Migrator {
             Box::new(m20240119_000001_create_collect_config_table::Migration),
             Box::new(m20240118_000001_create_collect_log_table::Migration),
             Box::new(m20240119_023953_create_sync_config_table::Migration),
-            Box::new(m20240125_000001_alert_collect_config_table::Migration),
-            Box::new(m20240125_000001_alert_collect_log_table::Migration),
-            Box::new(m20240125_000001_alert_sync_config_table::Migration),
-            Box::new(m20240129_000001_alert_collect_config_table::Migration),
         ]
     }
 }

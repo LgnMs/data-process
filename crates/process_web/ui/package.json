@@ -6,7 +6,8 @@
     "dev": "next dev --port=4000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prettier": "pnpm exec prettier . --write"
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.5",

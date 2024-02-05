@@ -78,6 +78,47 @@ impl MigrationTrait for Migration {
                             .string()
                             .comment("任务调度时间 Cron表达式"),
                     )
+                    .col(
+                        ColumnDef::new(CollectConfig::MaxNumberOfResultData)
+                            .integer()
+                            .comment(
+                                "返回数据的最大数量限制，一旦已保存的数据超过该值便不会再发起请求",
+                            )
+                            .default(1000),
+                    )
+                    .col(
+                        ColumnDef::new(CollectConfig::FiledOfResultData)
+                            .string()
+                            .comment(
+                                r#"返回数据中应检测的list的字段名，例如{"result": "data":[]}"#,
+                            ),
+                    )
+                    .col(
+                        ColumnDef::new(CollectConfig::MaxCountOfRequest)
+                            .integer()
+                            .comment(r#"最大请求次数"#),
+                    )
+                    .col(
+                        ColumnDef::new(CollectConfig::DbColumnsConfig)
+                            .json()
+                            .comment(r#"数据库列配置"#),
+                    )
+                    .col(
+                        ColumnDef::new(CollectConfig::DelFlag)
+                            .integer()
+                            .default(0)
+                            .comment(r#"1 已删除 0 未删除"#),
+                    )
+                    .col(
+                        ColumnDef::new(CollectConfig::UpdateTime)
+                            .timestamp()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(CollectConfig::CreateTime)
+                            .timestamp()
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await
@@ -111,7 +152,7 @@ pub enum CollectConfig {
     MaxCountOfRequest,
     DbColumnsConfig,
     Cron,
+    DelFlag,
     UpdateTime,
     CreateTime,
-    DelFlag,
 }

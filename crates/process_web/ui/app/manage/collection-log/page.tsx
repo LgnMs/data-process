@@ -3,12 +3,10 @@ import { Layout, theme } from "antd";
 import HeaderForm from "./components/header-form";
 import ContentTable from "./components/content-table";
 import TableContainer from "@/app/manage/components/table-container";
-import EditForm from "@/app/manage/collection-setting/components/edit-form";
+import DrawerInfo from "./components/drawer-info";
 import { useMainContext } from "@/contexts/main";
 
 const { Header, Content } = Layout;
-
-export interface ICommonCollectionSettingProps {}
 
 export default function pages() {
   const {
@@ -34,12 +32,12 @@ export default function pages() {
         </TableContainer>
       </Content>
 
-      <EditForm
-        open={state.collectConfig.editFormOpen}
+      <DrawerInfo
+        open={state.collectLog.drawerOpen}
         close={() => {
           dispatch({
-            type: "collectConfig.setEditFormOpen",
-            editFormOpen: false,
+            type: "collectLog.setDrawerOpen",
+            drawerOpen: false,
           });
         }}
       />

@@ -8,10 +8,13 @@ use ts_rs::TS;
 #[sea_orm(table_name = "collect_config")]
 #[ts(
     export,
-    export_to = "ui/api/models/CollectConfig.ts",
+    export_to = "ui/api/models/auto-generates/CollectConfig.ts",
     rename = "CollectConfig"
 )]
 pub struct Model {
+    #[sea_orm(primary_key)]
+    #[serde(skip_deserializing)]
+    pub id: i32,
     pub url: String,
     pub name: String,
     pub desc: Option<String>,
@@ -22,9 +25,6 @@ pub struct Model {
     #[ts(type = "any")]
     pub map_rules: Option<Json>,
     pub template_string: String,
-    #[sea_orm(primary_key)]
-    #[serde(skip_deserializing)]
-    pub id: i32,
     pub loop_request_by_pagination: Option<bool>,
     pub max_number_of_result_data: Option<i32>,
     pub filed_of_result_data: Option<String>,

@@ -4,22 +4,23 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS, Default)]
 #[sea_orm(table_name = "collect_log")]
 #[ts(
     export,
-    export_to = "ui/api/models/CollectLog.ts",
+    export_to = "ui/api/models/auto-generates/CollectLog.ts",
     rename = "CollectLog"
 )]
 pub struct Model {
-    pub running_log: Option<String>,
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: Uuid,
     pub collect_config_id: Option<i32>,
-    #[serde(skip_deserializing)]
+    pub running_log: Option<String>,
+    pub status: i32,
+    #[ts(type = "any")]
     pub update_time: DateTime,
-    #[serde(skip_deserializing)]
+    #[ts(type = "any")]
     pub create_time: DateTime,
 }
 
