@@ -21,6 +21,7 @@ axum-swagger-ui = "0.3.0"
 ts-rs = { version = "7.1", features = ["uuid", "uuid-impl"] }
 chrono = "0.4.31"
 math-parse = "1.0.2"
+tokio-cron-scheduler = { version = "*", features = ["signal"] }
 
 migration = { path = "migration" }
 process_core = { path = "../process_core" }

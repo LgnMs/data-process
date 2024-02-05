@@ -3,6 +3,7 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
+use tokio_cron_scheduler::JobScheduler;
 
 pub type ResJson<T> = Json<ResTemplate<T>>;
 
@@ -22,10 +23,11 @@ pub struct Pagination<T> {
     pub page_size: u64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct AppState {
     pub(crate) conn: DatabaseConnection,
     pub(crate) cache_conn: DatabaseConnection,
+    pub(crate) sched: JobScheduler,
 }
 
 // Make our own error that wraps `anyhow::Error`.

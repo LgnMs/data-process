@@ -91,7 +91,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
                     .body(parameters.body.unwrap_or("".to_string()))
                     .send()
                     .await?
-                    .json()
+                    .text()
                     .await?
             }
             _ => {
@@ -99,14 +99,21 @@ impl Receive<HttpConfig, Result<Http>> for Http {
                     .request(parameters.method, url)
                     .send()
                     .await?
-                    .json()
+                    .text()
                     .await?
             }
         };
 
         debug!("返回数据: {:?}\n ", res);
 
-        self.data = res;
+        match serde_json::from_slice(res.as_bytes()) {
+            Ok(x) => self.data = x,
+            Err(err) => {
+                let err_str = format!("返回的数据无法被序列化 {}", err);
+                error!("{}", err_str);
+                return Err(anyhow!(err_str));
+            }
+        };
 
         Ok(self.clone())
     }
