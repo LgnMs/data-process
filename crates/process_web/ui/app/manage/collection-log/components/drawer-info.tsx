@@ -3,7 +3,7 @@ import {
   Drawer,
   Space,
 } from "antd";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
 

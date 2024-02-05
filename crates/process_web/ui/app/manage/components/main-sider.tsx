@@ -5,7 +5,6 @@ import { useMainContext } from "@/contexts/main";
 import { SettingOutlined, LineChartOutlined } from "@ant-design/icons";
 
 const { Sider } = Layout;
-
 interface IMainSiderProps {
   onCollapse: (value: boolean) => void;
 }

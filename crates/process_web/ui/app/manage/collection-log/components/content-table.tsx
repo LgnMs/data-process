@@ -17,9 +17,9 @@ export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
   const pagination = state.collectLog.pagination;
 
-  const { data, isLoading, mutate } = useSWR(
+  const { data, isLoading} = useSWR(
     [CollectLog.LIST, pagination],
-    ([url, pagination]) => CollectLog.list(pagination)
+    ([_, pagination]) => CollectLog.list(pagination)
   );
 
   const columns: any = [
