@@ -3,7 +3,6 @@ import {
   ReactNode,
   createContext,
   useContext,
-  useEffect,
   useReducer,
 } from "react";
 import {
@@ -12,6 +11,12 @@ import {
   CollectConfigState,
   initCollectConfigState,
 } from "@/contexts/collectCofnigContext";
+import {
+  CollectLogAction,
+  CollectLogReducer,
+  CollectLogState,
+  initCollectLogState,
+} from "@/contexts/collectLogContext";
 
 export interface IRoleInfo {
   id: string;
@@ -26,6 +31,7 @@ interface MainState {
   permissions: string[];
   userInfo: Record<string, any> | null;
   collectConfig: CollectConfigState;
+  collectLog: CollectLogState
 }
 
 type MainAction =
@@ -33,7 +39,8 @@ type MainAction =
   | { type: "setRoles"; roles: MainState["roles"] }
   | { type: "setPermissions"; permissions: MainState["permissions"] }
   | { type: "setUserInfo"; userInfo: MainState["userInfo"] }
-  | CollectConfigAction;
+  | CollectConfigAction
+  | CollectLogAction
 
 function reducer(state: MainState, action: MainAction) {
   if (action.type === "setToken") {
@@ -63,7 +70,13 @@ function reducer(state: MainState, action: MainAction) {
   if (action.type.indexOf("collectConfig") > -1) {
     return {
       ...state,
-      collectConfig: CollectConfigReducer(state.collectConfig, action),
+      collectConfig: CollectConfigReducer(state.collectConfig, action as CollectConfigAction),
+    };
+  }
+  if (action.type.indexOf("collectLog") > -1) {
+    return {
+      ...state,
+      collectLog: CollectLogReducer(state.collectLog, action as CollectLogAction),
     };
   }
 
@@ -87,6 +100,7 @@ export function MainContextProvider(props: { children: ReactNode }) {
     permissions: [],
     userInfo: null,
     collectConfig: initCollectConfigState,
+    collectLog: initCollectLogState
   });
 
   return (

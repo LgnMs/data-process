@@ -16,17 +16,7 @@ export default function HeaderForm() {
 
       <Form.Item>
         <Space>
-          <Button type="primary" icon={<SearchOutlined rev={undefined} />} />
-          <Button
-            type="primary"
-            onClick={() => {
-              dispatch({
-                type: "collectConfig.setEditFormOpen",
-                editFormOpen: true,
-              });
-            }}
-            icon={<PlusOutlined rev={undefined} />}
-          />
+          <Button type="primary" icon={<SearchOutlined />} />
         </Space>
       </Form.Item>
     </Form>

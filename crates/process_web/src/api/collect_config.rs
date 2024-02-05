@@ -111,14 +111,13 @@ pub async fn execute_task(
     collect_log_id: Uuid
 ){
     let mut status = 1;
-    let model = collect_log::Model { status, running_log: Some("开始执行采集任务".to_string()), ..Default::default() };
+    let model = collect_log::Model { status, running_log: Some("开始执行采集任务!".to_string()), ..Default::default() };
     if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model).await.err() {
         error!("status: {status} 运行中；日志更新失败: {err}");
     };
 
     let mut collect_log_string = String::new();
 
-    collect_log_string.push_str("开始执行采集任务!\n");
     collect_log_string.push_str(format!("采集配置： {:?}\n", data).as_str());
     let res = process_data(&data).await;
     match res {

@@ -25,7 +25,7 @@ const Menus = [
     label: <MenuItem>采集配置</MenuItem>,
   },
   {
-    key: "/manage/log",
+    key: "/manage/collection-log",
     icon: <LineChartOutlined rev={undefined} />,
     label: <MenuItem>运行日志</MenuItem>,
   },
