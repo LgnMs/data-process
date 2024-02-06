@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Cron, DefaultLocale } from "react-js-cron";
 import "react-js-cron/dist/styles.css";
 
@@ -6,12 +6,10 @@ export default function CronEdit(props: {
   value?: string;
   onChange?: (value: string) => void;
 }) {
-  // const [value, setValue] = useState(props.value ? props.value : "");
-
   return (
     <Cron
       locale={LOCALE}
-      value={props.value ? props.value : ""}
+      value={props.value ? props.value : "0 0 1 * *"}
       setValue={(value: string) => {
         props.onChange?.(value);
       }}

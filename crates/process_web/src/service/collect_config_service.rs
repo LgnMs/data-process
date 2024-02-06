@@ -9,14 +9,16 @@ use process_core::json::find_value;
 use process_core::process::{Export, Receive, Serde};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
-use tokio_cron_scheduler::Job;
+use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
 use uuid::Uuid;
+use crate::api::collect_config::ListParams;
 
 use crate::api::common::AppState;
 use crate::entity::collect_config::Model;
 use crate::entity::{collect_config, collect_log};
 use crate::service::collect_log_service::CollectLogService;
+use crate::utils::{format_body_string, format_cron, job_err_to_db_err};
 
 pub struct CollectConfigService;
 
@@ -29,9 +31,17 @@ impl CollectConfigService {
             .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
     }
 
-    pub async fn list(db: &DbConn, page: u64, page_size: u64) -> Result<(Vec<Model>, u64), DbErr> {
+    pub async fn list(db: &DbConn, page: u64, page_size: u64, data: Option<ListParams>) -> Result<(Vec<Model>, u64), DbErr> {
+        let mut conditions = Condition::all();
+        if let Some(data) = data {
+            if let Some(name) = data.name {
+                conditions = conditions.add(collect_config::Column::Name.contains(&name));
+            }
+        }
+
         let paginator = collect_config::Entity::find()
             .filter(collect_config::Column::DelFlag.eq(0))
+            .filter(conditions)
             .order_by_desc(collect_config::Column::Id)
             .paginate(db, page_size);
 
@@ -40,49 +50,58 @@ impl CollectConfigService {
         paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
     }
 
-    pub async fn add(db: &DbConn, cache_db: &DbConn, data: Model) -> Result<Model, DbErr> {
-        Self::save(db, cache_db, None, data).await
+    pub async fn add(state: Arc<AppState>, data: Model) -> Result<Model, DbErr> {
+        Self::save(state, None, data).await
     }
 
-    pub async fn update_by_id(
-        db: &DbConn,
-        cache_db: &DbConn,
+    pub async fn update_by_id(state: Arc<AppState>, id: i32, data: Model) -> Result<Model, DbErr> {
+        Self::save(state, Some(id), data).await
+    }
+
+    pub async fn update_job_id_by_id(
+        state: Arc<AppState>,
+        job_id: Option<Uuid>,
         id: i32,
-        data: Model,
     ) -> Result<Model, DbErr> {
-        Self::save(db, cache_db, Some(id), data).await
+        let mut db_data = collect_config::Entity::find_by_id(id)
+            .one(&state.conn)
+            .await?
+            .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?
+            .into_active_model();
+
+        db_data.job_id = Set(job_id);
+
+        db_data.update(&state.conn).await
     }
 
-    pub async fn save(
-        db: &DbConn,
-        cache_db: &DbConn,
-        id: Option<i32>,
-        data: Model,
-    ) -> Result<Model, DbErr> {
+    pub async fn save(state: Arc<AppState>, id: Option<i32>, data: Model) -> Result<Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
         let now = Local::now().naive_local();
 
+        let data_clone = data.clone();
         let mut active_data = collect_config::ActiveModel {
-            url: Set(data.url),
-            name: Set(data.name),
-            desc: Set(data.desc),
-            method: Set(data.method),
-            headers: Set(data.headers),
-            body: Set(data.body),
-            map_rules: Set(data.map_rules),
-            template_string: Set(data.template_string),
-            loop_request_by_pagination: Set(data.loop_request_by_pagination),
-            cache_table_name: Set(data.cache_table_name.clone()),
-            max_number_of_result_data: Set(data.max_number_of_result_data),
-            filed_of_result_data: Set(data.filed_of_result_data),
-            max_count_of_request: Set(data.max_count_of_request),
-            cron: Set(data.cron),
-            db_columns_config: Set(data.db_columns_config.clone()),
+            url: Set(data_clone.url),
+            name: Set(data_clone.name),
+            desc: Set(data_clone.desc),
+            method: Set(data_clone.method),
+            headers: Set(data_clone.headers),
+            body: Set(data_clone.body),
+            map_rules: Set(data_clone.map_rules),
+            template_string: Set(data_clone.template_string),
+            loop_request_by_pagination: Set(data_clone.loop_request_by_pagination),
+            cache_table_name: Set(data_clone.cache_table_name),
+            max_number_of_result_data: Set(data_clone.max_number_of_result_data),
+            filed_of_result_data: Set(data_clone.filed_of_result_data),
+            max_count_of_request: Set(data_clone.max_count_of_request),
+            cron: Set(data_clone.cron),
+            db_columns_config: Set(data_clone.db_columns_config),
             ..Default::default()
         };
+
         if let Some(id) = id {
+            // 更新
             let db_data = collect_config::Entity::find_by_id(id)
-                .one(db)
+                .one(&state.conn)
                 .await?
                 .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
 
@@ -90,45 +109,67 @@ impl CollectConfigService {
             active_data.update_time = Set(now);
 
             if let Some(db_columns_config) = data.db_columns_config.as_ref() {
-                if db_data.db_columns_config != data.db_columns_config
-                    || db_data.cache_table_name != data.cache_table_name
-                {
+                if db_data.db_columns_config != data.db_columns_config {
                     Self::update_table_struct(
-                        cache_db,
-                        db_columns_config,
+                        &state.cache_conn,
+                        Some(db_columns_config),
                         data.cache_table_name.as_ref().unwrap(),
                     )
                     .await?;
                 }
             }
+            if db_data.cache_table_name != data.cache_table_name {
+                Self::update_table_struct(
+                    &state.cache_conn,
+                    None,
+                    data.cache_table_name.as_ref().unwrap(),
+                )
+                .await?;
+            }
 
-            active_data.update(db).await
+            let job_id = update_job_scheduler(state.clone(), &data, &db_data)
+                .await
+                .map_err(job_err_to_db_err)?;
+            if let Some(new_job_id) = job_id {
+                active_data.job_id = Set(Some(new_job_id));
+            }
+
+            active_data.update(&state.conn).await
         } else {
             active_data.create_time = Set(now);
             active_data.update_time = Set(now);
             if let Some(db_columns_config) = data.db_columns_config.as_ref() {
                 Self::create_table(
-                    cache_db,
+                    &state.cache_conn,
                     db_columns_config,
                     data.cache_table_name.as_ref().unwrap(),
                 )
                 .await?;
             }
-            active_data.insert(db).await
+            let job_id = create_job_scheduler(state.clone(), &data)
+                .await
+                .map_err(job_err_to_db_err)?;
+            active_data.job_id = Set(job_id);
+
+            active_data.insert(&state.conn).await
         }
     }
 
-    pub async fn delete(db: &DbConn, id: i32) -> Result<Model, DbErr> {
-        let mut collect_config: collect_config::ActiveModel =
-            collect_config::Entity::find_by_id(id)
-                .one(db)
+    pub async fn delete(state: Arc<AppState>, id: i32) -> Result<Model, DbErr> {
+        let data = collect_config::Entity::find_by_id(id)
+                .one(&state.conn)
                 .await?
-                .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
-                .map(Into::into)?;
+                .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
 
-        collect_config.del_flag = Set(1);
+        if let Some(job_id) = data.job_id {
+            state.sched.remove(&job_id).await.map_err(job_err_to_db_err)?;
+        }
+        let mut active_data = data.into_active_model();
 
-        collect_config.update(db).await
+        active_data.del_flag = Set(1);
+        active_data.job_id = Set(None);
+
+        active_data.update(&state.conn).await
     }
 
     pub async fn cache_data(cache_db: &DbConn, list: &Vec<String>) -> Result<bool, DbErr> {
@@ -188,7 +229,7 @@ impl CollectConfigService {
     }
     pub async fn update_table_struct(
         cache_db: &DbConn,
-        db_columns_config: &serde_json::Value,
+        db_columns_config: Option<&serde_json::Value>,
         table_name: &String,
     ) -> Result<bool, DbErr> {
         let now = Local::now().naive_utc().timestamp();
@@ -207,7 +248,11 @@ impl CollectConfigService {
             _ => {}
         };
 
-        Self::create_table(cache_db, db_columns_config, table_name).await
+        if let Some(x) = db_columns_config {
+            let res = Self::create_table(cache_db, x, table_name).await?;
+            return Ok(res);
+        }
+        Ok(true)
     }
 
     pub async fn execute_task(state: &Arc<AppState>, data: &Model) {
@@ -281,36 +326,19 @@ impl CollectConfigService {
         };
     }
 
-    pub async fn setup_collect_config_cron(
-        state: &Arc<AppState>,
-    ) -> anyhow::Result<()> {
-        let list = collect_config::Entity::find().all(&state.conn).await?;
+    /// 初始化所有的采集系统调度任务
+    pub async fn setup_collect_config_cron(state: &Arc<AppState>) -> anyhow::Result<()> {
+        let list = collect_config::Entity::find()
+            .filter(collect_config::Column::DelFlag.eq(0))
+            .all(&state.conn)
+            .await?;
 
         for item in list {
             let state = state.clone();
-            let item_c = item.clone();
+            let item = item.clone();
+            let job_id = create_job_scheduler(state.clone(), &item).await?;
 
-            match item.cron {
-                None => {
-                    let err = format!(
-                        "采集配置：{} 定时任务添加失败 cron: {:?} ",
-                        item.name, item.cron
-                    );
-                    warn!("{}", err);
-                }
-                Some(cron) => {
-                    // FIXME 匹配cron的格式
-                    state.clone().sched
-                        .add(Job::new_async(cron.as_str(), move |_uuid, mut _l| {
-                            let st = state.clone();
-                            let item_c = item_c.clone();
-                            Box::pin(async move {
-                                Self::execute_task(&st, &item_c).await;
-                            })
-                        })?)
-                        .await?;
-                }
-            }
+            CollectConfigService::update_job_id_by_id(state, job_id, item.id).await?;
         }
         state.sched.start().await?;
 
@@ -377,7 +405,7 @@ pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
                 }
 
                 let (has_next_page, res) =
-                    process_data_req(&data, Some(body_string.to_string())).await?;
+                    collect_data_with_http(&data, Some(body_string.to_string())).await?;
                 let new_vec = res?;
 
                 should_stop = !has_next_page;
@@ -398,50 +426,14 @@ pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
         }
     }
 
-    let (_, res) = process_data_req(data, body_string.clone()).await.unwrap();
+    let (_, res) = collect_data_with_http(data, body_string.clone())
+        .await
+        .unwrap();
 
     res
 }
 
-/// 查找body字符串中`${xxx}`格式值进行转换
-/// 目前只支持日期字符串
-pub fn format_body_string(body: Option<&String>) -> Option<String> {
-    if body.is_none() {
-        return None;
-    }
-
-    let mut body_str = body.unwrap().as_str();
-
-    let mut value_map = HashMap::new();
-
-    while let Some(i) = body_str.find("${") {
-        body_str = &body_str[i..];
-
-        if let Some(j) = body_str.find("}") {
-            let params_str = &body_str[2..j];
-            let current_str = &body_str[0..j + 1];
-            if params_str.contains("_now") {
-                let date = get_datetime_by_string(params_str).unwrap_or("".to_string());
-                value_map.insert(date, current_str);
-            }
-            //Tips 含_loop_counts的需要在循环请求中去获取参数，不在此处做处理
-
-            body_str = &body_str[j..];
-        } else {
-            break;
-        }
-    }
-
-    let mut new_str = body.unwrap().clone();
-
-    for (key, value) in value_map {
-        new_str = new_str.replace(value, key.as_str());
-    }
-
-    Some(new_str)
-}
-
-pub async fn process_data_req(
+pub async fn collect_data_with_http(
     data: &Model,
     body: Option<String>,
 ) -> anyhow::Result<(bool, anyhow::Result<Vec<String>>)> {
@@ -520,89 +512,47 @@ pub async fn process_data_req(
     Ok((has_next_page, res))
 }
 
-pub fn get_date(str: &str) -> anyhow::Result<chrono::Duration> {
-    let number = str[..str.len() - 1].parse::<i64>()?;
-    if str.contains("d") {
-        return Ok(chrono::Duration::days(number));
+async fn update_job_scheduler(
+    state: Arc<AppState>,
+    data: &Model,
+    db_data: &Model,
+) -> Result<Option<Uuid>, JobSchedulerError> {
+    if db_data.cron != data.cron {
+        if let Some(job_id) = db_data.job_id {
+            state.sched.remove(&job_id).await?;
+        }
+        return create_job_scheduler(state, data).await;
     }
-    if str.contains("h") {
-        return Ok(chrono::Duration::hours(number));
-    }
-    if str.contains("m") {
-        return Ok(chrono::Duration::minutes(number));
-    }
-    if str.contains("s") {
-        return Ok(chrono::Duration::seconds(number));
-    }
-    Err(anyhow!("未发现匹配的字符"))
+    Ok(None)
 }
 
-/// 根据特定字符串获取当地时间日期，支持加减法计算
-/// 例如："now+1d-24h-60m+60s.%Y-%m-%d %H:%M:%S"
-///
-///  1. now必须指定
-///  2. 1d表示1天，1h表示1小时，1m表示1分钟，1s表示1秒
-///  3. `.`前面是日期计算字符串，`.`后面是格式化字符串，参考：`<https://docs.rs/chrono/latest/chrono/format/strftime/index.html>`
-///
-///     `%Y-%m-%d %H:%M:%S`输出"2024-01-31 15:12:48"格式的日期
-///
-/// ```
-///     use process_web::service::collect_config_service::*;
-///
-///     let time_string = get_datetime_by_string(&r#"now+1d-24h-60m+60s.%Y-%m-%d %H:%M:%S"#.to_string());
-///
-///     println!("time_string {:?}", time_string);
-/// ```
-pub fn get_datetime_by_string(value_str: &str) -> anyhow::Result<String> {
-    let split_str: Vec<&str> = value_str.split('.').collect();
-
-    if split_str.len() > 0 {
-        let date_str = split_str[0];
-
-        if !date_str.contains("now") {
-            return Err(anyhow!("请指定now"));
-        }
-
-        let mut date = Local::now();
-        let mut last_i = 0;
-        let mut pre_str = "";
-        let mut current_sign = "";
-
-        for i in 0..date_str.len() {
-            let char = &date_str[i..i + 1];
-            if char == "-" || char == "+" {
-                if pre_str == "" {
-                    pre_str = &date_str[last_i..i];
-                    current_sign = char;
-                    last_i = i + 1;
-                    continue;
-                }
-
-                pre_str = &date_str[last_i..i];
-                if current_sign == "-" {
-                    date = date - get_date(pre_str)?;
-                } else if current_sign == "+" {
-                    date = date + get_date(pre_str)?;
-                }
-
-                last_i = i + 1;
-                current_sign = char;
-            }
-        }
-
-        pre_str = &date_str[last_i..];
-        if current_sign == "-" {
-            date = date - get_date(pre_str)?;
-        } else if current_sign == "+" {
-            date = date + get_date(pre_str)?;
-        }
-
-        if split_str.len() > 1 {
-            let format_str = split_str[1];
-            return Ok(date.naive_local().format(format_str).to_string());
-        }
-        return Ok(date.naive_local().to_string());
+async fn create_job_scheduler(
+    state: Arc<AppState>,
+    data: &Model,
+) -> Result<Option<Uuid>, JobSchedulerError> {
+    if let Some(cron) = data.cron.as_ref() {
+        let sched_state = state.clone();
+        let data = data.clone();
+        let job_id = state
+            .sched
+            .add(Job::new_async(
+                format_cron(cron.clone()).as_str(),
+                move |_uuid, mut _l| {
+                    let st = sched_state.clone();
+                    let item_c = data.clone();
+                    Box::pin(async move {
+                        CollectConfigService::execute_task(&st, &item_c).await;
+                    })
+                },
+            )?)
+            .await?;
+        return Ok(Some(job_id));
+    } else {
+        let err = format!(
+            "采集配置：{} 定时任务添加失败 cron: {:?} ",
+            data.name, data.cron
+        );
+        warn!("{}", err);
     }
-
-    Err(anyhow!("无法解析字符串"))
+    Ok(None)
 }

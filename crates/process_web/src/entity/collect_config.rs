@@ -33,6 +33,7 @@ pub struct Model {
     #[ts(type = "any")]
     pub db_columns_config: Option<Json>,
     pub cron: Option<String>,
+    pub job_id: Option<Uuid>,
     #[serde(skip_deserializing)]
     pub update_time: DateTime,
     #[serde(skip_deserializing)]

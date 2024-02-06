@@ -2,6 +2,7 @@ use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
 use uuid::Uuid;
+use crate::api::collect_log::ListParams;
 
 use crate::entity::collect_config;
 use crate::entity::collect_log;
@@ -20,11 +21,21 @@ impl CollectLogService {
         db: &DbConn,
         page: u64,
         page_size: u64,
+        data: Option<ListParams>
     ) -> Result<(Vec<serde_json::Value>, u64), DbErr> {
+
+        let mut conditions = Condition::all();
+        if let Some(data) = data {
+            if let Some(name) = data.collect_config_name {
+                conditions = conditions.add(collect_config::Column::Name.contains(&name));
+            }
+        }
+
         let db_res = collect_log::Entity::find()
             .find_also_related(collect_config::Entity)
             .offset((page - 1) * page_size)
             .limit(page_size)
+            .filter(conditions)
             .order_by_desc(collect_log::Column::UpdateTime)
             .into_json()
             .all(db)
@@ -59,7 +70,7 @@ impl CollectLogService {
         data: collect_log::Model,
     ) -> Result<collect_log::Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
-        let now = chrono::Local::now().naive_utc();
+        let now = chrono::Local::now().naive_local();
         let mut active_data = collect_log::ActiveModel {
             ..Default::default()
         };

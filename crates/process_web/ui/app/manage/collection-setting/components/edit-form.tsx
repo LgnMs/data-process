@@ -15,7 +15,7 @@ import {
 } from "antd";
 import React, { useEffect, useState } from "react";
 import { CloseOutlined, PlusOutlined } from "@ant-design/icons";
-import FormItemLabelTips from "@/app/manage/components/form-item-label-tips";
+import LabelTips from "@/app/manage/components/label-tips";
 import * as CollectConfig from "@/api/collect_config";
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
@@ -33,6 +33,7 @@ export default function EditForm(props: IEditFormProps) {
   const [mode, setMode] = useState<"edit" | "add">("add");
   const [shouldUpdateSql, setShouldUpdateSql] = useState(false);
   const [autoExec, setAutoExec] = useState(0);
+
   async function onSubmit() {
     if (shouldUpdateSql) {
       await new Promise((resolve) => {
@@ -111,6 +112,7 @@ export default function EditForm(props: IEditFormProps) {
   }
 
   useEffect(() => {
+    setShouldUpdateSql(false);
     if (state.collectConfig.editFormOpen) {
       if (state.collectConfig.editFormData) {
         const data: any = clone(state.collectConfig.editFormData);
@@ -134,6 +136,8 @@ export default function EditForm(props: IEditFormProps) {
 
         if (data.cron) {
           setAutoExec(1);
+        } else {
+          setAutoExec(0);
         }
 
         form.setFieldsValue(data);
@@ -331,9 +335,9 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={8}>
             <Form.Item
               label={
-                <FormItemLabelTips tips="指定页码和分页大小key后，会">
+                <LabelTips tips="指定页码和分页大小key后，会">
                   是否循环请求
-                </FormItemLabelTips>
+                </LabelTips>
               }
               name="loop_request_by_pagination"
             >
@@ -356,9 +360,9 @@ export default function EditForm(props: IEditFormProps) {
                   <Col span={8}>
                     <Form.Item
                       label={
-                        <FormItemLabelTips tips="返回数据的最大数量限制，一旦已保存的数据超过该值便不会再发起请求">
+                        <LabelTips tips="返回数据的最大数量限制，一旦已保存的数据超过该值便不会再发起请求">
                           最大数据量
-                        </FormItemLabelTips>
+                        </LabelTips>
                       }
                       name="max_number_of_result_data"
                       rules={[{ required: true }]}
@@ -370,11 +374,11 @@ export default function EditForm(props: IEditFormProps) {
                   <Col span={8}>
                     <Form.Item
                       label={
-                        <FormItemLabelTips
+                        <LabelTips
                           tips={`返回数据中应检测的list的字段名，例如{"data": "result":[]}的键值是data.result`}
                         >
                           返回数据集合键值
-                        </FormItemLabelTips>
+                        </LabelTips>
                       }
                       name="filed_of_result_data"
                       rules={[{ required: true }]}
@@ -385,9 +389,9 @@ export default function EditForm(props: IEditFormProps) {
                   <Col span={8}>
                     <Form.Item
                       label={
-                        <FormItemLabelTips tips={`最大请求次数`}>
+                        <LabelTips tips={`最大请求次数`}>
                           最大请求次数
-                        </FormItemLabelTips>
+                        </LabelTips>
                       }
                       name="max_count_of_request"
                       rules={[{ required: true }]}
@@ -403,9 +407,9 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={24}>
             <Form.Item
               label={
-                <FormItemLabelTips tips="Request headers">
+                <LabelTips tips="Request headers">
                   请求头
-                </FormItemLabelTips>
+                </LabelTips>
               }
             >
               <FormArrayList name="headers" />
@@ -415,9 +419,9 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={24}>
             <Form.Item
               label={
-                <FormItemLabelTips tips="POST请求会以转换为json body发出， GET请求会转换为URL参数">
+                <LabelTips tips="POST请求会以转换为json body发出， GET请求会转换为URL参数">
                   请求参数
-                </FormItemLabelTips>
+                </LabelTips>
               }
             >
               <FormArrayList name="body" />
@@ -427,9 +431,9 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={24}>
             <Form.Item
               label={
-                <FormItemLabelTips tips="key对应的值会转换为value对应的值">
+                <LabelTips tips="key对应的值会转换为value对应的值">
                   参数转换规则
-                </FormItemLabelTips>
+                </LabelTips>
               }
             >
               <FormArrayList name="map_rules" />
@@ -439,9 +443,9 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={24}>
             <Form.Item
               label={
-                <FormItemLabelTips tips="配置数据库表中的列, key是列名，value是返回或转换后的数据中值的键名。">
+                <LabelTips tips="配置数据库表中的列, key是列名，value是返回或转换后的数据中值的键名。">
                   列配置
-                </FormItemLabelTips>
+                </LabelTips>
               }
               rules={[{ required: true }]}
               extra={"列配置变更后表结构会重新生成，旧表会被备份"}
@@ -452,12 +456,12 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={24}>
             <Form.Item
               label={
-                <FormItemLabelTips tips="例如：INSERT INTO table_name (column1, column2) VALUES (${data#id}, ${data#name})">
+                <LabelTips tips="例如：INSERT INTO table_name (column1, column2) VALUES (${data#id}, ${data#name})">
                   插入SQL&nbsp;
                   <Button type="primary" size="small" onClick={generateSql}>
                     点击生成
                   </Button>
-                </FormItemLabelTips>
+                </LabelTips>
               }
               name="template_string"
               rules={[{ required: true }]}
@@ -476,18 +480,17 @@ export default function EditForm(props: IEditFormProps) {
                       if (e.target.value === 0) {
                         form.setFieldValue("cron", null);
                       } else {
-                        form.setFieldValue("cron", "0 0 * * *");
-                        // 0 0 0 ? * ?
+                        form.setFieldValue("cron", "0 0 1 * *");
                       }
                       setAutoExec(e.target.value);
                     }}
                   >
-                    <Radio value={0}>不执行</Radio>
-                    <Radio value={1}>自动执行</Radio>
+                    <Radio value={0}>停用</Radio>
+                    <Radio value={1}>启用</Radio>
                   </Radio.Group>
                 </div>
               }
-              name="cron"
+              name={autoExec === 1 ? "cron" : undefined}
             >
               {autoExec === 1 && <CronEdit />}
             </Form.Item>

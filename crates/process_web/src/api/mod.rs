@@ -47,7 +47,11 @@ pub async fn start() -> Result<()> {
 
     let sched = JobScheduler::new().await?;
 
-    let state = Arc::new(AppState { conn, cache_conn, sched });
+    let state = Arc::new(AppState {
+        conn,
+        cache_conn,
+        sched,
+    });
 
     CollectConfigService::setup_collect_config_cron(&state).await?;
 
@@ -62,7 +66,6 @@ pub async fn start() -> Result<()> {
     println!("listener on {server_url}");
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
     axum::serve(listener, app).await?;
-
 
     Ok(())
 }

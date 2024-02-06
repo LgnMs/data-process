@@ -6,3 +6,4 @@
 pub mod api;
 pub mod entity;
 pub mod service;
+pub mod utils;

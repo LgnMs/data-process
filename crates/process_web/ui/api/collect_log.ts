@@ -6,6 +6,7 @@ import {
   ResJson,
   ResJsonWithPagination,
 } from "@/api/common";
+import { CollectLogListParams } from "@/api/models/CollectLogListParams";
 
 export const PREFIX = "/collect_log";
 
@@ -17,7 +18,7 @@ export async function find_by_id(id: number): Promise<ResJson<CollectLog>> {
 
 export const LIST = `${PREFIX}/list/`;
 export async function list(
-  payload: PaginationPayload<CollectLog>
+  payload: PaginationPayload<CollectLogListParams>
 ): Promise<ResJsonWithPagination<CollectLog>> {
   return http_post(`${PREFIX}/list`, {
     body: JSON.stringify(payload),
