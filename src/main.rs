@@ -2,8 +2,6 @@ use anyhow::anyhow;
 use std::{env, fmt};
 use tracing::error;
 
-pub mod scheduler;
-
 #[derive(PartialEq)]
 enum AppEnv {
     Dev,
@@ -19,6 +17,7 @@ impl fmt::Display for AppEnv {
     }
 }
 
+// TODO [ ] 同步功能
 fn main() {
     let app_env = match env::var("APP_ENV") {
         Ok(v) if v == "prod" => AppEnv::Prod,
