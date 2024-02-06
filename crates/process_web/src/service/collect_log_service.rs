@@ -59,7 +59,7 @@ impl CollectLogService {
         data: collect_log::Model,
     ) -> Result<collect_log::Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
-        let now = chrono::Local::now().naive_utc();
+        let now = chrono::Local::now().naive_local();
         let mut active_data = collect_log::ActiveModel {
             ..Default::default()
         };

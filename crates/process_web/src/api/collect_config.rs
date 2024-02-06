@@ -6,16 +6,12 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use tracing::error;
-use uuid::Uuid;
 
 use crate::api::common::{
     AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
 };
 use crate::entity::collect_config::Model;
-use crate::entity::collect_log;
 use crate::service::collect_config_service::CollectConfigService;
-use crate::service::collect_log_service::CollectLogService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()

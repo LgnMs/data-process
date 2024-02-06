@@ -134,6 +134,8 @@ export default function EditForm(props: IEditFormProps) {
 
         if (data.cron) {
           setAutoExec(1);
+        } else {
+          setAutoExec(0);
         }
 
         form.setFieldsValue(data);
@@ -476,8 +478,7 @@ export default function EditForm(props: IEditFormProps) {
                       if (e.target.value === 0) {
                         form.setFieldValue("cron", null);
                       } else {
-                        form.setFieldValue("cron", "0 0 * * *");
-                        // 0 0 0 ? * ?
+                        form.setFieldValue("cron", "0 0 1 * *");
                       }
                       setAutoExec(e.target.value);
                     }}
@@ -487,7 +488,7 @@ export default function EditForm(props: IEditFormProps) {
                   </Radio.Group>
                 </div>
               }
-              name="cron"
+              name={autoExec === 1 ? "cron" : undefined}
             >
               {autoExec === 1 && <CronEdit />}
             </Form.Item>
