@@ -5,7 +5,7 @@ import useSWR from "swr";
 import * as CollectConfig from "@/api/collect_config";
 import { CollectConfig as ICollectConfig } from "@/api/models/CollectConfig";
 import { useMainContext } from "@/contexts/main";
-import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import React from "react";
 import LabelTips from "@/app/manage/components/label-tips";
 
@@ -15,7 +15,7 @@ export default function ContentTable() {
 
   const { data, isLoading, mutate } = useSWR(
     [CollectConfig.LIST, pagination],
-    ([url, pagination]) => CollectConfig.list(pagination)
+    ([_, pagination]) => CollectConfig.list(pagination)
   );
 
   const columns: any = [
