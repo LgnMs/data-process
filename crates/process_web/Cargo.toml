@@ -24,6 +24,7 @@ tokio-cron-scheduler = { version = "*", features = ["signal"] }
 
 migration = { path = "migration" }
 process_core = { path = "../process_core" }
+process_jdbc = { path = "../process_jdbc" }
 
 [dependencies.uuid]
 version = "1.7.0"

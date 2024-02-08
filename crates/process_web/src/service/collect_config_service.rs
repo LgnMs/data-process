@@ -480,11 +480,15 @@ pub async fn collect_data_with_http(
         .await?;
 
     let mut has_next_page = true;
-    let filed_of_result_data = data.filed_of_result_data.as_ref().unwrap();
 
-    if let Ok(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data) {
-        if let Some(array) = found_data.as_array() {
-            if array.is_empty() {
+    if let Some(filed_of_result_data) = data.filed_of_result_data.as_ref() {
+        if let Ok(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data) {
+            if let Some(array) = found_data.as_array() {
+                if array.is_empty() {
+                    has_next_page = false;
+                    return Ok((has_next_page, Ok(vec![])));
+                }
+            } else {
                 has_next_page = false;
                 return Ok((has_next_page, Ok(vec![])));
             }
@@ -494,8 +498,8 @@ pub async fn collect_data_with_http(
         }
     } else {
         has_next_page = false;
-        return Ok((has_next_page, Ok(vec![])));
     }
+
 
     if data.map_rules.is_some() {
         if let Some(x) = &data.map_rules {

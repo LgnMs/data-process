@@ -97,7 +97,6 @@ pub fn generate_new_map<'a>(
                 if current_item.is_none() {
                     let init_insert = || -> Result<Value> {
                         let new_origin_data = find_value(origin.borrow(), old_data)?;
-
                         if let Some(x) = new_origin_data.as_array() {
                             let last_key =
                                 origin[origin.as_str().find("#").unwrap() + 1..].to_string();
@@ -109,6 +108,7 @@ pub fn generate_new_map<'a>(
                                     let mut val = json!({});
                                     let map_rules =
                                         vec![[last_key.clone(), target_last_key.clone()]];
+
                                     generate_new_map(&map_rules, &mut val, &item)?;
                                     array.push(val);
                                 } else {
@@ -143,8 +143,17 @@ pub fn generate_new_map<'a>(
 
                                 // current_array_item.as_object_mut().unwrap().insert(target[i+1..].to_string(), current_value);
                                 let target_last_key = target[i + 1..].to_string();
-                                if target_last_key.contains('.') || target_last_key.contains('#') {
+                                if target_last_key.contains('.') {
                                     let mut val = json!({});
+                                    let map_rules =
+                                        vec![[last_key.clone(), target_last_key.clone()]];
+                                    generate_new_map(&map_rules, &mut val, &item).unwrap();
+                                    current_array_item
+                                        .as_object_mut()
+                                        .unwrap()
+                                        .append(val.as_object_mut().unwrap());
+                                } else if target_last_key.contains('#') {
+                                    let mut val = current_array_item.clone();
                                     let map_rules =
                                         vec![[last_key.clone(), target_last_key.clone()]];
                                     generate_new_map(&map_rules, &mut val, &item).unwrap();
@@ -198,4 +207,80 @@ pub fn generate_new_map<'a>(
     }
 
     Ok(())
+}
+
+fn map_data() {
+    let origin_data = json!({
+        "data":[
+            {
+                "id": 1,
+                "list": [
+                    {
+                        "a": 2,
+                        "b": 2
+                    }
+                ],
+                "children": [
+                    {
+                        "id": 2,
+                        "list": [
+                            {
+                                "a": 2,
+                                "b": 2
+                            }
+                        ],
+                    }
+                ]
+            }
+        ]
+    });
+
+    // 在数据中构造新的数据，如果有索引1的值，直接插入，如果没有则按照规则继续查询
+    let transform_rules = vec![
+            vec!["data#list#id", "data#list#prentid"],
+            vec!["data#list#children#id", "data#list#id"],
+            vec!["data#list#children#list#a", "data#list#a"],
+            vec!["data#list#children#list#b", "data#list#b"],
+    ];
+
+    // TODO
+    let find_value = |key: &str, value: Value| -> Value {
+        let mut current_key = key;
+        let mut current_index = "";
+        let mut current_value = &value;
+
+        let mut should_stop = false;
+        while !should_stop {
+            let mut has_dot = false;
+            let mut has_sharp = false;
+            if let Some(index) = key.find(".") {
+                current_index = &current_key[..index];
+                current_value = current_value.get(current_index).unwrap();
+                current_key = &current_key[index..];
+                has_dot = true;
+            }
+            if let Some(index) = key.find("#") {
+                current_index = &current_key[..index];
+                current_value = current_value.get(current_index).unwrap();
+                current_key = &current_key[index..];
+                has_sharp = true;
+            }
+            if has_dot ||has_sharp {
+                should_stop = true;
+            }
+        }
+
+        current_value.clone()
+    };
+
+
+
+    let map_rules = vec![
+        vec!["data#list#a", "r#a"],
+        vec!["data#list#b", "r#b"],
+        vec!["data#list#id", "r#id"],
+        vec!["data#list#prentid", "r#prentid"]
+    ];
+
+
 }
