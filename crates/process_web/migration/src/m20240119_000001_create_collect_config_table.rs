@@ -104,6 +104,11 @@ impl MigrationTrait for Migration {
                             .comment(r#"数据库列配置"#),
                     )
                     .col(
+                        ColumnDef::new(CollectConfig::JobId)
+                            .uuid()
+                            .comment(r#"调度任务ID"#),
+                    )
+                    .col(
                         ColumnDef::new(CollectConfig::DelFlag)
                             .integer()
                             .default(0)
@@ -153,6 +158,7 @@ pub enum CollectConfig {
     DbColumnsConfig,
     Cron,
     DelFlag,
+    JobId,
     UpdateTime,
     CreateTime,
 }

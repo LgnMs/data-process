@@ -1,8 +1,9 @@
 import { PaginationPayload } from "@/api/common";
 import { CollectConfig as ICollectConfig } from "@/api/models/CollectConfig";
+import { CollectConfigListParams } from "@/api/models/CollectConfigListParams";
 
 export interface CollectConfigState {
-  pagination: PaginationPayload<ICollectConfig>;
+  pagination: PaginationPayload<CollectConfigListParams>;
   editFormOpen: boolean;
   editFormData: ICollectConfig | null;
 }

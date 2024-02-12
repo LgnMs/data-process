@@ -2,7 +2,7 @@ import { QuestionCircleFilled } from "@ant-design/icons";
 import { Space, Tooltip } from "antd";
 import { ReactNode } from "react";
 
-export default function FormItemLabelTips(props: {
+export default function LabelTips(props: {
   children: ReactNode;
   tips: string;
 }) {

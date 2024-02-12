@@ -16,7 +16,6 @@ tracing-appender = "0.2"
 axum = { version = "0.7.4", features = ["macros"] }
 serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.108"
-schemars = { version = "0.8.10", features = ["uuid1"] }
 axum-swagger-ui = "0.3.0"
 ts-rs = { version = "7.1", features = ["uuid", "uuid-impl"] }
 chrono = "0.4.31"
@@ -25,6 +24,7 @@ tokio-cron-scheduler = { version = "*", features = ["signal"] }
 
 migration = { path = "migration" }
 process_core = { path = "../process_core" }
+process_jdbc = { path = "../process_jdbc" }
 
 [dependencies.uuid]
 version = "1.7.0"

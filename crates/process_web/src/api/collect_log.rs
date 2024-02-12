@@ -5,14 +5,12 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use schemars::JsonSchema;
 use serde::Deserialize;
 use std::sync::Arc;
+use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::api::common::{
-    AppError, AppState, Pagination, ResJson, ResJsonWithPagination, ResTemplate,
-};
+use crate::api::common::{AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate};
 use crate::entity::collect_log::Model;
 use crate::service::collect_log_service::CollectLogService;
 
@@ -27,12 +25,6 @@ pub fn set_routes() -> Router<Arc<AppState>> {
     routes
 }
 
-#[derive(Deserialize, JsonSchema)]
-struct QueryList {
-    current: u64,
-    page_size: u64,
-}
-
 async fn find_by_id(
     state: State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -42,11 +34,21 @@ async fn find_by_id(
     data_response!(res)
 }
 
+#[derive(Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/CollectLogListParams.ts",
+    rename = "CollectLogListParams"
+)]
+pub struct ListParams {
+    pub collect_config_name: Option<String>
+}
+
 async fn list(
     state: State<Arc<AppState>>,
-    Json(payload): Json<QueryList>,
+    Json(payload): Json<PaginationPayload<ListParams>>,
 ) -> Result<ResJsonWithPagination<serde_json::Value>, AppError> {
-    let res = CollectLogService::list(&state.conn, payload.current, payload.page_size).await;
+    let res = CollectLogService::list(&state.conn, payload.current, payload.page_size, payload.data).await;
 
     pagination_response!(res, payload.current, payload.page_size)
 }

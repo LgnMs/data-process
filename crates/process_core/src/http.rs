@@ -76,7 +76,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
 
         let client = reqwest::Client::builder()
             .default_headers(headers)
-            .timeout(Duration::from_millis(30000))
+            .timeout(Duration::from_millis(15000))
             .build()?;
 
         debug!(
@@ -109,7 +109,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
         match serde_json::from_slice(res.as_bytes()) {
             Ok(x) => self.data = x,
             Err(err) => {
-                let err_str = format!("返回的数据无法被序列化 {}", err);
+                let err_str = format!("返回的数据无法被序列化 请检查api是否能被正常调用 {}", err);
                 error!("{}", err_str);
                 return Err(anyhow!(err_str));
             }
@@ -175,30 +175,41 @@ impl Export for Http {
 
         for key in key_vec {
             let rel_key = &key[2..key.len() - 1];
-            let value = find_value(rel_key, &self.data)?;
-            if let Some(index) = rel_key.chars().position(|c| c == '#') {
-                let data_list = value.as_array().unwrap();
-
-                let mut j = 0;
-                for old_item in data_list {
-                    let item = find_value(&rel_key[index + 1..], old_item)?;
-
-                    if let Some(template) = result_vec.get(j) {
-                        result_vec[j] = template.replace(&key, item.as_str().unwrap_or("null"));
-                    } else {
-                        result_vec.push(template_sql.replace(&key, item.as_str().unwrap_or("null")))
-                    }
-                    j += 1;
-                }
-            } else {
-                if let Some(template) = result_vec.get_mut(0) {
-                    result_vec[0] = template.replace(&key, value.as_str().unwrap());
-                } else {
-                    result_vec.push(template_sql.replace(&key, value.as_str().unwrap()))
-                }
-            }
+            find(&key, rel_key, &self.data, &mut result_vec, template_sql)?;
         }
 
         Ok(result_vec)
     }
+}
+
+fn find(key: &String, rel_key: &str, data: &Value, result_vec: &mut Vec<String>, template_sql: &String) -> Result<()> {
+    let value = find_value(rel_key, data)?;
+
+    if let Some(index) = rel_key.chars().position(|c| c == '#') {
+        let data_list = value.as_array().unwrap();
+
+        let mut j = 0;
+        for old_item in data_list {
+            let rel_key = &rel_key[index + 1..];
+            if rel_key.contains("#") {
+                find(&key, rel_key, &old_item, result_vec, template_sql)?;
+            } else {
+                let item = find_value(rel_key, old_item)?;
+                println!("item : {}", item);
+                if let Some(template) = result_vec.get(j) {
+                    result_vec[j] = template.replace(key, item.to_string().as_str());
+                } else {
+                    result_vec.push(template_sql.replace(key, item.to_string().as_str()));
+                }
+                j += 1;
+            }
+        }
+    } else {
+        if let Some(template) = result_vec.get_mut(0) {
+            result_vec[0] = template.replace(key, value.as_str().unwrap());
+        } else {
+            result_vec.push(template_sql.replace(key, value.as_str().unwrap()))
+        }
+    }
+    Ok(())
 }

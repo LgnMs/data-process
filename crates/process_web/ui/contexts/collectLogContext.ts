@@ -1,8 +1,9 @@
 import { PaginationPayload } from "@/api/common";
 import { CollectLog as ICollectLog } from "@/api/models/CollectLog";
+import { CollectLogListParams } from "@/api/models/CollectLogListParams";
 
 export interface CollectLogState {
-  pagination: PaginationPayload<ICollectLog>;
+  pagination: PaginationPayload<CollectLogListParams>;
   drawerOpen: boolean;
   drawerData: ICollectLog | null;
 }

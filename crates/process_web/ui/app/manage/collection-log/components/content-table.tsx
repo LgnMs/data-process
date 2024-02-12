@@ -12,6 +12,7 @@ import {
   SyncOutlined
 } from "@ant-design/icons";
 import React from "react";
+import dayjs from "dayjs";
 
 export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
@@ -68,10 +69,16 @@ export default function ContentTable() {
     {
       title: "更新日期",
       dataIndex: "update_time",
+      render: (text: number) => {
+        return dayjs(text).format("YYYY-MM-DD HH:mm:ss")
+      }
     },
     {
       title: "创建日期",
       dataIndex: "create_time",
+      render: (text: number) => {
+        return dayjs(text).format("YYYY-MM-DD HH:mm:ss")
+      }
     },
     {
       title: "操作",

@@ -276,3 +276,130 @@ fn serde_json_array_test() {
         })
     );
 }
+
+
+#[test]
+fn serde_json_array2_test() {
+
+    let old_data3 = json!({
+        "test": 1,
+        "data": [
+            {
+                "a": [
+                    {
+                        "b": 1
+                    }
+                ],
+                "b": [
+                    {
+                        "c": 2
+                    }
+                ]
+            },
+            {
+                "a": [
+                    {
+                        "b": 2
+                    }
+                ],
+                "b": [
+                {
+                    "c": 3
+                }
+            ]
+            }
+        ]
+    });
+
+    let map_rules4 = vec![
+        ["data#a#b".to_string(), "res#aa#bb".to_string()],
+        ["data#b#c".to_string(), "res#bb#cc".to_string()],
+    ];
+    let mut new_data4 = json!({});
+    let _ = generate_new_map(&map_rules4, &mut new_data4, &old_data3);
+    assert_eq!(
+        new_data4,
+        json!({
+            "res": [
+                {
+                    "aa": [{
+                        "bb": 1
+                    }],
+                    "bb": [{
+                        "cc": 2
+                    }]
+                },
+                {
+                    "aa": [{
+                        "bb": 2
+                    }],
+                    "bb": [{
+                        "cc": 3
+                    }]
+                }
+            ]
+        })
+    );
+}
+
+#[test]
+fn tt() {
+    // TODO
+    let find_value = |key: &str, value: Value| -> Value {
+        let mut current_key = key;
+        let mut current_index = "";
+        let mut current_value = &value;
+
+        let mut should_stop = false;
+        while !should_stop {
+            let mut has_dot = false;
+            let mut has_sharp = false;
+            if let Some(index) = key.find(".") {
+                current_index = &current_key[..index];
+                current_value = current_value.get(current_index).unwrap();
+                current_key = &current_key[index..];
+                has_dot = true;
+            }
+            if let Some(index) = key.find("#") {
+                current_index = &current_key[..index];
+                current_value = current_value.get(current_index).unwrap();
+                current_key = &current_key[index..];
+                has_sharp = true;
+            }
+            if has_dot ||has_sharp {
+                should_stop = true;
+            }
+        }
+
+        current_value.clone()
+    };
+
+    let origin_data = json!({
+        "data":[
+            {
+                "id": 1,
+                "list": [
+                    {
+                        "a": 2,
+                        "b": 2
+                    }
+                ],
+                "children": [
+                    {
+                        "id": 2,
+                        "list": [
+                            {
+                                "a": 2,
+                                "b": 2
+                            }
+                        ],
+                    }
+                ]
+            }
+        ]
+    });
+
+    let a = find_value("data#list#a", origin_data);
+
+    println!("a {a}");
+}
