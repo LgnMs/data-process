@@ -3,7 +3,7 @@ struct DataSource {
     port: String,
     user: String,
     password: String,
-    database_type: Database
+    database_type: Database,
 }
 
 enum Database {

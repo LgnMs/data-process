@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use serde::{Deserialize};
+use serde::Deserialize;
 use ts_rs::TS;
 
 use crate::api::common::{
@@ -43,14 +43,20 @@ async fn find_by_id(
     rename = "CollectConfigListParams"
 )]
 pub struct ListParams {
-    pub name: Option<String>
+    pub name: Option<String>,
 }
 
 async fn list(
     state: State<Arc<AppState>>,
     Json(payload): Json<PaginationPayload<ListParams>>,
 ) -> Result<ResJsonWithPagination<Model>, AppError> {
-    let res = CollectConfigService::list(&state.conn, payload.current, payload.page_size, payload.data).await;
+    let res = CollectConfigService::list(
+        &state.conn,
+        payload.current,
+        payload.page_size,
+        payload.data,
+    )
+    .await;
 
     pagination_response!(res, payload.current, payload.page_size)
 }

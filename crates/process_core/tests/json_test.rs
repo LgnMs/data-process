@@ -1,5 +1,6 @@
-use process_core::json::generate_new_map;
+use process_core::json::{find_value, generate_new_map};
 use serde_json::{json, Value};
+use tracing::error;
 
 #[test]
 fn json_use() {
@@ -277,10 +278,8 @@ fn serde_json_array_test() {
     );
 }
 
-
 #[test]
 fn serde_json_array2_test() {
-
     let old_data3 = json!({
         "test": 1,
         "data": [
@@ -340,66 +339,4 @@ fn serde_json_array2_test() {
             ]
         })
     );
-}
-
-#[test]
-fn tt() {
-    // TODO
-    let find_value = |key: &str, value: Value| -> Value {
-        let mut current_key = key;
-        let mut current_index = "";
-        let mut current_value = &value;
-
-        let mut should_stop = false;
-        while !should_stop {
-            let mut has_dot = false;
-            let mut has_sharp = false;
-            if let Some(index) = key.find(".") {
-                current_index = &current_key[..index];
-                current_value = current_value.get(current_index).unwrap();
-                current_key = &current_key[index..];
-                has_dot = true;
-            }
-            if let Some(index) = key.find("#") {
-                current_index = &current_key[..index];
-                current_value = current_value.get(current_index).unwrap();
-                current_key = &current_key[index..];
-                has_sharp = true;
-            }
-            if has_dot ||has_sharp {
-                should_stop = true;
-            }
-        }
-
-        current_value.clone()
-    };
-
-    let origin_data = json!({
-        "data":[
-            {
-                "id": 1,
-                "list": [
-                    {
-                        "a": 2,
-                        "b": 2
-                    }
-                ],
-                "children": [
-                    {
-                        "id": 2,
-                        "list": [
-                            {
-                                "a": 2,
-                                "b": 2
-                            }
-                        ],
-                    }
-                ]
-            }
-        ]
-    });
-
-    let a = find_value("data#list#a", origin_data);
-
-    println!("a {a}");
 }

@@ -2,6 +2,7 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::api::collect_config::ListParams;
 use anyhow::anyhow;
 use chrono::Local;
 use process_core::http::HttpConfig;
@@ -12,7 +13,6 @@ use sea_orm::*;
 use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
 use uuid::Uuid;
-use crate::api::collect_config::ListParams;
 
 use crate::api::common::AppState;
 use crate::entity::collect_config::Model;
@@ -31,7 +31,12 @@ impl CollectConfigService {
             .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
     }
 
-    pub async fn list(db: &DbConn, page: u64, page_size: u64, data: Option<ListParams>) -> Result<(Vec<Model>, u64), DbErr> {
+    pub async fn list(
+        db: &DbConn,
+        page: u64,
+        page_size: u64,
+        data: Option<ListParams>,
+    ) -> Result<(Vec<Model>, u64), DbErr> {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.name {
@@ -157,12 +162,16 @@ impl CollectConfigService {
 
     pub async fn delete(state: Arc<AppState>, id: i32) -> Result<Model, DbErr> {
         let data = collect_config::Entity::find_by_id(id)
-                .one(&state.conn)
-                .await?
-                .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
+            .one(&state.conn)
+            .await?
+            .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
 
         if let Some(job_id) = data.job_id {
-            state.sched.remove(&job_id).await.map_err(job_err_to_db_err)?;
+            state
+                .sched
+                .remove(&job_id)
+                .await
+                .map_err(job_err_to_db_err)?;
         }
         let mut active_data = data.into_active_model();
 
@@ -499,7 +508,6 @@ pub async fn collect_data_with_http(
     } else {
         has_next_page = false;
     }
-
 
     if data.map_rules.is_some() {
         if let Some(x) = &data.map_rules {

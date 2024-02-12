@@ -182,7 +182,13 @@ impl Export for Http {
     }
 }
 
-fn find(key: &String, rel_key: &str, data: &Value, result_vec: &mut Vec<String>, template_sql: &String) -> Result<()> {
+fn find(
+    key: &String,
+    rel_key: &str,
+    data: &Value,
+    result_vec: &mut Vec<String>,
+    template_sql: &String,
+) -> Result<()> {
     let value = find_value(rel_key, data)?;
 
     if let Some(index) = rel_key.chars().position(|c| c == '#') {

@@ -1,8 +1,8 @@
+use crate::api::collect_log::ListParams;
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
 use uuid::Uuid;
-use crate::api::collect_log::ListParams;
 
 use crate::entity::collect_config;
 use crate::entity::collect_log;
@@ -21,9 +21,8 @@ impl CollectLogService {
         db: &DbConn,
         page: u64,
         page_size: u64,
-        data: Option<ListParams>
+        data: Option<ListParams>,
     ) -> Result<(Vec<serde_json::Value>, u64), DbErr> {
-
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.collect_config_name {

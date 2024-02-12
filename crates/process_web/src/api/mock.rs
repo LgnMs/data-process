@@ -48,176 +48,175 @@ pub async fn test_data_2(
     return Ok(Json(null));
 }
 
-
 pub async fn test_data_3() -> anyhow::Result<Json<Value>, AppError> {
     let data = serde_json::json!({
-    "code": "00000",
-    "message": "OK",
-    "success": true,
-    "result": {
-        "pageIndex": 1,
-        "pageSize": 999,
-        "totalPage": 1,
-        "totalRecord": 1,
-        "domains": [{
-            "code": "wireless",
-            "data": [{
-                "ciId": "000000000002bdd3",
-                "typeName": "AC",
-                "metricList": [{
-                    "code": "delayed_ping",
-                    "name": "ping时延",
-                    "value": "1.5905349999999998",
-                    "unit": "ms"
-                }, {
-                    "code": "memory_utilization",
-                    "name": "内存利用率",
-                    "value": "62",
-                    "unit": "%"
-                }, {
-                    "code": "ping_status",
-                    "name": "ping状态",
-                    "value": "正常",
-                    "unit": ""
-                }, {
-                    "code": "online_user_saturation",
-                    "name": "在线用户饱和度",
-                    "value": "0",
-                    "unit": "%"
-                }, {
-                    "code": "online_ap_saturation",
-                    "name": "在线AP饱和度",
-                    "value": "0",
-                    "unit": "%"
-                }, {
-                    "code": "cpu_utilization",
-                    "name": "CPU利用率",
-                    "value": "8",
-                    "unit": "%"
-                }, {
-                    "code": "online_ap_number",
-                    "name": "在线AP数",
-                    "value": "0",
-                    "unit": "个"
-                }, {
-                    "code": "online_user_number",
-                    "name": "在线用户数",
-                    "value": "0",
-                    "unit": "个"
-                }, {
-                    "code": "software_version_number",
-                    "name": "软件版本号",
-                    "value": "AC_RGOS 11.1(5)B80P3, Release(04131821)",
-                    "unit": ""
-                }, {
-                    "code": "snmp_reachable",
-                    "name": "snmp状态",
-                    "value": "正常",
-                    "unit": ""
-                }, {
-                    "code": "offline_ap_number",
-                    "name": "离线AP数",
-                    "value": "19",
-                    "unit": "个"
-                }, {
-                    "code": "system_up_time",
-                    "name": "运行时长",
-                    "value": "1586968.46",
-                    "unit": "s"
-                }],
-                "components": [{
-                    "ciId": "000000000002be17",
-                    "typeName": "WLAN",
+        "code": "00000",
+        "message": "OK",
+        "success": true,
+        "result": {
+            "pageIndex": 1,
+            "pageSize": 999,
+            "totalPage": 1,
+            "totalRecord": 1,
+            "domains": [{
+                "code": "wireless",
+                "data": [{
+                    "ciId": "000000000002bdd3",
+                    "typeName": "AC",
                     "metricList": [{
+                        "code": "delayed_ping",
+                        "name": "ping时延",
+                        "value": "1.5905349999999998",
+                        "unit": "ms"
+                    }, {
+                        "code": "memory_utilization",
+                        "name": "内存利用率",
+                        "value": "62",
+                        "unit": "%"
+                    }, {
+                        "code": "ping_status",
+                        "name": "ping状态",
+                        "value": "正常",
+                        "unit": ""
+                    }, {
+                        "code": "online_user_saturation",
+                        "name": "在线用户饱和度",
+                        "value": "0",
+                        "unit": "%"
+                    }, {
+                        "code": "online_ap_saturation",
+                        "name": "在线AP饱和度",
+                        "value": "0",
+                        "unit": "%"
+                    }, {
+                        "code": "cpu_utilization",
+                        "name": "CPU利用率",
+                        "value": "8",
+                        "unit": "%"
+                    }, {
+                        "code": "online_ap_number",
+                        "name": "在线AP数",
+                        "value": "0",
+                        "unit": "个"
+                    }, {
                         "code": "online_user_number",
                         "name": "在线用户数",
                         "value": "0",
                         "unit": "个"
-                    }]
-                }, {
-                    "ciId": "000000000002be0e",
-                    "typeName": "网络接口",
-                    "metricList": [{
-                        "code": "interface_in_errors_percent",
-                        "name": "接收错包率",
-                        "value": "0",
-                        "unit": "%"
                     }, {
-                        "code": "administer_status",
-                        "name": "管理状态",
-                        "value": "启用",
+                        "code": "software_version_number",
+                        "name": "软件版本号",
+                        "value": "AC_RGOS 11.1(5)B80P3, Release(04131821)",
                         "unit": ""
                     }, {
-                        "code": "total_flow",
-                        "name": "发送接收总流量",
-                        "value": "198071",
-                        "unit": "Bytes"
-                    }, {
-                        "code": "operate_status",
-                        "name": "操作状态",
+                        "code": "snmp_reachable",
+                        "name": "snmp状态",
                         "value": "正常",
                         "unit": ""
                     }, {
-                        "code": "in_drop_packets",
-                        "name": "接收丢包数",
-                        "value": "0",
+                        "code": "offline_ap_number",
+                        "name": "离线AP数",
+                        "value": "19",
                         "unit": "个"
                     }, {
-                        "code": "total_errors_packets",
-                        "name": "总错包数",
-                        "value": "0",
-                        "unit": "个"
+                        "code": "system_up_time",
+                        "name": "运行时长",
+                        "value": "1586968.46",
+                        "unit": "s"
+                    }],
+                    "components": [{
+                        "ciId": "000000000002be17",
+                        "typeName": "WLAN",
+                        "metricList": [{
+                            "code": "online_user_number",
+                            "name": "在线用户数",
+                            "value": "0",
+                            "unit": "个"
+                        }]
                     }, {
-                        "code": "bandwidth_utilization",
-                        "name": "带宽利用率",
-                        "value": "0",
-                        "unit": "%"
-                    }, {
-                        "code": "in_packets",
-                        "name": "接收包数",
-                        "value": "1785",
-                        "unit": "个"
-                    }, {
-                        "code": "in_error_packets",
-                        "name": "接收错包数",
-                        "value": "0",
-                        "unit": "个"
-                    }, {
-                        "code": "out_drop_packets",
-                        "name": "发送丢包数",
-                        "value": "0",
-                        "unit": "个"
-                    }, {
-                        "code": "out_error_packets",
-                        "name": "发送错包数",
-                        "value": "0",
-                        "unit": "个"
-                    }, {
-                        "code": "out_packets",
-                        "name": "发送包数",
-                        "value": "230",
-                        "unit": "个"
-                    }, {
-                        "code": "in_bandwidth_utilization",
-                        "name": "接收带宽利用率",
-                        "value": "0",
-                        "unit": "%"
-                    }, {
-                        "code": "out_rate",
-                        "name": "发送速率",
-                        "value": "1185.47",
-                        "unit": "bps"
-                    },{
-                        "code": "output_bytes_ipv4",
-                        "name": "IPv4发送流量",
-                        "value": "44307",
-                        "unit": "Bytes"
+                        "ciId": "000000000002be0e",
+                        "typeName": "网络接口",
+                        "metricList": [{
+                            "code": "interface_in_errors_percent",
+                            "name": "接收错包率",
+                            "value": "0",
+                            "unit": "%"
+                        }, {
+                            "code": "administer_status",
+                            "name": "管理状态",
+                            "value": "启用",
+                            "unit": ""
+                        }, {
+                            "code": "total_flow",
+                            "name": "发送接收总流量",
+                            "value": "198071",
+                            "unit": "Bytes"
+                        }, {
+                            "code": "operate_status",
+                            "name": "操作状态",
+                            "value": "正常",
+                            "unit": ""
+                        }, {
+                            "code": "in_drop_packets",
+                            "name": "接收丢包数",
+                            "value": "0",
+                            "unit": "个"
+                        }, {
+                            "code": "total_errors_packets",
+                            "name": "总错包数",
+                            "value": "0",
+                            "unit": "个"
+                        }, {
+                            "code": "bandwidth_utilization",
+                            "name": "带宽利用率",
+                            "value": "0",
+                            "unit": "%"
+                        }, {
+                            "code": "in_packets",
+                            "name": "接收包数",
+                            "value": "1785",
+                            "unit": "个"
+                        }, {
+                            "code": "in_error_packets",
+                            "name": "接收错包数",
+                            "value": "0",
+                            "unit": "个"
+                        }, {
+                            "code": "out_drop_packets",
+                            "name": "发送丢包数",
+                            "value": "0",
+                            "unit": "个"
+                        }, {
+                            "code": "out_error_packets",
+                            "name": "发送错包数",
+                            "value": "0",
+                            "unit": "个"
+                        }, {
+                            "code": "out_packets",
+                            "name": "发送包数",
+                            "value": "230",
+                            "unit": "个"
+                        }, {
+                            "code": "in_bandwidth_utilization",
+                            "name": "接收带宽利用率",
+                            "value": "0",
+                            "unit": "%"
+                        }, {
+                            "code": "out_rate",
+                            "name": "发送速率",
+                            "value": "1185.47",
+                            "unit": "bps"
+                        },{
+                            "code": "output_bytes_ipv4",
+                            "name": "IPv4发送流量",
+                            "value": "44307",
+                            "unit": "Bytes"
+                        }]
                     }]
                 }]
             }]
-        }]
-    }
-});
+        }
+    });
     debug!("mock test_data_1 start sleep 5000ms!");
     sleep(Duration::from_millis(1000)).await;
     debug!("mock test_data_1 start sleep done!");

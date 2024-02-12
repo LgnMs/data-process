@@ -4,7 +4,7 @@ use process_jdbc::kingbase::Kingbase;
 
 #[derive(Debug)]
 struct Model {
-    name: String
+    name: String,
 }
 
 impl Model {
@@ -26,10 +26,11 @@ impl Model {
             if !bool_rust {
                 break;
             }
-            let name = conn.jvm.invoke(&rs, "getString", &vec![InvocationArg::try_from("name")?])?;
+            let name =
+                conn.jvm
+                    .invoke(&rs, "getString", &vec![InvocationArg::try_from("name")?])?;
             let name_s: String = conn.jvm.to_rust(name)?;
             vec.push(Model { name: name_s })
-
         }
         conn.close()?;
         Ok(vec)
@@ -49,16 +50,16 @@ impl Model {
 fn main() {
     let mut conn = Kingbase::new().unwrap();
 
-
-
-    conn.connect("jdbc:kingbase8://192.168.40.3:54321/test?user=system&password=123456").unwrap();
+    conn.connect("jdbc:kingbase8://192.168.40.3:54321/test?user=system&password=123456")
+        .unwrap();
 
     // SELECT
     let c = Model::execute_query(&mut conn, r##"SELECT * FROM public.test;"##).unwrap();
     println!("{:?}", c);
 
     // INSERT
-    conn.execute_update(r#"INSERT INTO "public"."test" (name) VALUES('ttd');"#).expect("TODO: panic message");
+    conn.execute_update(r#"INSERT INTO "public"."test" (name) VALUES('ttd');"#)
+        .expect("TODO: panic message");
 
     let res: Vec<Model> = conn.execute_query(r##"SELECT * FROM public.test;"##)?;
 }

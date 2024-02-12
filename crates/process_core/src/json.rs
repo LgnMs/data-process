@@ -209,78 +209,78 @@ pub fn generate_new_map<'a>(
     Ok(())
 }
 
-fn map_data() {
-    let origin_data = json!({
-        "data":[
-            {
-                "id": 1,
-                "list": [
-                    {
-                        "a": 2,
-                        "b": 2
-                    }
-                ],
-                "children": [
-                    {
-                        "id": 2,
-                        "list": [
-                            {
-                                "a": 2,
-                                "b": 2
-                            }
-                        ],
-                    }
-                ]
+pub fn new_find_value(key: &str, value: Value) -> Option<Value> {
+    let mut current_key = key;
+    let mut current_index = "";
+    let mut current_value = Some(value);
+
+    if let Some(index) = current_key.find(".") {
+        current_index = &current_key[..index];
+        current_value = Some(
+            current_value
+                .as_ref()
+                .unwrap()
+                .get(current_index)
+                .unwrap()
+                .clone(),
+        );
+        current_key = &current_key[index + 1..];
+        return new_find_value(current_key, current_value.unwrap());
+    } else if let Some(index) = current_key.find("#") {
+        current_index = &current_key[..index];
+        current_value = match current_value.as_ref().unwrap().get(current_index) {
+            None => match current_value.unwrap().as_array() {
+                None => None,
+                Some(list) => {
+                    let value = list
+                        .iter()
+                        .map(|x| {
+                            new_find_value(current_index, x.clone()).unwrap()
+                        })
+                        .collect::<Vec<Value>>();
+                    Some(json!(value))
+                }
+            },
+            Some(val) => Some(val.clone()),
+        };
+        current_key = &current_key[index + 1..];
+        return new_find_value(current_key, current_value.unwrap());
+    } else {
+        current_index = current_key;
+
+        current_value = re_find(current_index, current_value.unwrap());
+    }
+
+    current_value
+}
+pub fn re_find(key: &str, value: Value) -> Option<Value> {
+    match value.get(key) {
+        None => match value.as_array() {
+            None => None,
+            Some(list) => {
+                let mut has_array = false;
+                let mut list = list
+                    .iter()
+                    .map(|x| {
+                        let val = re_find(key, x.clone()).unwrap();
+                        if val.is_array() {
+                            has_array = true;
+                        }
+                        val
+                    })
+                    .collect::<Vec<Value>>();
+
+                if has_array {
+                    list = list
+                        .into_iter()
+                        .flat_map(|x| {
+                            x.as_array().unwrap().clone()
+                        }).collect();
+                }
+
+                Some(json!(list))
             }
-        ]
-    });
-
-    // 在数据中构造新的数据，如果有索引1的值，直接插入，如果没有则按照规则继续查询
-    let transform_rules = vec![
-            vec!["data#list#id", "data#list#prentid"],
-            vec!["data#list#children#id", "data#list#id"],
-            vec!["data#list#children#list#a", "data#list#a"],
-            vec!["data#list#children#list#b", "data#list#b"],
-    ];
-
-    // TODO
-    let find_value = |key: &str, value: Value| -> Value {
-        let mut current_key = key;
-        let mut current_index = "";
-        let mut current_value = &value;
-
-        let mut should_stop = false;
-        while !should_stop {
-            let mut has_dot = false;
-            let mut has_sharp = false;
-            if let Some(index) = key.find(".") {
-                current_index = &current_key[..index];
-                current_value = current_value.get(current_index).unwrap();
-                current_key = &current_key[index..];
-                has_dot = true;
-            }
-            if let Some(index) = key.find("#") {
-                current_index = &current_key[..index];
-                current_value = current_value.get(current_index).unwrap();
-                current_key = &current_key[index..];
-                has_sharp = true;
-            }
-            if has_dot ||has_sharp {
-                should_stop = true;
-            }
-        }
-
-        current_value.clone()
-    };
-
-
-
-    let map_rules = vec![
-        vec!["data#list#a", "r#a"],
-        vec!["data#list#b", "r#b"],
-        vec!["data#list#id", "r#id"],
-        vec!["data#list#prentid", "r#prentid"]
-    ];
-
-
+        },
+        Some(val) => Some(val.clone()),
+    }
 }
