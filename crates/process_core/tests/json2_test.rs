@@ -3,7 +3,6 @@ use process_core::json::new_find_value;
 
 #[test]
 fn new_find_value_test() {
-
     let origin_data = json!({
         "data":[
             {
