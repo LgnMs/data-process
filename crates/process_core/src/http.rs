@@ -6,11 +6,11 @@ use reqwest::{
     header::{self, HeaderName, HeaderValue},
     Method,
 };
-use serde_json::{json, Value};
+use serde_json::{Value};
 use tracing::{debug, error};
 
 use crate::{
-    json::{find_value, generate_new_map},
+    json::{find_value, map_data},
     process::{Export, Receive, Serde},
 };
 
@@ -123,12 +123,7 @@ impl Serde for Http {
     type Target = Result<Http>;
 
     fn serde(&mut self) -> Self::Target {
-        let map_rules = &self.map_rules;
-        let origin_data = &self.data;
-        let mut new_data = json!({});
-        generate_new_map(&map_rules, &mut new_data, origin_data)?;
-
-        self.data = new_data;
+        self.data = map_data(&self.data, &self.map_rules).ok_or(anyhow!("映射数据不成功"))?;
         Ok(self.clone())
     }
 }
@@ -189,7 +184,7 @@ fn find(
     result_vec: &mut Vec<String>,
     template_sql: &String,
 ) -> Result<()> {
-    let value = find_value(rel_key, data)?;
+    let value = find_value(rel_key, data).ok_or(anyhow!("未找到数据"))?;
 
     if let Some(index) = rel_key.chars().position(|c| c == '#') {
         let data_list = value.as_array().unwrap();
@@ -200,7 +195,7 @@ fn find(
             if rel_key.contains("#") {
                 find(&key, rel_key, &old_item, result_vec, template_sql)?;
             } else {
-                let item = find_value(rel_key, old_item)?;
+                let item = find_value(rel_key, old_item).ok_or(anyhow!("未找到数据"))?;
                 println!("item : {}", item);
                 if let Some(template) = result_vec.get(j) {
                     result_vec[j] = template.replace(key, item.to_string().as_str());

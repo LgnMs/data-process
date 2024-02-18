@@ -491,7 +491,7 @@ pub async fn collect_data_with_http(
     let mut has_next_page = true;
 
     if let Some(filed_of_result_data) = data.filed_of_result_data.as_ref() {
-        if let Ok(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data) {
+        if let Some(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data) {
             if let Some(array) = found_data.as_array() {
                 if array.is_empty() {
                     has_next_page = false;

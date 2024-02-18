@@ -61,5 +61,5 @@ fn main() {
     conn.execute_update(r#"INSERT INTO "public"."test" (name) VALUES('ttd');"#)
         .expect("TODO: panic message");
 
-    let res: Vec<Model> = conn.execute_query(r##"SELECT * FROM public.test;"##)?;
+    // let res: Vec<Model> = conn.execute_query(r##"SELECT * FROM public.test;"##);
 }
