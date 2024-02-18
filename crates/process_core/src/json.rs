@@ -1,4 +1,5 @@
-use serde_json::{json, Value};
+use std::ptr::null;
+use serde_json::{json, to_string, Value};
 
 //
 // pub fn find_value<T: Borrow<str>>(key_o: T, data: &Value) -> Result<Value> {
@@ -245,6 +246,7 @@ pub fn find_value(key: &str, value: &Value) -> Option<Value> {
         current_index = current_key;
 
         current_value = re_find(current_index, &current_value.unwrap());
+
     }
 
     match current_value {
@@ -262,10 +264,18 @@ pub fn re_find(key: &str, value: &Value) -> Option<Value> {
                 let mut list = list
                     .iter()
                     .map(|x| {
-                        let val = re_find(key, x).unwrap();
-                        if val.is_array() {
-                            has_array = true;
-                        }
+                        let val = match re_find(key, x) {
+                            None => {
+                                has_array = false;
+                                json!(null)
+                            },
+                            Some(x) => {
+                                if x.is_array() {
+                                    has_array = true;
+                                }
+                                x
+                            }
+                        };
                         val
                     })
                     .collect::<Vec<Value>>();
@@ -284,7 +294,7 @@ pub fn re_find(key: &str, value: &Value) -> Option<Value> {
     }
 }
 
-pub(crate) fn map_data(origin_data: &Value, map_rules: &Vec<[String; 2]>) -> Option<Value> {
+pub fn map_data(origin_data: &Value, map_rules: &Vec<[String; 2]>) -> Option<Value> {
     let mut new_value = json!({});
 
     for rule in map_rules {
@@ -294,6 +304,9 @@ pub(crate) fn map_data(origin_data: &Value, map_rules: &Vec<[String; 2]>) -> Opt
         get_target_rule_data(origin, target, origin_data, &mut new_value);
     }
 
+    let a = new_value.to_string();
+    println!("a {:?}", a);
+    println!("new_value {new_value}");
     if new_value == json!({}) {
         None
     } else {
@@ -349,8 +362,8 @@ fn get_target_rule_data(o_key: &str, t_key: &str, origin_data: &Value, value: &m
     } else {
         current_key = t_key;
         let target_value = find_value(o_key, origin_data).unwrap_or(json!(null));
-
         if let Some(res_list) = target_value.as_array() {
+            let mut i = 0;
             for item in res_list {
                 if let Some(v_map) = value.as_object_mut() {
                     v_map.insert(current_key.to_string(), item.clone());
@@ -361,15 +374,35 @@ fn get_target_rule_data(o_key: &str, t_key: &str, origin_data: &Value, value: &m
                             }
                         ));
                     } else {
-                        for item2 in v_array {
-                            item2
-                                .as_object_mut()
-                                .unwrap()
-                                .insert(current_key.to_string(), item.clone());
-                        }
+                        // if res_list.len() > v_array.len() {
+                        // if v_array.get(i).is_none() {
+                        //     v_array.push(v_array[v_array.len()-1].clone());
+                        // }
+                        // FIXME 返回的值关系未正确匹配
+                        let mut current_item = v_array[v_array.len()-1].clone();
+                        current_item
+                            .as_object_mut()
+                            .unwrap()
+                            .insert(current_key.to_string(), item.clone());
+                        v_array.push(current_item);
+                            // .entry(current_key)
+                            // .and_modify(|e| *e = item.clone())
+                            // .or_insert(json!(null));
+                        // } else {
+                        //     for v_array_item in v_array {
+                        //         v_array_item
+                        //             .as_object_mut()
+                        //             .unwrap()
+                        //             .entry(current_key)
+                        //             .and_modify(|e| *e = item.clone())
+                        //             .or_insert(json!(null));
+                        //     }
+                        // }
                     }
                 }
+                i += 1;
             }
+
         }
     }
 }

@@ -217,6 +217,11 @@ pub async fn test_data_3() -> anyhow::Result<Json<Value>, AppError> {
             }]
         }
     });
+
+    // result.domains#data#ciId             data#1_ciId
+    // result.domains#data#metricList#name  data#1_name
+    // result.domains#data#components#ciId  data#2_ciId
+    // result.domains#data#components#metricList#name  data#2_name
     debug!("mock test_data_1 start sleep 5000ms!");
     sleep(Duration::from_millis(1000)).await;
     debug!("mock test_data_1 start sleep done!");

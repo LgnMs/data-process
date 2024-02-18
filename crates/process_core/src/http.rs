@@ -170,47 +170,26 @@ impl Export for Http {
 
         for key in key_vec {
             let rel_key = &key[2..key.len() - 1];
-            find(&key, rel_key, &self.data, &mut result_vec, template_sql)?;
+            let value = find_value(rel_key, &self.data).ok_or(anyhow!("未在data:{}中找到数据", &self.data))?;
+            if let Some(list) = value.as_array() {
+                for i in 0..list.len() {
+                    let item: &str;
+                    let temp_string = list[i].to_string();
+                    if let Some(x) = list[i].as_str() {
+                        item = x;
+                    } else {
+                        item = temp_string.as_str();
+                    }
+
+                    if result_vec.get(i).is_none() {
+                        result_vec.push(template_sql.replace(key.as_str(), item));
+                    } else {
+                        result_vec[i] = result_vec[i].replace(key.as_str(), item);
+                    }
+                }
+            }
         }
 
         Ok(result_vec)
     }
-}
-
-fn find(
-    key: &String,
-    rel_key: &str,
-    data: &Value,
-    result_vec: &mut Vec<String>,
-    template_sql: &String,
-) -> Result<()> {
-    let value = find_value(rel_key, data).ok_or(anyhow!("未找到数据"))?;
-
-    if let Some(index) = rel_key.chars().position(|c| c == '#') {
-        let data_list = value.as_array().unwrap();
-
-        let mut j = 0;
-        for old_item in data_list {
-            let rel_key = &rel_key[index + 1..];
-            if rel_key.contains("#") {
-                find(&key, rel_key, &old_item, result_vec, template_sql)?;
-            } else {
-                let item = find_value(rel_key, old_item).ok_or(anyhow!("未找到数据"))?;
-                println!("item : {}", item);
-                if let Some(template) = result_vec.get(j) {
-                    result_vec[j] = template.replace(key, item.to_string().as_str());
-                } else {
-                    result_vec.push(template_sql.replace(key, item.to_string().as_str()));
-                }
-                j += 1;
-            }
-        }
-    } else {
-        if let Some(template) = result_vec.get_mut(0) {
-            result_vec[0] = template.replace(key, value.as_str().unwrap());
-        } else {
-            result_vec.push(template_sql.replace(key, value.as_str().unwrap()))
-        }
-    }
-    Ok(())
 }
