@@ -98,6 +98,13 @@ fn find_value_test() {
 
     let e = find_value("result.code", &origin_data2, true);
     assert_eq!(e, Some(json!(200)));
+
+    let origin_data3 = json!([
+        {"a": 1}, {"a": 2}, {"a": 3}
+    ]);
+
+    let e = find_value("a", &origin_data3, true);
+    assert_eq!(e, Some(json!(vec![1, 2, 3])));
 }
 
 #[test]
@@ -212,42 +219,44 @@ fn test_flat_nested_object() {
 
     let new_data = flat_nested_object(&origin_data, "result.data", "children", "id");
 
-    assert_eq!(new_data.unwrap(), json!({
-        "result": {
-            "code": 200,
-            "data":[
-                {
-                    "parent_id": null,
-                    "id": 1,
-                    "list": [
-                        {
-                            "a": 2,
-                            "b": 2
-                        }
-                    ],
-                },
-                {
-                    "parent_id": 1,
-                    "id": 2,
-                    "list": [
-                        {
-                            "a": 2,
-                            "b": 2
-                        }
-                    ],
-                },
-                {
-                    "parent_id": 2,
-                    "id": 3,
-                    "list": [
-                        {
-                            "a": 3,
-                            "b": 3
-                        }
-                    ],
-                }
-            ]
-        }
-    }))
+    assert_eq!(
+        new_data.unwrap(),
+        json!({
+            "result": {
+                "code": 200,
+                "data":[
+                    {
+                        "parent_id": null,
+                        "id": 1,
+                        "list": [
+                            {
+                                "a": 2,
+                                "b": 2
+                            }
+                        ],
+                    },
+                    {
+                        "parent_id": 1,
+                        "id": 2,
+                        "list": [
+                            {
+                                "a": 2,
+                                "b": 2
+                            }
+                        ],
+                    },
+                    {
+                        "parent_id": 2,
+                        "id": 3,
+                        "list": [
+                            {
+                                "a": 3,
+                                "b": 3
+                            }
+                        ],
+                    }
+                ]
+            }
+        })
+    )
 }
-

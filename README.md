@@ -23,3 +23,11 @@ $ cargo run
 # 前端
 $ cd crates/process_web/ui && npm run dev
 ```
+
+### TODO
+
+- [ ] 采集Excel中的数据
+- [ ] 数据同步功能
+- [ ] 采集日志存储方式优化？
+- [ ] mysql数据库支持
+- [ ] 数据共享功能

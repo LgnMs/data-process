@@ -37,10 +37,11 @@ async fn test_http() -> Result<()> {
     println!("Http: {:?}", http);
     let export1 = http
         .set_template_string(
-            "INSERT INTO table_name (column1, column2) VALUES (${res.data#id}, ${res.data#no2})"
+            "INSERT INTO table_name (column1, column2) VALUES ('${res.data#id}', '${res.data#no2}')"
                 .to_string(),
         )
-        .export()?;
+        .export()
+        .await?;
     println!("export: {:?}", export1);
     Ok(())
 }

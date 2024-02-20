@@ -2220,8 +2220,10 @@ dependencies = [
  "anyhow",
  "async-trait",
  "reqwest",
+ "sea-orm",
  "serde",
  "serde_json",
+ "tokio",
  "tracing",
  "tracing-subscriber",
 ]

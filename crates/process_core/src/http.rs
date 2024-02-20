@@ -1,3 +1,4 @@
+/// 从http请求中获取数据并处理
 use std::time::Duration;
 
 use anyhow::{anyhow, Result};
@@ -10,11 +11,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{debug, error};
 
+use crate::json::flat_nested_object;
 use crate::{
     json::{find_value, map_data},
     process::{Export, Receive, Serde},
 };
-use crate::json::flat_nested_object;
 
 #[derive(Default, Debug, Clone)]
 pub struct Http {
@@ -139,24 +140,15 @@ impl Serde for Http {
     type Target = Result<Http>;
 
     fn serde(&mut self) -> Self::Target {
-        // self.NestedConfig = Some(vec![NestedConfig {
-        //     root_key: "result.domains".to_string(),
-        //     children_key: "data".to_string(),
-        //     id_key: "code".to_string(),
-        // }, NestedConfig {
-        //     root_key: "result.domains".to_string(),
-        //     children_key: "components".to_string(),
-        //     id_key: "ciId".to_string(),
-        // },NestedConfig {
-        //     root_key: "result.domains".to_string(),
-        //     children_key: "metricList".to_string(),
-        //     id_key: "ciId".to_string(),
-        // }]);
-
         // 处理接收到的数据，用于展开父子结构的嵌套数据
         if let Some(config_list) = &self.nested_config {
             for item in config_list {
-                match flat_nested_object(&self.data, item.root_key.as_str(), item.children_key.as_str(), item.id_key.as_str()) {
+                match flat_nested_object(
+                    &self.data,
+                    item.root_key.as_str(),
+                    item.children_key.as_str(),
+                    item.id_key.as_str(),
+                ) {
                     None => {}
                     Some(x) => {
                         let a = x.to_string();
@@ -175,68 +167,74 @@ impl Serde for Http {
     }
 }
 
-type SQLString = String;
+pub(crate) type SQLString = String;
 
+#[async_trait]
 impl Export for Http {
     type Target = Result<Vec<SQLString>>;
 
-    fn export(&mut self) -> Self::Target {
+    async fn export(&mut self) -> Self::Target {
         let template_sql = self
             .template_string
             .as_ref()
             .ok_or(anyhow!("未设置template_string"))?;
 
-        let mut temp_index_vec = vec![];
-
-        for i in 0..template_sql.len() {
-            let s = &template_sql[i..i + 1];
-            if s == "{" && i != 0 && &template_sql[i - 1..i] == "$" {
-                temp_index_vec.push(i);
-            } else if s == "}" {
-                if let Some(last) = temp_index_vec.last() {
-                    let last_i = last.clone();
-                    if &template_sql[last_i..last_i + 1] == "{" {
-                        temp_index_vec.push(i);
-                    }
-                }
-            }
-        }
-
-        let mut key_vec = vec![];
-        let mut i = 0;
-        while i < temp_index_vec.len() {
-            let one_index = temp_index_vec[i] - 1; // 取"{"前$的索引，所以减1
-            let two_index = temp_index_vec[i + 1];
-
-            key_vec.push(template_sql[one_index..two_index + 1].to_string());
-
-            i += 2;
-        }
-
-        let mut result_vec: Vec<String> = vec![];
-
-        for key in key_vec {
-            let rel_key = &key[2..key.len() - 1];
-            let value = find_value(rel_key, &self.data, true).ok_or(anyhow!("未在rel_key: {rel_key} data:{}中找到数据", &self.data))?;
-            if let Some(list) = value.as_array() {
-                for i in 0..list.len() {
-                    let item: &str;
-                    let temp_string = list[i].to_string();
-                    if let Some(x) = list[i].as_str() {
-                        item = x;
-                    } else {
-                        item = temp_string.as_str();
-                    }
-
-                    if result_vec.get(i).is_none() {
-                        result_vec.push(template_sql.replace(key.as_str(), item));
-                    } else {
-                        result_vec[i] = result_vec[i].replace(key.as_str(), item);
-                    }
-                }
-            }
-        }
-
-        Ok(result_vec)
+        generate_sql_list(template_sql, &self.data)
     }
+}
+
+pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<String>> {
+    let mut temp_index_vec = vec![];
+
+    for i in 0..template_sql.len() {
+        let s = &template_sql[i..i + 1];
+        if s == "{" && i != 0 && &template_sql[i - 1..i] == "$" {
+            temp_index_vec.push(i);
+        } else if s == "}" {
+            if let Some(last) = temp_index_vec.last() {
+                let last_i = last.clone();
+                if &template_sql[last_i..last_i + 1] == "{" {
+                    temp_index_vec.push(i);
+                }
+            }
+        }
+    }
+
+    let mut key_vec = vec![];
+    let mut i = 0;
+    while i < temp_index_vec.len() {
+        let one_index = temp_index_vec[i] - 1; // 取"{"前$的索引，所以减1
+        let two_index = temp_index_vec[i + 1];
+
+        key_vec.push(template_sql[one_index..two_index + 1].to_string());
+
+        i += 2;
+    }
+
+    let mut result_vec: Vec<String> = vec![];
+
+    for key in key_vec {
+        let rel_key = &key[2..key.len() - 1];
+        let value = find_value(rel_key, data, true)
+            .ok_or(anyhow!("未在rel_key: {rel_key} data:{}中找到数据", data))?;
+        if let Some(list) = value.as_array() {
+            for i in 0..list.len() {
+                let item: &str;
+                let temp_string = list[i].to_string();
+                if let Some(x) = list[i].as_str() {
+                    item = x;
+                } else {
+                    item = temp_string.as_str();
+                }
+
+                if result_vec.get(i).is_none() {
+                    result_vec.push(template_sql.replace(key.as_str(), item));
+                } else {
+                    result_vec[i] = result_vec[i].replace(key.as_str(), item);
+                }
+            }
+        }
+    }
+
+    Ok(result_vec)
 }

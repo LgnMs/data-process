@@ -493,7 +493,9 @@ pub async fn collect_data_with_http(
     let mut has_next_page = true;
 
     if let Some(filed_of_result_data) = data.filed_of_result_data.as_ref() {
-        if let Some(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data, false) {
+        if let Some(found_data) =
+            find_value(filed_of_result_data.borrow(), &http_receive.data, false)
+        {
             if let Some(array) = found_data.as_array() {
                 if array.is_empty() {
                     has_next_page = false;
@@ -516,7 +518,6 @@ pub async fn collect_data_with_http(
         http_receive.set_nested_config(config);
     }
 
-
     if let Some(x) = &data.map_rules {
         if !x.as_array().unwrap().is_empty() {
             http_receive.set_map_rules(get_map_rules(Some(x)));
@@ -526,7 +527,8 @@ pub async fn collect_data_with_http(
     let res = http_receive
         .serde()?
         .set_template_string(data.template_string.clone())
-        .export();
+        .export()
+        .await;
 
     Ok((has_next_page, res))
 }
