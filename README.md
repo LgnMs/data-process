@@ -1,4 +1,10 @@
-## 数据处理平台
+<h4 align="center">
+   数据处理平台
+    <a href="https://github.com/LgnMs/data-process-center/actions/workflows/rust.yml" target="_blank">
+       <img src="https://github.com/LgnMs/data-process-center/actions/workflows/rust.yml/badge.svg" />
+    </a>
+</h4>
+
 
 ### setup
 1. 准备数据库 (下列数据库可选)
