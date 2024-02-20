@@ -59,6 +59,14 @@ export default function EditForm(props: IEditFormProps) {
       headers[item.key] = item.value;
     });
 
+    const nested_config = values.nested_config?.map((item: any) => {
+      return {
+        root_key: item.key,
+        children_key: item.value,
+        id_key: item.value2,
+      }
+    })
+
     const map_rules = values.map_rules?.map((item: any) => [
       item.key,
       item.value,
@@ -83,6 +91,7 @@ export default function EditForm(props: IEditFormProps) {
       ...values,
       headers,
       map_rules,
+      nested_config,
       body: JSON.stringify(body),
     };
 
@@ -126,6 +135,11 @@ export default function EditForm(props: IEditFormProps) {
           const obj = JSON.parse(data.body);
           data.body = Object.keys(obj).map((key) => {
             return { key, value: obj[key] };
+          });
+        }
+        if (data.nested_config) {
+          data.nested_config = data.nested_config.map((item: any) => {
+            return { key: item.root_key, value: item.children_key, value2: item.id_key };
           });
         }
         if (data.map_rules) {
@@ -206,6 +220,7 @@ export default function EditForm(props: IEditFormProps) {
     buttonText?: string;
     initialValue?: any[];
     isColumnConfig?: boolean;
+    isNestedConfig?: boolean;
   }) {
     return (
       <Form.List name={props.name} initialValue={props.initialValue}>
@@ -222,6 +237,13 @@ export default function EditForm(props: IEditFormProps) {
                   <Form.Item noStyle name={[field.name, "value"]}>
                     <Input placeholder="value" />
                   </Form.Item>
+                  {
+                    props.isNestedConfig && (
+                      <Form.Item noStyle name={[field.name, "value2"]}>
+                        <Input placeholder="value2" />
+                      </Form.Item>
+                    )
+                  }
                   {props.isColumnConfig && (
                     <Form.Item
                       noStyle
@@ -425,6 +447,18 @@ export default function EditForm(props: IEditFormProps) {
               }
             >
               <FormArrayList name="body" />
+            </Form.Item>
+          </Col>
+
+          <Col span={24}>
+            <Form.Item
+              label={
+                <LabelTips tips="对接收的数据按规则依次执行展开">
+                  嵌套数据处理
+                </LabelTips>
+              }
+            >
+              <FormArrayList name="nested_config" isNestedConfig/>
             </Form.Item>
           </Col>
 

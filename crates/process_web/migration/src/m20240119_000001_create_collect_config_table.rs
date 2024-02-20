@@ -56,6 +56,11 @@ impl MigrationTrait for Migration {
                             .comment(r#"数据映射关系: [["code", "code2"]]"#),
                     )
                     .col(
+                        ColumnDef::new(CollectConfig::NestedConfig)
+                            .json()
+                            .comment(r#"嵌套数据展开规则"#),
+                    )
+                    .col(
                         ColumnDef::new(CollectConfig::TemplateString)
                             .string()
                             .not_null()
@@ -149,6 +154,7 @@ pub enum CollectConfig {
     Headers,
     Body,
     MapRules,
+    NestedConfig,
     TemplateString,
     LoopRequestByPagination,
     CacheTableName,

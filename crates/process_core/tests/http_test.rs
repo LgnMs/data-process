@@ -21,7 +21,7 @@ async fn test_http() -> Result<()> {
         // )
         // .await?
         .set_data(json!({"code":"SUCCESS", "data": {"result": [{"pkid": 1, "citycode": "2", "avg_no2_degree": "3" }]}}))
-        .add_map_rules(vec![
+        .set_map_rules(vec![
             ["code".to_string(), "code2".to_string()],
             ["data.result#pkid".to_string(), "res.data#id".to_string()],
             [

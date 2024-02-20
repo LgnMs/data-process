@@ -5,11 +5,12 @@ use std::sync::Arc;
 use crate::api::collect_config::ListParams;
 use anyhow::anyhow;
 use chrono::Local;
-use process_core::http::HttpConfig;
+use process_core::http::{HttpConfig, NestedConfig};
 use process_core::json::find_value;
 use process_core::process::{Export, Receive, Serde};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
+
 use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
 use uuid::Uuid;
@@ -92,6 +93,7 @@ impl CollectConfigService {
             headers: Set(data_clone.headers),
             body: Set(data_clone.body),
             map_rules: Set(data_clone.map_rules),
+            nested_config: Set(data_clone.nested_config),
             template_string: Set(data_clone.template_string),
             loop_request_by_pagination: Set(data_clone.loop_request_by_pagination),
             cache_table_name: Set(data_clone.cache_table_name),
@@ -491,7 +493,7 @@ pub async fn collect_data_with_http(
     let mut has_next_page = true;
 
     if let Some(filed_of_result_data) = data.filed_of_result_data.as_ref() {
-        if let Some(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data) {
+        if let Some(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data, false) {
             if let Some(array) = found_data.as_array() {
                 if array.is_empty() {
                     has_next_page = false;
@@ -509,15 +511,20 @@ pub async fn collect_data_with_http(
         has_next_page = false;
     }
 
-    if data.map_rules.is_some() {
-        if let Some(x) = &data.map_rules {
-            if !x.as_array().unwrap().is_empty() {
-                http_receive = http_receive.add_map_rules(get_map_rules(Some(x))).serde()?;
-            }
+    if let Some(x) = &data.nested_config {
+        let config: Vec<NestedConfig> = serde_json::from_value(x.clone()).unwrap();
+        http_receive.set_nested_config(config);
+    }
+
+
+    if let Some(x) = &data.map_rules {
+        if !x.as_array().unwrap().is_empty() {
+            http_receive.set_map_rules(get_map_rules(Some(x)));
         }
     }
 
     let res = http_receive
+        .serde()?
         .set_template_string(data.template_string.clone())
         .export();
 

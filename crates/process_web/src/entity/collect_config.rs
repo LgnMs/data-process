@@ -31,6 +31,8 @@ pub struct Model {
     pub max_count_of_request: Option<i32>,
     pub cache_table_name: Option<String>,
     #[ts(type = "any")]
+    pub nested_config: Option<Json>,
+    #[ts(type = "any")]
     pub db_columns_config: Option<Json>,
     pub cron: Option<String>,
     pub job_id: Option<Uuid>,

@@ -6,19 +6,22 @@ use reqwest::{
     header::{self, HeaderName, HeaderValue},
     Method,
 };
-use serde_json::{Value};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use tracing::{debug, error};
 
 use crate::{
     json::{find_value, map_data},
     process::{Export, Receive, Serde},
 };
+use crate::json::flat_nested_object;
 
 #[derive(Default, Debug, Clone)]
 pub struct Http {
     pub data: Value,
     /// 将数组0的数据映射给数组1的
-    pub map_rules: Vec<[String; 2]>,
+    pub map_rules: Option<Vec<[String; 2]>>,
+    pub nested_config: Option<Vec<NestedConfig>>,
     /// 导出字符模板
     /// ```js
     /// 例如：data = { data: [{"id: 1, "name": "name1"}, {"id: 2, "name": "name2"}] }
@@ -35,6 +38,13 @@ pub struct HttpConfig {
     pub body: Option<String>,
 }
 
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+pub struct NestedConfig {
+    root_key: String,
+    children_key: String,
+    id_key: String,
+}
+
 impl Http {
     pub fn new() -> Self {
         Self::default()
@@ -45,8 +55,14 @@ impl Http {
         self
     }
 
-    pub fn add_map_rules(&mut self, map_rules: Vec<[String; 2]>) -> &mut Self {
-        self.map_rules = map_rules;
+    pub fn set_map_rules(&mut self, map_rules: Vec<[String; 2]>) -> &mut Self {
+        self.map_rules = Some(map_rules);
+
+        self
+    }
+
+    pub fn set_nested_config(&mut self, nested_config: Vec<NestedConfig>) -> &mut Self {
+        self.nested_config = Some(nested_config);
 
         self
     }
@@ -123,7 +139,38 @@ impl Serde for Http {
     type Target = Result<Http>;
 
     fn serde(&mut self) -> Self::Target {
-        self.data = map_data(&self.data, &self.map_rules).ok_or(anyhow!("映射数据不成功"))?;
+        // self.NestedConfig = Some(vec![NestedConfig {
+        //     root_key: "result.domains".to_string(),
+        //     children_key: "data".to_string(),
+        //     id_key: "code".to_string(),
+        // }, NestedConfig {
+        //     root_key: "result.domains".to_string(),
+        //     children_key: "components".to_string(),
+        //     id_key: "ciId".to_string(),
+        // },NestedConfig {
+        //     root_key: "result.domains".to_string(),
+        //     children_key: "metricList".to_string(),
+        //     id_key: "ciId".to_string(),
+        // }]);
+
+        // 处理接收到的数据，用于展开父子结构的嵌套数据
+        if let Some(config_list) = &self.nested_config {
+            for item in config_list {
+                match flat_nested_object(&self.data, item.root_key.as_str(), item.children_key.as_str(), item.id_key.as_str()) {
+                    None => {}
+                    Some(x) => {
+                        let a = x.to_string();
+                        println!("a {a}");
+                        self.data = x;
+                    }
+                }
+            }
+        }
+
+        if let Some(map_rules) = &self.map_rules {
+            self.data = map_data(&self.data, map_rules).ok_or(anyhow!("映射数据不成功"))?;
+        }
+
         Ok(self.clone())
     }
 }
@@ -170,7 +217,7 @@ impl Export for Http {
 
         for key in key_vec {
             let rel_key = &key[2..key.len() - 1];
-            let value = find_value(rel_key, &self.data).ok_or(anyhow!("未在data:{}中找到数据", &self.data))?;
+            let value = find_value(rel_key, &self.data, true).ok_or(anyhow!("未在rel_key: {rel_key} data:{}中找到数据", &self.data))?;
             if let Some(list) = value.as_array() {
                 for i in 0..list.len() {
                     let item: &str;

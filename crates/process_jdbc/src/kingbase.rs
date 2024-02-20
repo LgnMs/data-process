@@ -14,7 +14,7 @@ pub struct Kingbase {
 impl Kingbase {
     pub fn new() -> Result<Self> {
         let driver_path = "lib/kingbase8-8.6.0.jar";
-        let entry = ClasspathEntry::new("lib/kingbase8-8.6.0.jar");
+        let entry = ClasspathEntry::new("libs/kingbase8-8.6.0.jar");
         let jvm = JvmBuilder::new().classpath_entry(entry).build()?;
 
         Ok(Self {

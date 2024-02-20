@@ -1,8 +1,11 @@
+use std::fs::File;
+use std::io::BufReader;
 use crate::api::common::{AppError, AppState, PaginationPayload};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde_json::Value;
 use std::sync::Arc;
+use axum::extract::Path;
 use tokio::time::{sleep, Duration};
 use tracing::debug;
 
@@ -10,7 +13,8 @@ pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
         .route("/test_data_1", get(test_data_1))
         .route("/test_data_2", post(test_data_2))
-        .route("/test_data_3", get(test_data_3));
+        .route("/test_data_3", get(test_data_3))
+        .route("/test_data_4", get(test_data_4));
 
     routes
 }
@@ -226,4 +230,19 @@ pub async fn test_data_3() -> anyhow::Result<Json<Value>, AppError> {
     sleep(Duration::from_millis(1000)).await;
     debug!("mock test_data_1 start sleep done!");
     Ok(Json(data))
+}
+
+pub async fn test_data_4() -> anyhow::Result<Json<Value>, AppError> {
+    let file = File::open("static/data/test_json.txt")?;
+    let reader = BufReader::new(file);
+    let u = serde_json::from_reader(reader)?;
+
+    // result.domains#data#ciId             data#1_ciId
+    // result.domains#data#metricList#name  data#1_name
+    // result.domains#data#components#ciId  data#2_ciId
+    // result.domains#data#components#metricList#name  data#2_name
+    debug!("mock test_data_1 start sleep 5000ms!");
+    sleep(Duration::from_millis(1000)).await;
+    debug!("mock test_data_1 start sleep done!");
+    Ok(Json(u))
 }

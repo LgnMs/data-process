@@ -9,6 +9,7 @@ export interface CollectConfig {
   headers: any;
   body: string | null;
   map_rules: any;
+  nested_config: any;
   template_string: string;
   loop_request_by_pagination: boolean | null;
   max_number_of_result_data: number | null;
