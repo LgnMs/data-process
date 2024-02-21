@@ -22,7 +22,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(SyncConfig::DataSource)
-                            .string()
+                            .json()
                             .not_null()
                             .comment("数据源"),
                     )
@@ -33,22 +33,34 @@ impl MigrationTrait for Migration {
                             .comment("数据源表名"),
                     )
                     .col(
+                        ColumnDef::new(SyncConfig::SourceTableColumns)
+                            .json()
+                            .not_null()
+                            .comment("数据源要查询的字段"),
+                    )
+                    .col(
                         ColumnDef::new(SyncConfig::QuerySql)
                             .string()
                             .not_null()
-                            .comment("查询SQL"),
-                    )
-                    .col(
-                        ColumnDef::new(SyncConfig::TargetType)
-                            .string()
-                            .not_null()
-                            .comment("同步数据目标类型"),
+                            .comment("数据源要执行的查询SQL"),
                     )
                     .col(
                         ColumnDef::new(SyncConfig::TargetDataSource)
-                            .string()
+                            .json()
                             .not_null()
                             .comment("同步数据目标源"),
+                    )
+                    .col(
+                        ColumnDef::new(SyncConfig::TargetTableName)
+                            .json()
+                            .not_null()
+                            .comment("同步数据目标表"),
+                    )
+                    .col(
+                        ColumnDef::new(SyncConfig::TargetQuerySqlTemplate)
+                            .json()
+                            .not_null()
+                            .comment("目标数据库要执行的sql模板"),
                     )
                     .col(
                         ColumnDef::new(SyncConfig::UpdateTime)
@@ -79,9 +91,11 @@ pub enum SyncConfig {
     Id,
     DataSource,
     SourceTableName,
+    SourceTableColumns,
     QuerySql,
-    TargetType,
     TargetDataSource,
+    TargetTableName,
+    TargetQuerySqlTemplate,
     UpdateTime,
     CreateTime,
 }

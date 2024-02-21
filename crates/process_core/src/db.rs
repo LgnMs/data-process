@@ -13,6 +13,7 @@ use crate::process::Serde;
 #[derive(Debug, Clone)]
 pub struct Db {
     pub data: Option<Value>,
+    pub db_source_config: Option<DataSource>,
     // pub map_rules: Option<Vec<[String; 2]>>,
     pub template_string: Option<String>,
     pub target_db_source_config: Option<DataSource>,
@@ -20,7 +21,7 @@ pub struct Db {
 
 #[derive(Debug, Clone)]
 pub struct DbConfig {
-    pub conn: DatabaseConnection,
+    pub db_source_config: DataSource,
 }
 
 /// 管理多数据源，然后执行SQL
@@ -48,6 +49,7 @@ impl Db {
         Self {
             data: None,
             template_string: None,
+            db_source_config: None,
             target_db_source_config: None,
         }
     }
@@ -82,26 +84,42 @@ async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Res
                 db.execute(Statement::from_string(db.get_database_backend(), sql))
                     .await?;
             }
+            Ok(())
         }
-        Database::MYSQL => {}
-        Database::KINGBASE => {}
-        Database::ORACLE => {}
-        Database::MSSQL => {}
-    };
-
-    Ok(())
+        _ => Ok(())
+    }
 }
+
+async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<Value>> {
+     match db_source.database_type {
+        Database::POSTGRES => {
+            let db_url = format!(
+                "postgres://{}:{}@{}/{}",
+                db_source.user, db_source.password, db_source.host, db_source.database_name
+            );
+            let db = sea_orm::Database::connect(db_url.as_str()).await?;
+
+            let data: Vec<JsonValue> = JsonValue::find_by_statement(Statement::from_sql_and_values(
+                db.get_database_backend(),
+                query_sql,
+                [],
+            ))
+                .all(&db)
+                .await?;
+
+            Ok(data)
+        }
+        _ => Ok(vec![]),
+    }
+}
+
 #[async_trait]
 impl Receive<DbConfig, Result<Db>> for Db {
     async fn receive(&mut self, query_sql: String, parameters: DbConfig) -> Result<Db> {
-        let data: Vec<JsonValue> = JsonValue::find_by_statement(Statement::from_sql_and_values(
-            parameters.conn.get_database_backend(),
-            query_sql,
-            [],
-        ))
-        .all(&parameters.conn)
-        .await?;
 
+        let data = find_all_sql(&parameters.db_source_config, query_sql).await?;
+
+        println!("data {data:?}");
         self.data = Some(json!(data));
 
         Ok(self.clone())
@@ -142,12 +160,6 @@ impl Export for Db {
         let sql_list = generate_sql_list(template_sql, data)?;
 
         if let Some(db_source) = &self.target_db_source_config {
-            // tokio::task::spawn(async move {
-            //     if let Err(err) = execute_sql(&db, sql_list).await {
-            //         error!("{}", anyhow!(err));
-            //     }
-            // });
-            println!("db_source {db_source:?}");
             execute_sql(&db_source, sql_list).await?;
         }
         Ok(())
