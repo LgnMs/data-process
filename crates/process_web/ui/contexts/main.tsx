@@ -17,6 +17,18 @@ import {
   CollectLogState,
   initCollectLogState,
 } from "@/contexts/collectLogContext";
+import {
+  initSyncConfigState,
+  SyncConfigAction,
+  SyncConfigReducer,
+  SyncConfigState,
+} from "@/contexts/syncCofnigContext";
+import {
+  initSyncLogState,
+  SyncLogAction,
+  SyncLogReducer,
+  SyncLogState,
+} from "@/contexts/syncLogContext";
 
 export interface IRoleInfo {
   id: string;
@@ -32,6 +44,8 @@ interface MainState {
   userInfo: Record<string, any> | null;
   collectConfig: CollectConfigState;
   collectLog: CollectLogState;
+  syncConfig: SyncConfigState;
+  syncLog: SyncLogState;
 }
 
 type MainAction =
@@ -40,7 +54,9 @@ type MainAction =
   | { type: "setPermissions"; permissions: MainState["permissions"] }
   | { type: "setUserInfo"; userInfo: MainState["userInfo"] }
   | CollectConfigAction
-  | CollectLogAction;
+  | CollectLogAction
+  | SyncConfigAction
+  | SyncLogAction;
 
 function reducer(state: MainState, action: MainAction) {
   if (action.type === "setToken") {
@@ -85,6 +101,21 @@ function reducer(state: MainState, action: MainAction) {
       ),
     };
   }
+  if (action.type.indexOf("syncConfig") > -1) {
+    return {
+      ...state,
+      syncConfig: SyncConfigReducer(
+        state.syncConfig,
+        action as SyncConfigAction
+      ),
+    };
+  }
+  if (action.type.indexOf("syncLog") > -1) {
+    return {
+      ...state,
+      syncLog: SyncLogReducer(state.syncLog, action as SyncLogAction),
+    };
+  }
 
   throw Error("Unknown action");
 }
@@ -107,6 +138,8 @@ export function MainContextProvider(props: { children: ReactNode }) {
     userInfo: null,
     collectConfig: initCollectConfigState,
     collectLog: initCollectLogState,
+    syncConfig: initSyncConfigState,
+    syncLog: initSyncLogState,
   });
 
   return (
