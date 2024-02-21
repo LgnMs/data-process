@@ -299,6 +299,7 @@ impl CollectConfigService {
         let mut collect_log_string = String::new();
 
         collect_log_string.push_str(format!("采集配置： {:?}\n", data).as_str());
+        // TODO 如果是循环请求修改为分批次插入
         let res = process_data(&data).await;
         match res {
             Ok(list) => {

@@ -4,7 +4,7 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS, Default)]
 #[sea_orm(table_name = "sync_config")]
 #[ts(
     export,
@@ -15,11 +15,18 @@ pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: i32,
-    pub data_source: String,
+    #[ts(type = "any")]
+    pub data_source: Json,
     pub source_table_name: String,
+    #[ts(type = "any")]
+    pub source_table_columns: Json,
     pub query_sql: String,
-    pub target_type: String,
-    pub target_data_source: String,
+    #[ts(type = "any")]
+    pub target_data_source: Json,
+    #[ts(type = "any")]
+    pub target_table_name: Json,
+    #[ts(type = "any")]
+    pub target_query_sql_template: Json,
     #[serde(skip_deserializing)]
     pub update_time: DateTime,
     #[serde(skip_deserializing)]

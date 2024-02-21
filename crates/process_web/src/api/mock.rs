@@ -1,5 +1,4 @@
 use crate::api::common::{AppError, AppState, PaginationPayload};
-use axum::extract::Path;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde_json::Value;
