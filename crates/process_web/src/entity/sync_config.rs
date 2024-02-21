@@ -15,6 +15,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: i32,
+    pub name: String,
     #[ts(type = "any")]
     pub data_source: Json,
     pub source_table_name: String,
@@ -24,9 +25,13 @@ pub struct Model {
     #[ts(type = "any")]
     pub target_data_source: Json,
     #[ts(type = "any")]
-    pub target_table_name: Json,
+    pub target_table_name: String,
     #[ts(type = "any")]
-    pub target_query_sql_template: Json,
+    pub target_query_sql_template: String,
+    pub cron: Option<String>,
+    pub job_id: Option<Uuid>,
+    #[serde(skip_deserializing)]
+    pub del_flag: i32,
     #[serde(skip_deserializing)]
     pub update_time: DateTime,
     #[serde(skip_deserializing)]

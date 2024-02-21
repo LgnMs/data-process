@@ -24,7 +24,9 @@ async fn db_test() -> anyhow::Result<()> {
             r#"SELECT id, parent_code, parent_ci_id, code, "name", unit, value, ci_id, type_name
 FROM public.test_data_32;"#
                 .to_string(),
-            DbConfig { db_source_config: origin },
+            DbConfig {
+                db_source_config: origin,
+            },
         )
         .await?
         .set_template_string(

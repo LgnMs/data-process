@@ -272,7 +272,7 @@ impl CollectConfigService {
             id: collect_log_id,
             collect_config_id: Some(data.id),
             status: 0,
-            running_log: Some(String::new()),
+            running_log: String::new(),
             ..Default::default()
         };
 
@@ -286,7 +286,7 @@ impl CollectConfigService {
         let mut status = 1;
         let model = collect_log::Model {
             status,
-            running_log: Some("开始执行采集任务!".to_string()),
+            running_log: "开始执行采集任务!".to_string(),
             ..Default::default()
         };
         if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model)
@@ -327,7 +327,7 @@ impl CollectConfigService {
 
         let model = collect_log::Model {
             status,
-            running_log: Some(collect_log_string),
+            running_log: collect_log_string,
             ..Default::default()
         };
         if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model)
@@ -350,7 +350,7 @@ impl CollectConfigService {
             let item = item.clone();
             let job_id = create_job_scheduler(state.clone(), &item).await?;
 
-            CollectConfigService::update_job_id_by_id(state, job_id, item.id).await?;
+            Self::update_job_id_by_id(state, job_id, item.id).await?;
         }
         state.sched.start().await?;
 

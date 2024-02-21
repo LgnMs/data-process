@@ -26,9 +26,7 @@ export async function list(
 }
 
 export const ADD = `${PREFIX}/add/`;
-export async function add(
-  payload: CollectLog
-): Promise<ResJson<CollectLog>> {
+export async function add(payload: CollectLog): Promise<ResJson<CollectLog>> {
   console.log(payload);
   return http_post(`${PREFIX}/add`, {
     body: JSON.stringify(payload),

@@ -5,19 +5,18 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS, Default)]
-#[sea_orm(table_name = "collect_log")]
+#[sea_orm(table_name = "sync_log")]
 #[ts(
     export,
-    export_to = "ui/api/models/auto-generates/CollectLog.ts",
-    rename = "CollectLog"
+    export_to = "ui/api/models/auto-generates/SyncLog.ts",
+    rename = "SyncLog"
 )]
 pub struct Model {
-    #[sea_orm(primary_key)]
-    #[serde(skip_deserializing)]
+    #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub collect_config_id: Option<i32>,
     pub running_log: String,
     pub status: i32,
+    pub sync_config_id: i32,
     #[ts(type = "any")]
     pub update_time: DateTime,
     #[ts(type = "any")]
@@ -27,18 +26,18 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::collect_config::Entity",
-        from = "Column::CollectConfigId",
-        to = "super::collect_config::Column::Id",
+        belongs_to = "super::sync_config::Entity",
+        from = "Column::SyncConfigId",
+        to = "super::sync_config::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    CollectConfig,
+    SyncConfig,
 }
 
-impl Related<super::collect_config::Entity> for Entity {
+impl Related<super::sync_config::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::CollectConfig.def()
+        Relation::SyncConfig.def()
     }
 }
 

@@ -22,11 +22,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/',
-        destination: '/manage/collection-setting',
+        source: "/",
+        destination: "/manage/collection-setting",
         permanent: false,
       },
-    ]
+    ];
   },
 };
 

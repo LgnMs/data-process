@@ -15,16 +15,16 @@ export default function HeaderForm() {
       type: "collectLog.setPagination",
       pagination: {
         ...state.collectLog.pagination,
-        data
-      }
-    })
+        data,
+      },
+    });
     await mutate([CollectLog.LIST, state.collectLog.pagination]);
   }
 
   return (
     <Form form={form} name="basic" layout="inline">
       <Form.Item name="collect_config_name">
-        <Input placeholder="请输入采集配置名称"/>
+        <Input placeholder="请输入采集配置名称" />
       </Form.Item>
 
       <Form.Item>
