@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use sea_orm::{ConnectionTrait, DatabaseConnection, FromQueryResult, JsonValue, Statement};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::http::generate_sql_list;
@@ -25,7 +26,7 @@ pub struct DbConfig {
 }
 
 /// 管理多数据源，然后执行SQL
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DataSource {
     pub host: String,
     pub port: String,
@@ -35,7 +36,7 @@ pub struct DataSource {
     pub database_type: Database,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum Database {
     MYSQL,
     MSSQL,
@@ -86,12 +87,12 @@ async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Res
             }
             Ok(())
         }
-        _ => Ok(())
+        _ => Ok(()),
     }
 }
 
 async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<Value>> {
-     match db_source.database_type {
+    match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
                 "postgres://{}:{}@{}/{}",
@@ -99,13 +100,11 @@ async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<V
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
-            let data: Vec<JsonValue> = JsonValue::find_by_statement(Statement::from_sql_and_values(
-                db.get_database_backend(),
-                query_sql,
-                [],
-            ))
-                .all(&db)
-                .await?;
+            let data: Vec<JsonValue> = JsonValue::find_by_statement(
+                Statement::from_sql_and_values(db.get_database_backend(), query_sql, []),
+            )
+            .all(&db)
+            .await?;
 
             Ok(data)
         }
@@ -116,7 +115,6 @@ async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<V
 #[async_trait]
 impl Receive<DbConfig, Result<Db>> for Db {
     async fn receive(&mut self, query_sql: String, parameters: DbConfig) -> Result<Db> {
-
         let data = find_all_sql(&parameters.db_source_config, query_sql).await?;
 
         println!("data {data:?}");
@@ -143,7 +141,7 @@ impl Serde for Db {
 
 #[async_trait]
 impl Export for Db {
-    type Target = Result<()>;
+    type Target = Result<Vec<String>>;
 
     async fn export(&mut self) -> Self::Target {
         if self.data.is_none() {
@@ -160,8 +158,8 @@ impl Export for Db {
         let sql_list = generate_sql_list(template_sql, data)?;
 
         if let Some(db_source) = &self.target_db_source_config {
-            execute_sql(&db_source, sql_list).await?;
+            execute_sql(&db_source, sql_list.clone()).await?;
         }
-        Ok(())
+        Ok(sql_list)
     }
 }

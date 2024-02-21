@@ -20,6 +20,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(SyncConfig::Name).string().not_null())
                     .col(
                         ColumnDef::new(SyncConfig::DataSource)
                             .json()
@@ -52,15 +53,31 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(SyncConfig::TargetTableName)
-                            .json()
+                            .string()
                             .not_null()
                             .comment("同步数据目标表"),
                     )
                     .col(
                         ColumnDef::new(SyncConfig::TargetQuerySqlTemplate)
-                            .json()
+                            .string()
                             .not_null()
                             .comment("目标数据库要执行的sql模板"),
+                    )
+                    .col(
+                        ColumnDef::new(SyncConfig::JobId)
+                            .uuid()
+                            .comment(r#"调度任务ID"#),
+                    )
+                    .col(
+                        ColumnDef::new(SyncConfig::Cron)
+                            .string()
+                            .comment("任务调度时间 Cron表达式"),
+                    )
+                    .col(
+                        ColumnDef::new(SyncConfig::DelFlag)
+                            .integer()
+                            .default(0)
+                            .comment(r#"1 已删除 0 未删除"#),
                     )
                     .col(
                         ColumnDef::new(SyncConfig::UpdateTime)
@@ -89,6 +106,7 @@ impl MigrationTrait for Migration {
 pub enum SyncConfig {
     Table,
     Id,
+    Name,
     DataSource,
     SourceTableName,
     SourceTableColumns,
@@ -96,6 +114,9 @@ pub enum SyncConfig {
     TargetDataSource,
     TargetTableName,
     TargetQuerySqlTemplate,
+    Cron,
+    JobId,
+    DelFlag,
     UpdateTime,
     CreateTime,
 }

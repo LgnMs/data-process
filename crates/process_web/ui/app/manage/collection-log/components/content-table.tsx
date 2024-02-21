@@ -9,7 +9,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  SyncOutlined
+  SyncOutlined,
 } from "@ant-design/icons";
 import React from "react";
 import dayjs from "dayjs";
@@ -18,7 +18,7 @@ export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
   const pagination = state.collectLog.pagination;
 
-  const { data, isLoading} = useSWR(
+  const { data, isLoading } = useSWR(
     [CollectLog.LIST, pagination],
     ([_, pagination]) => CollectLog.list(pagination)
   );
@@ -36,8 +36,8 @@ export default function ContentTable() {
       title: "采集配置名称",
       dataIndex: "collect_config.name",
       render: (_: string, record: ICollectLog) => {
-        return record.collect_config.name
-      }
+        return record.collect_config.name;
+      },
     },
     {
       title: "运行状态",
@@ -47,38 +47,45 @@ export default function ContentTable() {
       render: (text: number) => {
         switch (text) {
           case 0:
-            return <Tag icon={<ClockCircleOutlined />} color="default">
-              等待
-            </Tag>
+            return (
+              <Tag icon={<ClockCircleOutlined />} color="default">
+                等待
+              </Tag>
+            );
           case 1:
-            return <Tag icon={<SyncOutlined spin />} color="processing">
-              运行中
-            </Tag>
+            return (
+              <Tag icon={<SyncOutlined spin />} color="processing">
+                运行中
+              </Tag>
+            );
           case 2:
-            return <Tag icon={<CheckCircleOutlined />} color="success">
-              完成
-            </Tag>
+            return (
+              <Tag icon={<CheckCircleOutlined />} color="success">
+                完成
+              </Tag>
+            );
           case 3:
-            return <Tag icon={<CloseCircleOutlined />} color="error">
-              失败
-            </Tag>
-
+            return (
+              <Tag icon={<CloseCircleOutlined />} color="error">
+                失败
+              </Tag>
+            );
         }
-      }
+      },
     },
     {
       title: "更新日期",
       dataIndex: "update_time",
       render: (text: number) => {
-        return dayjs(text).format("YYYY-MM-DD HH:mm:ss")
-      }
+        return dayjs(text).format("YYYY-MM-DD HH:mm:ss");
+      },
     },
     {
       title: "创建日期",
       dataIndex: "create_time",
       render: (text: number) => {
-        return dayjs(text).format("YYYY-MM-DD HH:mm:ss")
-      }
+        return dayjs(text).format("YYYY-MM-DD HH:mm:ss");
+      },
     },
     {
       title: "操作",

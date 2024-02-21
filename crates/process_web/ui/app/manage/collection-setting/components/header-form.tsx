@@ -15,9 +15,9 @@ export default function HeaderForm() {
       type: "collectConfig.setPagination",
       pagination: {
         ...state.collectConfig.pagination,
-        data
-      }
-    })
+        data,
+      },
+    });
     await mutate([CollectConfig.LIST, state.collectConfig.pagination]);
   }
 

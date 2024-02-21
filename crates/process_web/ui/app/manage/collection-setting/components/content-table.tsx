@@ -36,24 +36,24 @@ export default function ContentTable() {
       dataIndex: "desc",
     },
     {
-      title: <LabelTips
-        tips={`设置执行周期后启用`}
-      >
-        状态
-      </LabelTips>,
+      title: <LabelTips tips={`设置执行周期后启用`}>状态</LabelTips>,
       width: 120,
       align: "center",
-      render: (_:any, record: ICollectConfig) => {
+      render: (_: any, record: ICollectConfig) => {
         if (record.cron) {
-          return <Tag icon={<CheckCircleOutlined />} color="success">
-            启用
-          </Tag>
+          return (
+            <Tag icon={<CheckCircleOutlined />} color="success">
+              启用
+            </Tag>
+          );
         } else {
-          return <Tag icon={<ClockCircleOutlined />} color="default">
-            停用
-          </Tag>
+          return (
+            <Tag icon={<ClockCircleOutlined />} color="default">
+              停用
+            </Tag>
+          );
         }
-      }
+      },
     },
     {
       title: "操作",

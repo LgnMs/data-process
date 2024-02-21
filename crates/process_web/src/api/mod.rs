@@ -4,6 +4,8 @@ pub mod collect_config;
 pub mod collect_log;
 pub mod common;
 pub mod mock;
+pub mod sync_config;
+pub mod sync_log;
 
 use anyhow::Result;
 use axum::http::{StatusCode, Uri};
@@ -59,6 +61,8 @@ pub async fn start() -> Result<()> {
     let app = Router::new()
         .nest("/collect_config", collect_config::set_routes())
         .nest("/collect_log", collect_log::set_routes())
+        .nest("/sync_config", sync_config::set_routes())
+        .nest("/sync_log", sync_log::set_routes())
         .nest("/mock", mock::set_routes())
         .fallback(fallback)
         .with_state(state);

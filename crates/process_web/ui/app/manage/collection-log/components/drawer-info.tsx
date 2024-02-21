@@ -1,8 +1,4 @@
-import {
-  Button,
-  Drawer,
-  Space,
-} from "antd";
+import { Button, Drawer, Space } from "antd";
 import React from "react";
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
@@ -34,10 +30,8 @@ export default function DrawerInfo(props: IEditFormProps) {
       }
       onClose={close}
     >
-      <code style={{whiteSpace: "pre-wrap"}}>
-        {
-          state.collectLog.drawerData?.running_log
-        }
+      <code style={{ whiteSpace: "pre-wrap" }}>
+        {state.collectLog.drawerData?.running_log}
       </code>
     </Drawer>
   );

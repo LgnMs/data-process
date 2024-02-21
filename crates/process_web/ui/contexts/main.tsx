@@ -31,7 +31,7 @@ interface MainState {
   permissions: string[];
   userInfo: Record<string, any> | null;
   collectConfig: CollectConfigState;
-  collectLog: CollectLogState
+  collectLog: CollectLogState;
 }
 
 type MainAction =
@@ -40,7 +40,7 @@ type MainAction =
   | { type: "setPermissions"; permissions: MainState["permissions"] }
   | { type: "setUserInfo"; userInfo: MainState["userInfo"] }
   | CollectConfigAction
-  | CollectLogAction
+  | CollectLogAction;
 
 function reducer(state: MainState, action: MainAction) {
   if (action.type === "setToken") {
@@ -70,13 +70,19 @@ function reducer(state: MainState, action: MainAction) {
   if (action.type.indexOf("collectConfig") > -1) {
     return {
       ...state,
-      collectConfig: CollectConfigReducer(state.collectConfig, action as CollectConfigAction),
+      collectConfig: CollectConfigReducer(
+        state.collectConfig,
+        action as CollectConfigAction
+      ),
     };
   }
   if (action.type.indexOf("collectLog") > -1) {
     return {
       ...state,
-      collectLog: CollectLogReducer(state.collectLog, action as CollectLogAction),
+      collectLog: CollectLogReducer(
+        state.collectLog,
+        action as CollectLogAction
+      ),
     };
   }
 
@@ -100,7 +106,7 @@ export function MainContextProvider(props: { children: ReactNode }) {
     permissions: [],
     userInfo: null,
     collectConfig: initCollectConfigState,
-    collectLog: initCollectLogState
+    collectLog: initCollectLogState,
   });
 
   return (

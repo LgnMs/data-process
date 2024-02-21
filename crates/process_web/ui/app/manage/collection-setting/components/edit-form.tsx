@@ -64,8 +64,8 @@ export default function EditForm(props: IEditFormProps) {
         root_key: item.key,
         children_key: item.value,
         id_key: item.value2,
-      }
-    })
+      };
+    });
 
     const map_rules = values.map_rules?.map((item: any) => [
       item.key,
@@ -139,7 +139,11 @@ export default function EditForm(props: IEditFormProps) {
         }
         if (data.nested_config) {
           data.nested_config = data.nested_config.map((item: any) => {
-            return { key: item.root_key, value: item.children_key, value2: item.id_key };
+            return {
+              key: item.root_key,
+              value: item.children_key,
+              value2: item.id_key,
+            };
           });
         }
         if (data.map_rules) {
@@ -237,13 +241,11 @@ export default function EditForm(props: IEditFormProps) {
                   <Form.Item noStyle name={[field.name, "value"]}>
                     <Input placeholder="value" />
                   </Form.Item>
-                  {
-                    props.isNestedConfig && (
-                      <Form.Item noStyle name={[field.name, "value2"]}>
-                        <Input placeholder="value2" />
-                      </Form.Item>
-                    )
-                  }
+                  {props.isNestedConfig && (
+                    <Form.Item noStyle name={[field.name, "value2"]}>
+                      <Input placeholder="value2" />
+                    </Form.Item>
+                  )}
                   {props.isColumnConfig && (
                     <Form.Item
                       noStyle
@@ -312,7 +314,10 @@ export default function EditForm(props: IEditFormProps) {
             if (item.name[0] === "method") {
               setDefaultForPostHeaders(item.value);
             }
-            if (item.name[0] === "db_columns_config" || item.name[0] === "cache_table_name") {
+            if (
+              item.name[0] === "db_columns_config" ||
+              item.name[0] === "cache_table_name"
+            ) {
               setShouldUpdateSql(true);
             }
           });
@@ -428,11 +433,7 @@ export default function EditForm(props: IEditFormProps) {
 
           <Col span={24}>
             <Form.Item
-              label={
-                <LabelTips tips="Request headers">
-                  请求头
-                </LabelTips>
-              }
+              label={<LabelTips tips="Request headers">请求头</LabelTips>}
             >
               <FormArrayList name="headers" />
             </Form.Item>
@@ -458,7 +459,7 @@ export default function EditForm(props: IEditFormProps) {
                 </LabelTips>
               }
             >
-              <FormArrayList name="nested_config" isNestedConfig/>
+              <FormArrayList name="nested_config" isNestedConfig />
             </Form.Item>
           </Col>
 

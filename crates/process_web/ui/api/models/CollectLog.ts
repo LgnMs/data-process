@@ -9,5 +9,5 @@ export interface CollectLog {
   status: number;
   update_time: any;
   create_time: any;
-  collect_config: CollectConfig
+  collect_config: CollectConfig;
 }
