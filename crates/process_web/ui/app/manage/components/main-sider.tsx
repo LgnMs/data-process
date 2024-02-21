@@ -21,12 +21,22 @@ const Menus = [
   {
     key: "/manage/collection-setting",
     icon: <SettingOutlined rev={undefined} />,
-    label: <MenuItem>采集配置</MenuItem>,
+    label: <MenuItem>采集任务配置</MenuItem>,
   },
   {
     key: "/manage/collection-log",
     icon: <LineChartOutlined rev={undefined} />,
-    label: <MenuItem>运行日志</MenuItem>,
+    label: <MenuItem>采集任务日志</MenuItem>,
+  },
+  {
+    key: "/manage/sync-setting",
+    icon: <SettingOutlined rev={undefined} />,
+    label: <MenuItem>同步任务配置</MenuItem>,
+  },
+  {
+    key: "/manage/sync-log",
+    icon: <LineChartOutlined rev={undefined} />,
+    label: <MenuItem>同步任务日志</MenuItem>,
   },
 ];
 
