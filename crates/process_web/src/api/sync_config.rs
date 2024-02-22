@@ -1,11 +1,12 @@
-use std::sync::Arc;
 use axum::extract::{Path, State};
-use axum::{Json, Router};
 use axum::routing::{get, post};
+use axum::{Json, Router};
 use serde::Deserialize;
+use std::sync::Arc;
 use ts_rs::TS;
 
 use crate::api::common::*;
+use crate::{bool_response, data_response, pagination_response, res_template_ok};
 use crate::entity::sync_config::Model;
 use crate::service::sync_config_service::SyncConfigService;
 
@@ -50,7 +51,7 @@ async fn list(
         payload.page_size,
         payload.data,
     )
-        .await;
+    .await;
 
     pagination_response!(res, payload.current, payload.page_size)
 }
@@ -73,7 +74,10 @@ async fn update_by_id(
     data_response!(res)
 }
 
-async fn del(state: State<Arc<AppState>>, Path(id): Path<i32>) -> anyhow::Result<ResJson<bool>, AppError> {
+async fn del(
+    state: State<Arc<AppState>>,
+    Path(id): Path<i32>,
+) -> anyhow::Result<ResJson<bool>, AppError> {
     let res = SyncConfigService::delete(state.0, id).await;
 
     bool_response!(res)

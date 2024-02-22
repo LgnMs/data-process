@@ -34,7 +34,6 @@ export default function EditForm(props: IEditFormProps) {
   const [autoExec, setAutoExec] = useState(0);
 
   async function onSubmit() {
-
     await form.validateFields();
     const values = form.getFieldsValue(true);
 
@@ -92,7 +91,6 @@ export default function EditForm(props: IEditFormProps) {
     }
   }, [state.syncConfig.editFormOpen]);
 
-
   return (
     <Drawer
       title={`${mode === "add" ? "新增" : "编辑"}同步配置`}
@@ -114,9 +112,7 @@ export default function EditForm(props: IEditFormProps) {
         labelAlign="left"
         labelWrap
         onFieldsChange={(changedFields) => {
-          changedFields.forEach((item) => {
-
-          });
+          changedFields.forEach((item) => {});
         }}
       >
         <Row gutter={16}>
@@ -126,38 +122,66 @@ export default function EditForm(props: IEditFormProps) {
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="源表数据库连接配置" name="data_source" rules={[{ required: true }]}>
+            <Form.Item
+              label="源表数据库连接配置"
+              name="data_source"
+              rules={[{ required: true }]}
+            >
               <Input placeholder="请输入" />
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="源表" name="source_table_name" rules={[{ required: true }]}>
+            <Form.Item
+              label="源表"
+              name="source_table_name"
+              rules={[{ required: true }]}
+            >
               <Input placeholder="请输入" />
             </Form.Item>
           </Col>
 
           <Col span={8}>
-            <Form.Item label="源表列" name="source_table_columns" rules={[{ required: true }]}>
+            <Form.Item
+              label="源表列"
+              name="source_table_columns"
+              rules={[{ required: true }]}
+            >
               <Input placeholder="请输入" />
             </Form.Item>
           </Col>
           <Col span={24}>
-            <Form.Item label="源表查询sql" name="query_sql" rules={[{ required: true }]}>
+            <Form.Item
+              label="源表查询sql"
+              name="query_sql"
+              rules={[{ required: true }]}
+            >
               <Input.TextArea placeholder="请输入" />
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="目标表" name="target_table_name" rules={[{ required: true }]}>
+            <Form.Item
+              label="目标表"
+              name="target_table_name"
+              rules={[{ required: true }]}
+            >
               <Input placeholder="请输入" />
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="目标表连接配置" name="target_data_source" rules={[{ required: true }]}>
+            <Form.Item
+              label="目标表连接配置"
+              name="target_data_source"
+              rules={[{ required: true }]}
+            >
               <Input placeholder="请输入" />
             </Form.Item>
           </Col>
           <Col span={24}>
-            <Form.Item label="目标表查询sql模板" name="target_query_sql_template" rules={[{ required: true }]}>
+            <Form.Item
+              label="目标表查询sql模板"
+              name="target_query_sql_template"
+              rules={[{ required: true }]}
+            >
               <Input.TextArea placeholder="请输入" />
             </Form.Item>
           </Col>

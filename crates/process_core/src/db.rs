@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use sea_orm::{ConnectionTrait, DatabaseConnection, FromQueryResult, JsonValue, Statement};
+use sea_orm::{ConnectionTrait, FromQueryResult, JsonValue, Statement};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 

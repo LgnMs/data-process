@@ -15,6 +15,7 @@ use crate::api::common::{
 };
 use crate::entity::collect_log::Model;
 use crate::service::collect_log_service::CollectLogService;
+use crate::{bool_response, data_response, pagination_response};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()

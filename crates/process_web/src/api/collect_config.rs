@@ -14,6 +14,7 @@ use crate::api::common::{
 };
 use crate::entity::collect_config::Model;
 use crate::service::collect_config_service::CollectConfigService;
+use crate::{bool_response, data_response, pagination_response, res_template_ok};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()

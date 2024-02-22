@@ -1,5 +1,3 @@
-#[macro_use]
-pub mod macros;
 pub mod collect_config;
 pub mod collect_log;
 pub mod common;
