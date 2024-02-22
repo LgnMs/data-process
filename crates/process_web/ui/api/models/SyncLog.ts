@@ -9,5 +9,5 @@ export interface SyncLog {
   sync_config_id: number;
   update_time: any;
   create_time: any;
-  collect_config: SyncConfig;
+  sync_config: SyncConfig;
 }

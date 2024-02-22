@@ -1,3 +1,4 @@
+use serde_json::json;
 use process_core::db;
 use process_core::db::{DataSource, Db, DbConfig};
 use process_core::process::{Export, Receive, Serde};
@@ -6,17 +7,28 @@ use process_core::process::{Export, Receive, Serde};
 async fn db_test() -> anyhow::Result<()> {
     let mut db = Db::new();
 
-    let host = "192.168.40.3".to_string();
-    // let host = "127.0.0.1".to_string();
-    let origin = DataSource {
-        host: host,
-        port: "5432".to_string(),
-        user: "postgres".to_string(),
-        password: "123456".to_string(),
-        database_name: "data_process_cache".to_string(),
-        database_type: db::Database::POSTGRES,
-    };
+    // let host = "192.168.40.3".to_string();
+    // // let host = "127.0.0.1".to_string();
+    // let origin = DataSource {
+    //     host: host,
+    //     port: "5432".to_string(),
+    //     user: "postgres".to_string(),
+    //     password: "123456".to_string(),
+    //     database_name: "data_process_cache".to_string(),
+    //     database_type: db::Database::POSTGRES,
+    // };
 
+    let origin_str = r#"
+        {
+            "host": "192.168.40.3",
+            "port": "5432",
+            "user": "postgres",
+            "password": "123456",
+            "database_name": "data_process_cache",
+            "database_type": "POSTGRES"
+        }
+    "#;
+    let origin: DataSource = serde_json::from_str(origin_str).unwrap();
     let target = origin.clone();
 
     let res = db
