@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::Local;
 use migration::Condition;
-use process_core::db::{DbConfig, Db};
+use process_core::db::{Db, DbConfig};
 use process_core::process::{Export, Receive};
 use sea_orm::prelude::*;
 use sea_orm::ActiveValue::{Set, Unchanged};
@@ -50,12 +50,16 @@ impl SyncConfigService {
 
         paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
     }
-    
+
     pub async fn add(state: Arc<AppState>, data: Model) -> std::result::Result<Model, DbErr> {
         Self::save(state, None, data).await
     }
 
-    pub async fn update_by_id(state: Arc<AppState>, id: i32, data: Model) -> std::result::Result<Model, DbErr> {
+    pub async fn update_by_id(
+        state: Arc<AppState>,
+        id: i32,
+        data: Model,
+    ) -> std::result::Result<Model, DbErr> {
         Self::save(state, Some(id), data).await
     }
 
