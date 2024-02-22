@@ -71,6 +71,7 @@ impl SyncConfigService {
         let mut active_data = sync_config::ActiveModel {
             name: Set(data_clone.name),
             data_source: Set(data_clone.data_source),
+            source_table_name: Set(data_clone.source_table_name),
             source_table_columns: Set(data_clone.source_table_columns),
             query_sql: Set(data_clone.query_sql),
             target_data_source: Set(data_clone.target_data_source),
@@ -178,11 +179,12 @@ impl SyncConfigService {
         let mut collect_log_string = String::new();
 
         collect_log_string.push_str(format!("同步配置： {:?}\n", data).as_str());
-        // TODO 修改为db_porcess
         let res = process_data(&data).await;
         match res {
             Ok(list) => {
                 collect_log_string.push_str(format!("SQL执行成功： {:?}\n", list).as_str());
+                status = 2;
+                collect_log_string.push_str("同步任务执行成功!\n");
             }
             Err(err) => {
                 let err_str = format!("{}\n", err);
@@ -278,7 +280,7 @@ async fn create_job_scheduler(
         return Ok(Some(job_id));
     } else {
         let err = format!(
-            "采集配置：{} 定时任务添加失败 cron: {:?} ",
+            "同步配置：{} 定时任务添加失败 cron: {:?} ",
             data.name, data.cron
         );
         warn!("{}", err);

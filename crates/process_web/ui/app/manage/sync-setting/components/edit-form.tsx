@@ -5,18 +5,13 @@ import {
   Drawer,
   Form,
   Input,
-  InputNumber,
   message,
   Radio,
   Row,
-  Select,
   Space,
-  Modal,
 } from "antd";
 import React, { useEffect, useState } from "react";
-import { CloseOutlined, PlusOutlined } from "@ant-design/icons";
-import LabelTips from "@/app/manage/components/label-tips";
-import * as SyncConfig from "@/api/collect_config";
+import * as SyncConfig from "@/api/sync_config";
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
 import { clone } from "lodash";
@@ -37,14 +32,13 @@ export default function EditForm(props: IEditFormProps) {
     await form.validateFields();
     const values = form.getFieldsValue(true);
 
-    const headers: Record<string, string> = {};
-
-    values.headers?.forEach((item: any) => {
-      headers[item.key] = item.value;
-    });
+    const data_source = JSON.parse(values.data_source);
+    const target_data_source = JSON.parse(values.target_data_source);
 
     const data = {
       ...values,
+      data_source,
+      target_data_source
     };
 
     let res;
@@ -82,6 +76,8 @@ export default function EditForm(props: IEditFormProps) {
         } else {
           setAutoExec(0);
         }
+        data.data_source = JSON.stringify(data.data_source);
+        data.target_data_source = JSON.stringify(data.target_data_source);
 
         form.setFieldsValue(data);
         setMode("edit");

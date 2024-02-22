@@ -1,4 +1,4 @@
-import { CollectLog } from "@/api/models/CollectLog";
+import { SyncLog } from "@/api/models/SyncLog";
 import {
   http_get,
   http_post,
@@ -6,27 +6,27 @@ import {
   ResJson,
   ResJsonWithPagination,
 } from "@/api/common";
-import { CollectLogListParams } from "@/api/models/CollectLogListParams";
+import { SyncLogListParams } from "@/api/models/SyncLogListParams";
 
-export const PREFIX = "/collect_log";
+export const PREFIX = "/sync_log";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 
-export async function find_by_id(id: number): Promise<ResJson<CollectLog>> {
+export async function find_by_id(id: number): Promise<ResJson<SyncLog>> {
   return http_get(`${FIND_BY_ID}${id}`);
 }
 
 export const LIST = `${PREFIX}/list/`;
 export async function list(
-  payload: PaginationPayload<CollectLogListParams>
-): Promise<ResJsonWithPagination<CollectLog>> {
+  payload: PaginationPayload<SyncLogListParams>
+): Promise<ResJsonWithPagination<SyncLog>> {
   return http_post(`${PREFIX}/list`, {
     body: JSON.stringify(payload),
   });
 }
 
 export const ADD = `${PREFIX}/add/`;
-export async function add(payload: CollectLog): Promise<ResJson<CollectLog>> {
+export async function add(payload: SyncLog): Promise<ResJson<SyncLog>> {
   console.log(payload);
   return http_post(`${PREFIX}/add`, {
     body: JSON.stringify(payload),
@@ -36,8 +36,8 @@ export async function add(payload: CollectLog): Promise<ResJson<CollectLog>> {
 export const UPDATE_BY_ID = `${PREFIX}/update_by_id/`;
 export async function update_by_id(
   id: string,
-  payload: CollectLog
-): Promise<ResJson<CollectLog>> {
+  payload: SyncLog
+): Promise<ResJson<SyncLog>> {
   return http_post(`${PREFIX}/update_by_id/${id}`, {
     body: JSON.stringify(payload),
   });

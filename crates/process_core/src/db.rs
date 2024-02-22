@@ -149,7 +149,6 @@ impl Export for Db {
         }
         let data = self.data.as_ref().unwrap();
 
-        println!("Value {data}");
         let template_sql = self
             .template_string
             .as_ref()

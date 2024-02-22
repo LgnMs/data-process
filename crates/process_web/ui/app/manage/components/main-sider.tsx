@@ -2,7 +2,13 @@ import React, { ReactNode, useState } from "react";
 import { Layout, Menu, Space } from "antd";
 import { usePathname, useRouter } from "next/navigation";
 import { useMainContext } from "@/contexts/main";
-import { SettingOutlined, LineChartOutlined } from "@ant-design/icons";
+import {
+  SettingOutlined,
+  LineChartOutlined,
+  CloudSyncOutlined,
+  NodeCollapseOutlined,
+  FileTextOutlined
+} from "@ant-design/icons";
 
 const { Sider } = Layout;
 interface IMainSiderProps {
@@ -19,24 +25,31 @@ function MenuItem(props: { children: ReactNode; status?: string }) {
 
 const Menus = [
   {
-    key: "/manage/collection-setting",
-    icon: <SettingOutlined rev={undefined} />,
-    label: <MenuItem>采集任务配置</MenuItem>,
+    key: "collection-setting",
+    icon: <NodeCollapseOutlined />,
+    label: <MenuItem>采集任务</MenuItem>,
   },
   {
-    key: "/manage/collection-log",
-    icon: <LineChartOutlined rev={undefined} />,
-    label: <MenuItem>采集任务日志</MenuItem>,
+    key: "sync-setting",
+    icon: <CloudSyncOutlined />,
+    label: <MenuItem>同步任务</MenuItem>,
   },
   {
-    key: "/manage/sync-setting",
-    icon: <SettingOutlined rev={undefined} />,
-    label: <MenuItem>同步任务配置</MenuItem>,
-  },
-  {
-    key: "/manage/sync-log",
-    icon: <LineChartOutlined rev={undefined} />,
-    label: <MenuItem>同步任务日志</MenuItem>,
+    key: "manage",
+    icon: <FileTextOutlined />,
+    label: <MenuItem>日志</MenuItem>,
+    children: [
+      {
+        key: "collection-log",
+        icon: <LineChartOutlined/>,
+        label: <MenuItem>采集任务日志</MenuItem>,
+      },
+      {
+        key: "sync-log",
+        icon: <LineChartOutlined />,
+        label: <MenuItem>同步任务日志</MenuItem>,
+      },
+    ]
   },
 ];
 
