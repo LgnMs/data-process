@@ -2219,6 +2219,7 @@ dependencies = [
  "actix-rt",
  "anyhow",
  "async-trait",
+ "process_jdbc",
  "reqwest",
  "sea-orm",
  "serde",
@@ -2233,7 +2234,10 @@ name = "process_jdbc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "j4rs",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
