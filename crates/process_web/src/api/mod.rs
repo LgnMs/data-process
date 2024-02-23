@@ -19,6 +19,7 @@ use tracing_subscriber::fmt::writer::MakeWriterExt;
 
 use crate::api::common::AppState;
 use crate::service::collect_config_service::CollectConfigService;
+use crate::service::sync_config_service::SyncConfigService;
 
 #[tokio::main]
 pub async fn start() -> Result<()> {
@@ -53,7 +54,10 @@ pub async fn start() -> Result<()> {
         sched,
     });
 
+    // 初始化调度任务
     CollectConfigService::setup_collect_config_cron(&state).await?;
+    SyncConfigService::setup_collect_config_cron(&state).await?;
+    state.sched.start().await?;
 
     // build our application with a route
     let app = Router::new()
