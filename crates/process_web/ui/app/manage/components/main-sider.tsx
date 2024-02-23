@@ -53,7 +53,6 @@ export function MainSider(props: IMainSiderProps) {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { state } = useMainContext()!;
 
   function getKey(list: Array<any>, arr?: Array<any>) {
     const keys = arr ? arr : [];

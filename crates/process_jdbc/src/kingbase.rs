@@ -1,7 +1,6 @@
 use crate::common::{ExecuteJDBC, JDBC, JdbcType};
 use anyhow::Result;
 use j4rs::{ClasspathEntry, Instance, InvocationArg, Jvm, JvmBuilder};
-use std::collections::HashMap;
 use std::path::PathBuf;
 use chrono::{Local, TimeZone};
 use serde_json::{json, Value};
