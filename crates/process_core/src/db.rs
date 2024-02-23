@@ -71,6 +71,7 @@ impl Db {
     }
 }
 
+// TODO: 适配更多的数据库
 async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Result<()> {
     match db_source.database_type {
         Database::POSTGRES => {
