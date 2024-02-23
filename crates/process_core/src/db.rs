@@ -3,6 +3,8 @@ use async_trait::async_trait;
 use sea_orm::{ConnectionTrait, FromQueryResult, JsonValue, Statement};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use process_jdbc::common::{ExecuteJDBC, JDBC};
+use process_jdbc::kingbase::Kingbase;
 
 use crate::http::generate_sql_list;
 use crate::process::Export;
@@ -88,7 +90,22 @@ async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Res
             }
             Ok(())
         }
-        _ => Ok(()),
+        Database::KINGBASE => {
+            let db_url = format!(
+                "jdbc:kingbase8://{}:{}/{}?user={}&password={}",
+                db_source.host, db_source.port, db_source.database_name, db_source.user, db_source.password
+            );
+            let mut conn = Kingbase::new().unwrap();
+
+            conn.connect(&db_url)
+                .unwrap();
+
+            for sql in query_sql_list {
+               conn.execute_update(&sql)?
+            }
+            Ok(())
+        }
+        _ => Ok(())
     }
 }
 
@@ -107,6 +124,19 @@ async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<V
             .all(&db)
             .await?;
 
+            Ok(data)
+        }
+        Database::KINGBASE => {
+            let db_url = format!(
+                "jdbc:kingbase8://{}:{}/{}?user={}&password={}",
+                db_source.host, db_source.port, db_source.database_name, db_source.user, db_source.password
+            );
+            let mut conn = Kingbase::new().unwrap();
+
+            conn.connect(&db_url)
+                .unwrap();
+
+            let data = conn.execute_query(&query_sql).unwrap();
             Ok(data)
         }
         _ => Ok(vec![]),
