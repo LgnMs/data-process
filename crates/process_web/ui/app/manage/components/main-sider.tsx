@@ -3,8 +3,6 @@ import { Layout, Menu, Space } from "antd";
 import { usePathname, useRouter } from "next/navigation";
 import { useMainContext } from "@/contexts/main";
 import {
-  SettingOutlined,
-  LineChartOutlined,
   CloudSyncOutlined,
   NodeCollapseOutlined,
   FileTextOutlined
@@ -41,12 +39,10 @@ const Menus = [
     children: [
       {
         key: "collection-log",
-        icon: <LineChartOutlined/>,
         label: <MenuItem>采集任务日志</MenuItem>,
       },
       {
         key: "sync-log",
-        icon: <LineChartOutlined />,
         label: <MenuItem>同步任务日志</MenuItem>,
       },
     ]
