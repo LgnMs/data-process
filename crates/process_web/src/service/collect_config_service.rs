@@ -133,7 +133,9 @@ impl CollectConfigService {
                 )
                 .await?;
             }
-
+            
+            let mut data = data.clone();
+            data.id = id;
             let job_id = update_job_scheduler(state.clone(), &data, &db_data)
                 .await
                 .map_err(job_err_to_db_err)?;
@@ -352,7 +354,6 @@ impl CollectConfigService {
 
             Self::update_job_id_by_id(state, job_id, item.id).await?;
         }
-        state.sched.start().await?;
 
         Ok(())
     }
@@ -557,8 +558,9 @@ async fn create_job_scheduler(
         let data = data.clone();
         let job_id = state
             .sched
-            .add(Job::new_async(
+            .add(Job::new_async_tz(
                 format_cron(cron.clone()).as_str(),
+                Local::now().timezone(),
                 move |_uuid, mut _l| {
                     let st = sched_state.clone();
                     let item_c = data.clone();
