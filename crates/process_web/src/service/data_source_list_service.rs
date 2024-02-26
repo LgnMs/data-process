@@ -1,17 +1,16 @@
-
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
-use crate::api::datasource_list::ListParams;
 
-use crate::entity::{datasource_list};
-use crate::entity::datasource_list::Model;
+use crate::api::datas_ource_list::ListParams;
+use crate::entity::{data_source_list};
+use crate::entity::data_source_list::Model;
 
 pub struct DataSourceListService;
 
 impl DataSourceListService {
     pub async fn find_by_id(db: &DbConn, id: i32) -> Result<Model, DbErr> {
-        datasource_list::Entity::find_by_id(id)
+        data_source_list::Entity::find_by_id(id)
             .one(db)
             .await?
             .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
@@ -26,14 +25,14 @@ impl DataSourceListService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.database_name {
-                conditions = conditions.add(datasource_list::Column::DatabaseName.contains(&name));
+                conditions = conditions.add(data_source_list::Column::DatabaseName.contains(&name));
             }
         }
 
-        let paginator = datasource_list::Entity::find()
-            .filter(datasource_list::Column::DelFlag.eq(0))
+        let paginator = data_source_list::Entity::find()
+            .filter(data_source_list::Column::DelFlag.eq(0))
             .filter(conditions)
-            .order_by_desc(datasource_list::Column::Id)
+            .order_by_desc(data_source_list::Column::Id)
             .paginate(db, page_size);
 
         let num_pages = paginator.num_items().await?;
@@ -60,7 +59,7 @@ impl DataSourceListService {
     ) -> Result<Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
         let now = chrono::Local::now().naive_local();
-        let mut active_data = datasource_list::ActiveModel {
+        let mut active_data = data_source_list::ActiveModel {
             database_name: Set(data.database_name),
             database_type: Set(data.database_type),
             host: Set(data.host),
@@ -70,7 +69,7 @@ impl DataSourceListService {
             ..Default::default()
         };
         if let Some(id) = id {
-            let db_data = datasource_list::Entity::find_by_id(id)
+            let db_data = data_source_list::Entity::find_by_id(id)
                 .one(db)
                 .await?
                 .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
@@ -87,7 +86,7 @@ impl DataSourceListService {
     }
 
     pub async fn delete(db: &DbConn, id: i32) -> Result<Model, DbErr> {
-        let data = datasource_list::Entity::find_by_id(id)
+        let data = data_source_list::Entity::find_by_id(id)
             .one(db)
             .await?
             .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;

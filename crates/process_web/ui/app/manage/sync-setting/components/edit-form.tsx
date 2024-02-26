@@ -1,4 +1,4 @@
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import {
   Button,
   Col,
@@ -7,11 +7,13 @@ import {
   Input,
   message,
   Radio,
-  Row,
-  Space,
+  Row, Select,
+  Space
 } from "antd";
 import React, { useEffect, useState } from "react";
 import * as SyncConfig from "@/api/sync_config";
+import * as DataSourceList from "@/api/data_source_list";
+import { DataSourceList as IDataSourceList } from "@/api/models/DataSourceList"
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
 import { clone } from "lodash";
@@ -32,13 +34,9 @@ export default function EditForm(props: IEditFormProps) {
     await form.validateFields();
     const values = form.getFieldsValue(true);
 
-    const data_source = JSON.parse(values.data_source);
-    const target_data_source = JSON.parse(values.target_data_source);
 
     const data = {
       ...values,
-      data_source,
-      target_data_source
     };
 
     let res;
@@ -76,8 +74,6 @@ export default function EditForm(props: IEditFormProps) {
         } else {
           setAutoExec(0);
         }
-        data.data_source = JSON.stringify(data.data_source);
-        data.target_data_source = JSON.stringify(data.target_data_source);
 
         form.setFieldsValue(data);
         setMode("edit");
@@ -97,6 +93,11 @@ export default function EditForm(props: IEditFormProps) {
           <Button onClick={close}>取消</Button>
           <Button onClick={onSubmit} type="primary">
             提交
+          </Button>
+          <Button onClick={() => {
+            console.log(form.getFieldsValue())
+          }} type="primary">
+            de
           </Button>
         </Space>
       }
@@ -119,11 +120,12 @@ export default function EditForm(props: IEditFormProps) {
           </Col>
           <Col span={8}>
             <Form.Item
-              label="源表数据库连接配置"
+              label="源表数据库"
               name="data_source"
               rules={[{ required: true }]}
             >
-              <Input placeholder="请输入" />
+              {/*<Input placeholder="请输入" />*/}
+              <DataSourceSelect />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -156,17 +158,17 @@ export default function EditForm(props: IEditFormProps) {
           </Col>
           <Col span={8}>
             <Form.Item
-              label="目标表"
-              name="target_table_name"
+              label="目标表数据库"
+              name="target_data_source"
               rules={[{ required: true }]}
             >
-              <Input placeholder="请输入" />
+              <DataSourceSelect />
             </Form.Item>
           </Col>
           <Col span={8}>
             <Form.Item
-              label="目标表连接配置"
-              name="target_data_source"
+              label="目标表"
+              name="target_table_name"
               rules={[{ required: true }]}
             >
               <Input placeholder="请输入" />
@@ -212,4 +214,37 @@ export default function EditForm(props: IEditFormProps) {
       </Form>
     </Drawer>
   );
+}
+
+function DataSourceSelect(props: {
+  value?: IDataSourceList
+  onChange?: (data: IDataSourceList) => void
+}) {
+  const pagination = {
+      current: 1,
+      page_size: 999,
+      data: null,
+  };
+  const { data,  } = useSWR(
+      [DataSourceList.LIST, pagination],
+      ([_, pagination]) => DataSourceList.list(pagination)
+  );
+
+  let options: any[] = [];
+
+  if (data?.data) {
+    options = data.data.list.map(item => {
+      return {
+        value: item.id,
+        label: item.database_name
+      }
+    })
+  }
+  return <Select allowClear placeholder="请选择" value={props.value?.id}  options={options} onChange={(value) => {
+    data?.data?.list.forEach(item => {
+      if (value === item.id) {
+        props.onChange?.(item)
+      }
+    })
+  }} />
 }

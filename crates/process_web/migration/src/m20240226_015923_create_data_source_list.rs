@@ -1,4 +1,3 @@
-use crate::m20240119_000001_create_collect_config_table::CollectConfig;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -42,12 +41,12 @@ impl MigrationTrait for Migration {
                             .comment(r#"1 已删除 0 未删除"#),
                     )
                     .col(
-                        ColumnDef::new(CollectConfig::UpdateTime)
+                        ColumnDef::new(DataSourceList::UpdateTime)
                             .timestamp()
                             .not_null(),
                     )
                     .col(
-                        ColumnDef::new(CollectConfig::CreateTime)
+                        ColumnDef::new(DataSourceList::CreateTime)
                             .timestamp()
                             .not_null(),
                     )

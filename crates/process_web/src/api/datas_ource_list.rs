@@ -6,8 +6,8 @@ use serde::Deserialize;
 use ts_rs::TS;
 use crate::api::common::{AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination};
 use crate::{bool_response, data_response, pagination_response};
-use crate::entity::datasource_list::Model;
-use crate::service::datasource_list_service::DataSourceListService;
+use crate::entity::data_source_list::Model;
+use crate::service::data_source_list_service::DataSourceListService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()

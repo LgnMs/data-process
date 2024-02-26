@@ -10,7 +10,7 @@ use serde::Deserialize;
 use ts_rs::TS;
 
 use crate::api::common::{
-    AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
+    AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination,
 };
 use crate::entity::collect_config::Model;
 use crate::service::collect_config_service::CollectConfigService;

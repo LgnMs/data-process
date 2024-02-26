@@ -11,7 +11,7 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::api::common::{
-    AppError, AppState, Pagination, PaginationPayload, ResJson, ResJsonWithPagination, ResTemplate,
+    AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination,
 };
 use crate::entity::sync_log::Model;
 use crate::service::sync_log_service::SyncLogService;

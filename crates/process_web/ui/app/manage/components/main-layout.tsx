@@ -3,7 +3,7 @@ import { ConfigProvider, Layout } from "antd";
 import { useState } from "react";
 import zhCN from "antd/locale/zh_CN";
 import { MainHeader } from "./main-header";
-import { MainSider } from "./main-sider";
+import { MainSlider } from "./main-slider";
 import { MainContent } from "./main-content";
 import dayjs from "dayjs";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
@@ -31,7 +31,7 @@ export default function MainLayout({
               padding: `64px 0 0 ${collapsed ? "80px" : "200px"}`,
             }}
           >
-            <MainSider onCollapse={(value) => setCollapsed(value)} />
+            <MainSlider onCollapse={(value) => setCollapsed(value)} />
             <Layout>
               {/* <MainBreadcrumb /> */}
               <MainContent>{children}</MainContent>

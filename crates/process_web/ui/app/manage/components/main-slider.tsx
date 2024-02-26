@@ -1,11 +1,10 @@
 import React, { ReactNode, useState } from "react";
 import { Layout, Menu, Space } from "antd";
 import { usePathname, useRouter } from "next/navigation";
-import { useMainContext } from "@/contexts/main";
 import {
   CloudSyncOutlined,
   NodeCollapseOutlined,
-  FileTextOutlined
+  FileTextOutlined, DatabaseOutlined
 } from "@ant-design/icons";
 
 const { Sider } = Layout;
@@ -23,49 +22,57 @@ function MenuItem(props: { children: ReactNode; status?: string }) {
 
 const Menus = [
   {
-    key: "collection-setting",
+    key: "/manage/data-source-list",
+    icon: <DatabaseOutlined />,
+    label: <MenuItem>数据源管理</MenuItem>,
+  },
+  {
+    key: "/manage/collection-setting",
     icon: <NodeCollapseOutlined />,
     label: <MenuItem>采集任务</MenuItem>,
   },
   {
-    key: "sync-setting",
+    key: "/manage/sync-setting",
     icon: <CloudSyncOutlined />,
     label: <MenuItem>同步任务</MenuItem>,
   },
   {
-    key: "manage",
+    key: "/manage",
     icon: <FileTextOutlined />,
     label: <MenuItem>日志</MenuItem>,
     children: [
       {
         key: "collection-log",
-        label: <MenuItem>采集任务日志</MenuItem>,
+          label: <MenuItem>采集任务日志</MenuItem>,
       },
       {
         key: "sync-log",
         label: <MenuItem>同步任务日志</MenuItem>,
       },
-    ]
+    ],
   },
 ];
 
-export function MainSider(props: IMainSiderProps) {
+export function MainSlider(props: IMainSiderProps) {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  function getKey(list: Array<any>, arr?: Array<any>) {
+  function getKey(list: Array<any>, arr?: Array<any>, parentKey?: string) {
     const keys = arr ? arr : [];
-    list.forEach((item) => {
-      if (`/${item.key}` === pathname) {
+
+    for (let i = 0; i < list.length; i += 1) {
+      let item = list[i];
+      if (item.key === pathname || `${parentKey}/${item.key}` === pathname) {
         keys.push(item.key);
+        return keys;
       } else {
         if (item.children) {
           keys.push(item.key);
-          getKey(item.children, keys);
+          getKey(item.children, keys, item.key);
         }
       }
-    });
+    }
     return keys;
   }
 
@@ -98,6 +105,7 @@ export function MainSider(props: IMainSiderProps) {
   const onSelect = (value: any) => {
     router.push(value.key);
   };
+  console.log(keys)
 
   return (
     <Sider
@@ -133,7 +141,7 @@ export function MainSider(props: IMainSiderProps) {
         mode="inline"
         onSelect={onSelect}
         defaultSelectedKeys={[keys[keys.length - 1]]}
-        defaultOpenKeys={keys.slice(0, keys.length - 1)}
+        defaultOpenKeys={keys}
         style={{ height: "100%", borderRight: 0 }}
         items={Menus}
       />

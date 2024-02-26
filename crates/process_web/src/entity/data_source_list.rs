@@ -5,14 +5,15 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, TS, Deserialize)]
-#[sea_orm(table_name = "datasource_list")]
+#[sea_orm(table_name = "data_source_list")]
 #[ts(
     export,
-    export_to = "ui/api/models/auto-generates/DatasourceList.ts",
-    rename = "DatasourceList"
+    export_to = "ui/api/models/auto-generates/DataSourceList.ts",
+    rename = "DataSourceList"
 )]
 pub struct Model {
     #[sea_orm(primary_key)]
+    #[serde(skip_deserializing)]
     pub id: i32,
     pub database_name: String,
     pub database_type: String,
@@ -20,10 +21,11 @@ pub struct Model {
     pub port: String,
     pub user: String,
     pub password: String,
+    #[serde(skip_deserializing)]
     pub del_flag: i32,
-    #[ts(type = "any")]
+    #[serde(skip_deserializing)]
     pub update_time: DateTime,
-    #[ts(type = "any")]
+    #[serde(skip_deserializing)]
     pub create_time: DateTime,
 }
 

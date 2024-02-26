@@ -29,6 +29,13 @@ import {
   SyncLogReducer,
   SyncLogState,
 } from "@/contexts/syncLogContext";
+import { DataSourceList } from "@/api/models/DataSourceList";
+import {
+  DataSourceListAction,
+  DataSourceListReducer,
+  DataSourceListState,
+  initDataSourceListState,
+} from "@/contexts/dataSourceListContext";
 
 export interface IRoleInfo {
   id: string;
@@ -46,6 +53,7 @@ interface MainState {
   collectLog: CollectLogState;
   syncConfig: SyncConfigState;
   syncLog: SyncLogState;
+  dataSourceList: DataSourceListState;
 }
 
 type MainAction =
@@ -56,7 +64,8 @@ type MainAction =
   | CollectConfigAction
   | CollectLogAction
   | SyncConfigAction
-  | SyncLogAction;
+  | SyncLogAction
+  | DataSourceListAction;
 
 function reducer(state: MainState, action: MainAction) {
   if (action.type === "setToken") {
@@ -116,6 +125,15 @@ function reducer(state: MainState, action: MainAction) {
       syncLog: SyncLogReducer(state.syncLog, action as SyncLogAction),
     };
   }
+  if (action.type.indexOf("dataSourceList") > -1) {
+    return {
+      ...state,
+      dataSourceList: DataSourceListReducer(
+        state.dataSourceList,
+        action as DataSourceListAction
+      ),
+    };
+  }
 
   throw Error("Unknown action");
 }
@@ -140,6 +158,7 @@ export function MainContextProvider(props: { children: ReactNode }) {
     collectLog: initCollectLogState,
     syncConfig: initSyncConfigState,
     syncLog: initSyncLogState,
+    dataSourceList: initDataSourceListState,
   });
 
   return (

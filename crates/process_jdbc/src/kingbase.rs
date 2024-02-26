@@ -3,24 +3,20 @@ use anyhow::Result;
 use chrono::{Local, TimeZone};
 use j4rs::{ClasspathEntry, Instance, InvocationArg, Jvm, JvmBuilder};
 use serde_json::{json, Value};
-use std::path::PathBuf;
 
 pub struct Kingbase {
     pub jvm: Jvm,
-    driver_path: PathBuf,
     conn: Option<Instance>,
     pub statement: Option<Instance>,
 }
 
 impl Kingbase {
     pub fn new() -> Result<Self> {
-        let driver_path = "lib/kingbase8-8.6.0.jar";
         let entry = ClasspathEntry::new("libs/kingbase8-8.6.0.jar");
         let jvm = JvmBuilder::new().classpath_entry(entry).build()?;
 
         Ok(Self {
             jvm,
-            driver_path: PathBuf::from(driver_path),
             conn: None,
             statement: None,
         })
