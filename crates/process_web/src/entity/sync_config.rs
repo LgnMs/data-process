@@ -19,8 +19,6 @@ pub struct Model {
     #[ts(type = "any")]
     pub data_source: Json,
     pub source_table_name: String,
-    #[ts(type = "any")]
-    pub source_table_columns: Json,
     pub query_sql: String,
     #[ts(type = "any")]
     pub target_data_source: Json,

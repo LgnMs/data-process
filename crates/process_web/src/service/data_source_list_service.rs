@@ -1,9 +1,10 @@
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
+use process_core::db::DataSource;
 
 use crate::api::data_source_list::ListParams;
-use crate::entity::{data_source_list};
+use crate::entity::data_source_list;
 use crate::entity::data_source_list::Model;
 
 pub struct DataSourceListService;
@@ -44,23 +45,16 @@ impl DataSourceListService {
         DataSourceListService::save(db, None, data).await
     }
 
-    pub async fn update_by_id(
-        db: &DbConn,
-        id: i32,
-        data: Model,
-    ) -> Result<Model, DbErr> {
+    pub async fn update_by_id(db: &DbConn, id: i32, data: Model) -> Result<Model, DbErr> {
         DataSourceListService::save(db, Some(id), data).await
     }
 
-    pub async fn save(
-        db: &DbConn,
-        id: Option<i32>,
-        data: Model,
-    ) -> Result<Model, DbErr> {
+    pub async fn save(db: &DbConn, id: Option<i32>, data: Model) -> Result<Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
         let now = chrono::Local::now().naive_local();
         let mut active_data = data_source_list::ActiveModel {
             database_name: Set(data.database_name),
+            table_schema: Set(data.table_schema),
             database_type: Set(data.database_type),
             host: Set(data.host),
             port: Set(data.port),
@@ -83,6 +77,62 @@ impl DataSourceListService {
             active_data.update_time = Set(now);
             active_data.insert(db).await
         }
+    }
+
+
+    pub async fn query_table_columns(
+        data_source: DataSource,
+        table_name: String,
+    ) -> anyhow::Result<Vec<serde_json::Value>, DbErr> {
+        let sql_string = match &data_source.database_type {
+            process_core::db::Database::MYSQL => {
+                format!(
+                    "SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = '{}' 
+                AND TABLE_NAME = '{}';
+                ",
+                    &data_source.database_name, table_name
+                )
+            }
+            process_core::db::Database::MSSQL => {
+                format!(
+                    "SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = '{}';",
+                    table_name
+                )
+            }
+            process_core::db::Database::POSTGRES | process_core::db::Database::KINGBASE => {
+                format!(
+                    "SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_schema = '{}' 
+                    AND table_name = '{}';
+                    ",
+                    &data_source
+                        .table_schema
+                        .as_ref()
+                        .unwrap_or(&"public".to_string()),
+                    table_name
+                )
+            }
+            process_core::db::Database::ORACLE => {
+                format!(
+                    "SELECT COLUMN_NAME 
+                    FROM USER_TAB_COLUMNS 
+                    WHERE TABLE_NAME = '{}';",
+                    table_name
+                )
+            }
+        };
+
+        process_core::db::find_all_sql(&data_source, sql_string)
+            .await
+            .map_err(|err| {
+                let s = format!("{}", err);
+                DbErr::Custom(s.to_owned())
+            })
     }
 
     pub async fn delete(db: &DbConn, id: i32) -> Result<Model, DbErr> {

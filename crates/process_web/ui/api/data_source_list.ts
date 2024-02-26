@@ -7,6 +7,7 @@ import {
   ResJsonWithPagination,
 } from "@/api/common";
 import { DataSourceListParams } from "@/api/models/DataSourceListParams";
+import { QueryTableColumnsParameters } from "@/api/models/QueryTableColumnsParameters";
 
 export const PREFIX = "/datasource_list";
 
@@ -48,4 +49,14 @@ export async function update_by_id(
 export const DEL = `${PREFIX}/del/`;
 export async function del(id: number): Promise<ResJson<boolean>> {
   return http_get(`${PREFIX}/del/${id}`);
+}
+
+
+export const QUERY_TABLE_COLUMNS = `${PREFIX}/query_table_columns/`;
+export async function query_table_columns(
+  payload: QueryTableColumnsParameters
+): Promise<ResJson<Record<string, string>[]>> {
+  return http_post(`${PREFIX}/query_table_columns`, {
+    body: JSON.stringify(payload),
+  });
 }

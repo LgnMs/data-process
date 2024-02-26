@@ -9,9 +9,7 @@ use axum::{
 use serde::Deserialize;
 use ts_rs::TS;
 
-use crate::api::common::{
-    AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination,
-};
+use crate::api::common::{AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination};
 use crate::entity::collect_config::Model;
 use crate::service::collect_config_service::CollectConfigService;
 use crate::{bool_response, data_response, pagination_response, res_template_ok};

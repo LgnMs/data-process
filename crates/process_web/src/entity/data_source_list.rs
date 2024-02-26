@@ -16,6 +16,7 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub database_name: String,
+    pub table_schema: Option<String>,
     pub database_type: String,
     pub host: String,
     pub port: String,

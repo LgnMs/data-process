@@ -10,9 +10,7 @@ use std::sync::Arc;
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::api::common::{
-    AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination,
-};
+use crate::api::common::{AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination};
 use crate::entity::sync_log::Model;
 use crate::service::sync_log_service::SyncLogService;
 use crate::{bool_response, data_response, pagination_response};

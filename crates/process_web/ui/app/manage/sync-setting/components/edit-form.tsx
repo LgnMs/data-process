@@ -18,6 +18,7 @@ import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/p
 import { useMainContext } from "@/contexts/main";
 import { clone } from "lodash";
 import CronEdit from "@/app/manage/components/cron-edit";
+import LabelTips from "@/app/manage/components/label-tips";
 
 interface IEditFormProps extends ICommonCollectionSettingProps {
   open: boolean;
@@ -83,6 +84,57 @@ export default function EditForm(props: IEditFormProps) {
     }
   }, [state.syncConfig.editFormOpen]);
 
+  async function getSourceDataBaseColumns() {
+    const data_source = form.getFieldValue('data_source')!;
+    const source_table_name = form.getFieldValue('source_table_name')!;
+    const res = await DataSourceList.query_table_columns({
+      data_source,
+      table_name: source_table_name
+    });
+    let cols: string[] = [];
+    res.data?.forEach((item, index) => {
+      for (const key in item) {
+        cols.push(item[key])
+      }
+    })
+    return cols;
+  }
+  async function generateSourceSql() {
+    const data_source = form.getFieldValue('data_source')!;
+    const source_table_name = form.getFieldValue('source_table_name')!;
+    const table_schema = data_source?.table_schema;
+    let sql = "SELECT "
+    let cols: string[] = await getSourceDataBaseColumns();
+
+    const table_name = table_schema ? `${table_schema}.${source_table_name}` : source_table_name;
+    sql += `${cols.join(", ")} FROM ${table_name};`;
+
+    form.setFieldValue('query_sql', sql);
+
+  }
+
+  async function generateTargetSql() {
+    const data_source = form.getFieldValue('target_data_source')!;
+    const source_table_name = form.getFieldValue('target_table_name')!;
+    const table_schema = data_source?.table_schema;
+    const res = await DataSourceList.query_table_columns({
+      data_source,
+      table_name: source_table_name
+    });
+    let sql = "INSERT INTO "
+    let cols: string[] = [];
+    res.data?.forEach((item, index) => {
+      for (const key in item) {
+        cols.push(item[key])
+      }
+    })
+    const table_name = table_schema ? `${table_schema}.${source_table_name}` : source_table_name;
+    //INSERT INTO public.sync_test_table (code, naem) VALUES('${code}', '${name}');
+    sql += `${table_name} (${cols.join(', ')}) VALUES();`;
+
+    form.setFieldValue('target_query_sql_template', sql);
+  }
+
   return (
     <Drawer
       title={`${mode === "add" ? "新增" : "编辑"}同步配置`}
@@ -94,11 +146,6 @@ export default function EditForm(props: IEditFormProps) {
           <Button onClick={onSubmit} type="primary">
             提交
           </Button>
-          <Button onClick={() => {
-            console.log(form.getFieldsValue())
-          }} type="primary">
-            de
-          </Button>
         </Space>
       }
       onClose={close}
@@ -109,7 +156,8 @@ export default function EditForm(props: IEditFormProps) {
         labelAlign="left"
         labelWrap
         onFieldsChange={(changedFields) => {
-          changedFields.forEach((item) => {});
+          changedFields.forEach((item) => {
+          });
         }}
       >
         <Row gutter={16}>
@@ -138,18 +186,16 @@ export default function EditForm(props: IEditFormProps) {
             </Form.Item>
           </Col>
 
-          <Col span={8}>
-            <Form.Item
-              label="源表列"
-              name="source_table_columns"
-              rules={[{ required: true }]}
-            >
-              <Input placeholder="请输入" />
-            </Form.Item>
-          </Col>
           <Col span={24}>
             <Form.Item
-              label="源表查询sql"
+              label={
+                <LabelTips tips={`例如：SELECT id, parent_code, parent_ci_id, code, "name", unit, value, ci_id, type_name FROM test_data;"`}>
+                  源表查询sql&nbsp;
+                  <Button type="primary" size="small" onClick={generateSourceSql}>
+                    点击生成
+                  </Button>
+                </LabelTips>
+              }
               name="query_sql"
               rules={[{ required: true }]}
             >
@@ -175,8 +221,15 @@ export default function EditForm(props: IEditFormProps) {
             </Form.Item>
           </Col>
           <Col span={24}>
-            <Form.Item
-              label="目标表查询sql模板"
+              <Form.Item
+              label={
+                <LabelTips tips="例如：INSERT INTO public.sync_test_table (code, naem) VALUES('${code}', '${name}');">
+                  目标表查询sql模板&nbsp;
+                  <Button type="primary" size="small" onClick={generateTargetSql}>
+                    点击生成
+                  </Button>
+                </LabelTips>
+              }
               name="target_query_sql_template"
               rules={[{ required: true }]}
             >
@@ -218,7 +271,7 @@ export default function EditForm(props: IEditFormProps) {
 
 function DataSourceSelect(props: {
   value?: IDataSourceList
-  onChange?: (data: IDataSourceList) => void
+  onChange?: (data?: IDataSourceList) => void
 }) {
   const pagination = {
       current: 1,
@@ -246,5 +299,8 @@ function DataSourceSelect(props: {
         props.onChange?.(item)
       }
     })
-  }} />
+  }}
+                 onClear={() => {
+                   props.onChange?.()
+                 }}/>
 }

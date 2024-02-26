@@ -5,7 +5,6 @@ export interface SyncConfig {
   name: string;
   data_source: any;
   source_table_name: string;
-  source_table_columns: any;
   query_sql: string;
   target_data_source: any;
   target_table_name: any;

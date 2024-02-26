@@ -4,7 +4,7 @@ pub mod prelude;
 
 pub mod collect_config;
 pub mod collect_log;
+pub mod data_source_list;
 pub mod sync_config;
 pub mod sync_log;
-pub mod data_source_list;
 // pub mod sync_log;

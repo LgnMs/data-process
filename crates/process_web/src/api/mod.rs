@@ -1,10 +1,10 @@
 pub mod collect_config;
 pub mod collect_log;
 pub mod common;
+pub mod data_source_list;
 pub mod mock;
 pub mod sync_config;
 pub mod sync_log;
-pub mod data_source_list;
 
 use anyhow::Result;
 use axum::http::{StatusCode, Uri};

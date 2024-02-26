@@ -34,12 +34,6 @@ impl MigrationTrait for Migration {
                             .comment("数据源表名"),
                     )
                     .col(
-                        ColumnDef::new(SyncConfig::SourceTableColumns)
-                            .json()
-                            .not_null()
-                            .comment("数据源要查询的字段"),
-                    )
-                    .col(
                         ColumnDef::new(SyncConfig::QuerySql)
                             .string()
                             .not_null()
@@ -110,7 +104,6 @@ pub enum SyncConfig {
     Name,
     DataSource,
     SourceTableName,
-    SourceTableColumns,
     QuerySql,
     TargetDataSource,
     TargetTableName,

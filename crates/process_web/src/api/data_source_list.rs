@@ -1,13 +1,15 @@
-use std::sync::Arc;
-use axum::extract::{Path, State};
-use axum::{Json, Router};
-use axum::routing::{get, post};
-use serde::Deserialize;
-use ts_rs::TS;
 use crate::api::common::{AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination};
-use crate::{bool_response, data_response, pagination_response};
 use crate::entity::data_source_list::Model;
 use crate::service::data_source_list_service::DataSourceListService;
+use crate::{bool_response, data_response, pagination_response};
+use axum::extract::{Path, State};
+use axum::routing::{get, post};
+use axum::{Json, Router};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use serde_json::Value;
+use ts_rs::TS;
+use process_core::db::DataSource;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
@@ -15,6 +17,7 @@ pub fn set_routes() -> Router<Arc<AppState>> {
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))
+        .route("/query_table_columns", post(query_table_columns))
         .route("/del/:id", get(del));
 
     routes
@@ -22,9 +25,9 @@ pub fn set_routes() -> Router<Arc<AppState>> {
 
 #[derive(Deserialize, TS)]
 #[ts(
-export,
-export_to = "ui/api/models/auto-generates/DatasourceListParams.ts",
-rename = "DatasourceListParams"
+    export,
+    export_to = "ui/api/models/auto-generates/DatasourceListParams.ts",
+    rename = "DatasourceListParams"
 )]
 pub struct ListParams {
     pub database_name: Option<String>,
@@ -48,7 +51,7 @@ async fn list(
         payload.page_size,
         payload.data,
     )
-        .await;
+    .await;
 
     pagination_response!(res, payload.current, payload.page_size)
 }
@@ -61,7 +64,6 @@ async fn add(
 
     data_response!(res)
 }
-
 
 async fn update_by_id(
     state: State<Arc<AppState>>,
@@ -80,4 +82,25 @@ async fn del(
     let res = DataSourceListService::delete(&state.conn, id).await;
 
     bool_response!(res)
+}
+
+#[derive(Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/QueryTableColumnsParameters.ts",
+    rename = "QueryTableColumnsParameters"
+)]
+struct QueryTableColumnsParameters {
+    #[ts(type = "any")]
+    data_source: DataSource,
+    table_name: String
+}
+
+async fn query_table_columns(
+    _: State<Arc<AppState>>,
+    Json(payload): Json<QueryTableColumnsParameters>,
+) -> anyhow::Result<ResJson<Vec<Value>>, AppError> {
+    let res = DataSourceListService::query_table_columns(payload.data_source, payload.table_name).await;
+
+    data_response!(res)
 }

@@ -95,7 +95,8 @@ export default function EditForm(props: IEditFormProps) {
         labelAlign="left"
         labelWrap
         onFieldsChange={(changedFields) => {
-          changedFields.forEach((item) => {});
+          changedFields.forEach((item) => {
+          });
         }}
       >
         <Row gutter={16}>
@@ -116,6 +117,11 @@ export default function EditForm(props: IEditFormProps) {
                   { label: "MS SQL server", value: "MSSQL" },
                 ]}
               />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="模式" name="table_schema">
+              <Input placeholder="public" />
             </Form.Item>
           </Col>
           <Col span={8}>

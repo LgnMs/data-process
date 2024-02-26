@@ -72,7 +72,6 @@ impl SyncConfigService {
             name: Set(data_clone.name),
             data_source: Set(data_clone.data_source),
             source_table_name: Set(data_clone.source_table_name),
-            source_table_columns: Set(data_clone.source_table_columns),
             query_sql: Set(data_clone.query_sql),
             target_data_source: Set(data_clone.target_data_source),
             target_table_name: Set(data_clone.target_table_name),
@@ -150,8 +149,6 @@ impl SyncConfigService {
 
         db_data.update(&state.conn).await
     }
-    
-    pub 
 
     pub async fn execute_task(state: &Arc<AppState>, data: &Model) {
         let sync_log_id = Uuid::new_v4();

@@ -70,7 +70,10 @@ macro_rules! data_response {
     ($res: expr) => {
         match $res {
             Ok(data) => Ok(::axum::Json($crate::res_template_ok!(Some(data)))),
-            Err(err) => Ok(::axum::Json($crate::res_template_err!(None, err.to_string()))),
+            Err(err) => Ok(::axum::Json($crate::res_template_err!(
+                None,
+                err.to_string()
+            ))),
         }
     };
 }

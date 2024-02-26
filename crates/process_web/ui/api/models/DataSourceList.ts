@@ -3,6 +3,7 @@
 export interface DataSourceList {
   id: number;
   database_name: string;
+  table_schema?: string;
   database_type: string;
   host: string;
   port: string;

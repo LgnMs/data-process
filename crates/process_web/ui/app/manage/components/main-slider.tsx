@@ -105,7 +105,6 @@ export function MainSlider(props: IMainSiderProps) {
   const onSelect = (value: any) => {
     router.push(value.key);
   };
-  console.log(keys)
 
   return (
     <Sider

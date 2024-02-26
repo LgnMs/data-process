@@ -21,8 +21,9 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(DataSourceList::DatabaseName)
                             .string()
-                            .not_null()
+                            .not_null(),
                     )
+                    .col(ColumnDef::new(DataSourceList::TableSchema).string())
                     .col(
                         ColumnDef::new(DataSourceList::DatabaseType)
                             .string()
@@ -67,6 +68,7 @@ enum DataSourceList {
     Table,
     Id,
     DatabaseName,
+    TableSchema,
     DatabaseType,
     Host,
     Port,

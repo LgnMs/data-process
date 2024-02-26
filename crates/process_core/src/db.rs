@@ -35,6 +35,7 @@ pub struct DataSource {
     pub user: String,
     pub password: String,
     pub database_name: String,
+    pub table_schema: Option<String>,
     pub database_type: Database,
 }
 
@@ -74,7 +75,7 @@ impl Db {
 }
 
 // TODO: 适配更多的数据库
-async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Result<()> {
+pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Result<()> {
     match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
@@ -112,7 +113,7 @@ async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Res
     }
 }
 
-async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<Value>> {
+pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<Value>> {
     match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
