@@ -5,7 +5,7 @@ use crate::{bool_response, data_response, pagination_response};
 use axum::extract::{Path, State};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::Arc;
 use serde_json::Value;
 use ts_rs::TS;
