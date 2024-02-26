@@ -1,9 +1,9 @@
-use crate::common::{ExecuteJDBC, JDBC, JdbcType};
+use crate::common::{ExecuteJDBC, JdbcType, JDBC};
 use anyhow::Result;
-use j4rs::{ClasspathEntry, Instance, InvocationArg, Jvm, JvmBuilder};
-use std::path::PathBuf;
 use chrono::{Local, TimeZone};
+use j4rs::{ClasspathEntry, Instance, InvocationArg, Jvm, JvmBuilder};
 use serde_json::{json, Value};
+use std::path::PathBuf;
 
 pub struct Kingbase {
     pub jvm: Jvm,
@@ -87,17 +87,9 @@ impl ExecuteJDBC for Kingbase {
             &vec![query_arg],
         )?;
 
-        let meta_data = self.jvm.invoke(
-            &rs,
-            "getMetaData",
-            &vec![],
-        )?;
+        let meta_data = self.jvm.invoke(&rs, "getMetaData", &vec![])?;
 
-        let column_count_instance = self.jvm.invoke(
-            &meta_data,
-            "getColumnCount",
-            &vec![],
-        )?;
+        let column_count_instance = self.jvm.invoke(&meta_data, "getColumnCount", &vec![])?;
         let column_count: i32 = self.jvm.to_rust(column_count_instance)?;
 
         let mut vec = vec![];
@@ -123,149 +115,143 @@ impl ExecuteJDBC for Kingbase {
                 )?)?;
 
                 let value: Value = match JdbcType::from_i32(column_type) {
-                    None => {
-                        Value::Null
-                    }
-                    Some(col_type) => {
-                        match col_type {
-                            JdbcType::Varchar => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getString",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::String(x),
-                                    Err(_) => Value::Null
-                                }
+                    None => Value::Null,
+                    Some(col_type) => match col_type {
+                        JdbcType::Varchar => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getString",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::String(x),
+                                Err(_) => Value::Null,
                             }
-                            JdbcType::Integer => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getInt",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::Number(x),
-                                    Err(_) => Value::Null
-                                }
+                        }
+                        JdbcType::Integer => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getInt",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::Number(x),
+                                Err(_) => Value::Null,
                             }
-                            JdbcType::Float => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getFloat",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::Number(x),
-                                    Err(_) => Value::Null
-                                }
+                        }
+                        JdbcType::Float => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getFloat",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::Number(x),
+                                Err(_) => Value::Null,
                             }
-                            JdbcType::Double => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getDouble",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::Number(x),
-                                    Err(_) => Value::Null
-                                }
+                        }
+                        JdbcType::Double => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getDouble",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::Number(x),
+                                Err(_) => Value::Null,
                             }
-                            JdbcType::BigInt => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getLong",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::Number(x),
-                                    Err(_) => Value::Null
-                                }
+                        }
+                        JdbcType::BigInt => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getLong",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::Number(x),
+                                Err(_) => Value::Null,
                             }
-                            JdbcType::Decimal => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getDecimal",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::Number(x),
-                                    Err(_) => Value::Null
-                                }
+                        }
+                        JdbcType::Decimal => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getDecimal",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::Number(x),
+                                Err(_) => Value::Null,
                             }
-                            JdbcType::Boolean => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getBoolean",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::Bool(x),
-                                    Err(_) => Value::Null
-                                }
+                        }
+                        JdbcType::Boolean => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getBoolean",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::Bool(x),
+                                Err(_) => Value::Null,
                             }
-                            JdbcType::Blob => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getBlob",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::Object(x),
-                                    Err(_) => Value::Null
-                                }
+                        }
+                        JdbcType::Blob => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getBlob",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::Object(x),
+                                Err(_) => Value::Null,
                             }
-                            JdbcType::Time => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getTime",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::String(x),
-                                    Err(err) => {
-                                        println!("err {err}");
-                                        Value::Null
-                                    }
-                                }
-                            }
-                            JdbcType::Timestamp => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getTimestamp",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust::<i64>(r) {
-                                    Ok(x) => {
-                                        let s = x / 1000;
-                                        let ns = x as u32 % 1000;
-                                        let dt = Local.timestamp_opt(s, ns).unwrap();
-                                        let date_string = dt.format("%Y-%m-%d %H:%M:%S").to_string();
-                                        Value::String(date_string)
-                                    },
-                                    Err(err) => {
-                                        println!("err {err}");
-                                        Value::Null
-                                    }
-                                }
-                            }
-                            JdbcType::Null => {
-                                Value::Null
-                            }
-                            _ => {
-                                let r = self.jvm.invoke(
-                                    &rs,
-                                    "getString",
-                                    &vec![InvocationArg::try_from(i)?.into_primitive()?]
-                                )?;
-                                match self.jvm.to_rust(r) {
-                                    Ok(x) => Value::String(x),
-                                    Err(_) => Value::Null
+                        }
+                        JdbcType::Time => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getTime",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::String(x),
+                                Err(err) => {
+                                    println!("err {err}");
+                                    Value::Null
                                 }
                             }
                         }
-                    }
+                        JdbcType::Timestamp => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getTimestamp",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust::<i64>(r) {
+                                Ok(x) => {
+                                    let s = x / 1000;
+                                    let ns = x as u32 % 1000;
+                                    let dt = Local.timestamp_opt(s, ns).unwrap();
+                                    let date_string = dt.format("%Y-%m-%d %H:%M:%S").to_string();
+                                    Value::String(date_string)
+                                }
+                                Err(err) => {
+                                    println!("err {err}");
+                                    Value::Null
+                                }
+                            }
+                        }
+                        JdbcType::Null => Value::Null,
+                        _ => {
+                            let r = self.jvm.invoke(
+                                &rs,
+                                "getString",
+                                &vec![InvocationArg::try_from(i)?.into_primitive()?],
+                            )?;
+                            match self.jvm.to_rust(r) {
+                                Ok(x) => Value::String(x),
+                                Err(_) => Value::Null,
+                            }
+                        }
+                    },
                 };
                 println!("column_name {column_name} column_type {column_type}");
                 map.insert(column_name, value);
@@ -280,8 +266,7 @@ impl ExecuteJDBC for Kingbase {
     fn execute_update(&mut self, query_str: &str) -> Result<()> {
         self.prepare_statement(query_str)?;
 
-        self
-            .jvm
+        self.jvm
             .invoke(&self.statement.as_ref().unwrap(), "executeUpdate", &vec![])?;
 
         self.close()?;

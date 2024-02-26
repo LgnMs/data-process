@@ -4,6 +4,7 @@ mod m20240118_000001_create_collect_log_table;
 mod m20240118_000001_create_sync_log_table;
 mod m20240119_000001_create_collect_config_table;
 mod m20240119_023953_create_sync_config_table;
+mod m20240226_015923_create_datasource_list;
 
 pub struct Migrator;
 
@@ -11,10 +12,11 @@ pub struct Migrator;
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
-            Box::new(m20240119_000001_create_collect_config_table::Migration),
             Box::new(m20240118_000001_create_collect_log_table::Migration),
-            Box::new(m20240119_023953_create_sync_config_table::Migration),
             Box::new(m20240118_000001_create_sync_log_table::Migration),
+            Box::new(m20240119_000001_create_collect_config_table::Migration),
+            Box::new(m20240119_023953_create_sync_config_table::Migration),
+            Box::new(m20240226_015923_create_datasource_list::Migration),
         ]
     }
 }

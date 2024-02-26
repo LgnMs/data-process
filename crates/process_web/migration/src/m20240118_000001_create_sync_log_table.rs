@@ -52,7 +52,7 @@ impl MigrationTrait for Migration {
         // Replace the sample below with your own migration scripts
 
         manager
-            .drop_table(Table::drop().table(SyncConfig::Table).to_owned())
+            .drop_table(Table::drop().table(SyncLog::Table).to_owned())
             .await
     }
 }

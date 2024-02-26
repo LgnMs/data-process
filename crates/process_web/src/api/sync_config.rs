@@ -6,9 +6,9 @@ use std::sync::Arc;
 use ts_rs::TS;
 
 use crate::api::common::*;
-use crate::{bool_response, data_response, pagination_response, res_template_ok};
 use crate::entity::sync_config::Model;
 use crate::service::sync_config_service::SyncConfigService;
+use crate::{bool_response, data_response, pagination_response, res_template_ok};
 
 #[derive(Deserialize, TS)]
 #[ts(

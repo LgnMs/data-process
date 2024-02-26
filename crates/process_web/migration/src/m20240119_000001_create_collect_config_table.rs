@@ -117,6 +117,7 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(CollectConfig::DelFlag)
                             .integer()
                             .default(0)
+                            .not_null()
                             .comment(r#"1 已删除 0 未删除"#),
                     )
                     .col(

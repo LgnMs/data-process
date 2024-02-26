@@ -90,7 +90,7 @@ impl SyncConfigService {
 
             active_data.id = Unchanged(db_data.id);
             active_data.update_time = Set(now);
-            
+
             let mut data = data.clone();
             data.id = id;
             let job_id = update_job_scheduler(state.clone(), &data, &db_data)

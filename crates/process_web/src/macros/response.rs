@@ -1,19 +1,19 @@
 #[macro_export]
 macro_rules! res_template {
     ($list: expr, $current: expr, $page_size: expr, $total: expr, $msg: expr) => {{
-        let data = Pagination {
+        let data = $crate::api::common::Pagination {
             total: $total,
             list: $list,
             current: $current,
             page_size: $page_size,
         };
-        ResTemplate {
+        $crate::api::common::ResTemplate {
             message: $msg,
             data: Some(data),
         }
     }};
     ($data: expr, $msg: expr) => {
-        ResTemplate {
+        $crate::api::common::ResTemplate {
             message: $msg,
             data: $data,
         }
@@ -56,8 +56,8 @@ macro_rules! res_template_err {
 macro_rules! bool_response {
     ($res: expr) => {
         match $res {
-            Ok(_) => Ok(Json($crate::res_template_ok!(Some(true)))),
-            Err(err) => Ok(Json($crate::res_template_err!(
+            Ok(_) => Ok(::axum::Json($crate::res_template_ok!(Some(true)))),
+            Err(err) => Ok(::axum::Json($crate::res_template_err!(
                 Some(false),
                 err.to_string()
             ))),
@@ -69,8 +69,8 @@ macro_rules! bool_response {
 macro_rules! data_response {
     ($res: expr) => {
         match $res {
-            Ok(data) => Ok(Json($crate::res_template_ok!(Some(data)))),
-            Err(err) => Ok(Json($crate::res_template_err!(None, err.to_string()))),
+            Ok(data) => Ok(::axum::Json($crate::res_template_ok!(Some(data)))),
+            Err(err) => Ok(::axum::Json($crate::res_template_err!(None, err.to_string()))),
         }
     };
 }
@@ -79,10 +79,10 @@ macro_rules! data_response {
 macro_rules! pagination_response {
     ($res: expr, $current: expr, $page_size: expr) => {
         match $res {
-            Ok((list, total)) => Ok(Json($crate::res_template_ok!(
+            Ok((list, total)) => Ok(::axum::Json($crate::res_template_ok!(
                 list, $current, $page_size, total
             ))),
-            Err(err) => Ok(Json($crate::res_template_err!(
+            Err(err) => Ok(::axum::Json($crate::res_template_err!(
                 vec![],
                 $current,
                 $page_size,

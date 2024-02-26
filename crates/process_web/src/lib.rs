@@ -5,6 +5,6 @@
 /// }
 pub mod api;
 pub mod entity;
+mod macros;
 pub mod service;
 pub mod utils;
-mod macros;

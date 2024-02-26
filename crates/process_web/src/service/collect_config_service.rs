@@ -133,7 +133,7 @@ impl CollectConfigService {
                 )
                 .await?;
             }
-            
+
             let mut data = data.clone();
             data.id = id;
             let job_id = update_job_scheduler(state.clone(), &data, &db_data)

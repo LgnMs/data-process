@@ -65,7 +65,7 @@ impl MigrationTrait for Migration {
         // Replace the sample below with your own migration scripts
 
         manager
-            .drop_table(Table::drop().table(CollectConfig::Table).to_owned())
+            .drop_table(Table::drop().table(CollectLog::Table).to_owned())
             .await
     }
 }
