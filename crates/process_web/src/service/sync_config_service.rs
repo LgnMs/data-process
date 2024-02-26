@@ -150,6 +150,8 @@ impl SyncConfigService {
 
         db_data.update(&state.conn).await
     }
+    
+    pub 
 
     pub async fn execute_task(state: &Arc<AppState>, data: &Model) {
         let sync_log_id = Uuid::new_v4();

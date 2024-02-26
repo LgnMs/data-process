@@ -2,7 +2,7 @@ use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
 
-use crate::api::datas_ource_list::ListParams;
+use crate::api::data_source_list::ListParams;
 use crate::entity::{data_source_list};
 use crate::entity::data_source_list::Model;
 

@@ -4,7 +4,7 @@ pub mod common;
 pub mod mock;
 pub mod sync_config;
 pub mod sync_log;
-pub mod datas_ource_list;
+pub mod data_source_list;
 
 use anyhow::Result;
 use axum::http::{StatusCode, Uri};
@@ -66,7 +66,7 @@ pub async fn start() -> Result<()> {
         .nest("/collect_log", collect_log::set_routes())
         .nest("/sync_config", sync_config::set_routes())
         .nest("/sync_log", sync_log::set_routes())
-        .nest("/datasource_list", datas_ource_list::set_routes())
+        .nest("/datasource_list", data_source_list::set_routes())
         .nest("/mock", mock::set_routes())
         .fallback(fallback)
         .with_state(state);
