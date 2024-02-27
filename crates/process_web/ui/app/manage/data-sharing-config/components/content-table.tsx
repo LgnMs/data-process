@@ -1,22 +1,20 @@
 "use client";
-import { message, Popconfirm, Space, Table, Tag, Typography } from "antd";
+import { message, Popconfirm, Space, Table, Typography } from "antd";
 import useSWR from "swr";
-
-import * as SyncConfig from "@/api/sync_config";
-import { SyncConfig as ISyncConfig } from "@/api/models/SyncConfig";
-import { useMainContext } from "@/contexts/main";
-import { CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import React from "react";
-import LabelTips from "@/app/manage/components/label-tips";
+
+import * as DataSharingConfig from "@/api/data_sharing_config";
+import { DataSharingConfig as IDataSharingConfig } from "@/api/models/DataSharingConfig";
+import { useMainContext } from "@/contexts/main";
 import dayjs from "dayjs";
 
 export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
-  const pagination = state.syncConfig.pagination;
+  const pagination = state.dataSharingConfig.pagination;
 
   const { data, isLoading, mutate } = useSWR(
-    [SyncConfig.LIST, pagination],
-    ([_, pagination]) => SyncConfig.list(pagination)
+    [DataSharingConfig.LIST, pagination],
+    ([_, pagination]) => DataSharingConfig.list(pagination)
   );
 
   const columns: any = [
@@ -36,57 +34,29 @@ export default function ContentTable() {
       },
     },
     {
-      title: <LabelTips tips={`设置执行周期后启用`}>状态</LabelTips>,
-      width: 120,
-      align: "center",
-      render: (_: any, record: ISyncConfig) => {
-        if (record.cron) {
-          return (
-            <Tag icon={<CheckCircleOutlined />} color="success">
-              启用
-            </Tag>
-          );
-        } else {
-          return (
-            <Tag icon={<ClockCircleOutlined />} color="default">
-              停用
-            </Tag>
-          );
-        }
-      },
-    },
-    {
       title: "操作",
       width: 150,
-      render: (_: any, record: ISyncConfig) => {
+      render: (_: any, record: IDataSharingConfig) => {
         return (
           <Space>
             <Typography.Link
               onClick={() => {
                 dispatch({
-                  type: "syncConfig.setEditFormOpen",
+                  type: "dataSharingConfig.setEditFormOpen",
                   editFormOpen: true,
                 });
                 dispatch({
-                  type: "syncConfig.setEditFormData",
+                  type: "dataSharingConfig.setEditFormData",
                   editFormData: record,
                 });
               }}
             >
               查看
             </Typography.Link>
-            <Typography.Link
-              onClick={async () => {
-                await SyncConfig.execute(record.id!);
-                message.success("执行成功");
-              }}
-            >
-              立即执行
-            </Typography.Link>
             <Popconfirm
               title="确定要删除吗？"
               onConfirm={async () => {
-                const res = await SyncConfig.del(record.id!);
+                const res = await DataSharingConfig.del(record.id!);
                 if (res.data) {
                   message.success("删除成功");
                   await mutate();
@@ -101,7 +71,7 @@ export default function ContentTable() {
     },
   ];
 
-  let dataSource: Array<ISyncConfig> = [];
+  let dataSource: Array<IDataSharingConfig> = [];
   let total = 0;
   if (data?.data) {
     dataSource = data.data.list;
@@ -123,7 +93,7 @@ export default function ContentTable() {
       }}
       onChange={({ current, pageSize }) => {
         dispatch({
-          type: "syncConfig.setPagination",
+          type: "dataSharingConfig.setPagination",
           pagination: {
             ...pagination,
             current: current as number,

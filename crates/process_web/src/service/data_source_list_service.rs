@@ -53,6 +53,7 @@ impl DataSourceListService {
         debug!("data: {:?}, id: {:?}", data, id);
         let now = chrono::Local::now().naive_local();
         let mut active_data = data_source_list::ActiveModel {
+            name: Set(data.name),
             database_name: Set(data.database_name),
             table_schema: Set(data.table_schema),
             database_type: Set(data.database_type),
@@ -72,7 +73,6 @@ impl DataSourceListService {
             active_data.update_time = Set(now);
             active_data.update(db).await
         } else {
-            active_data.id = Set(data.id);
             active_data.create_time = Set(now);
             active_data.update_time = Set(now);
             active_data.insert(db).await

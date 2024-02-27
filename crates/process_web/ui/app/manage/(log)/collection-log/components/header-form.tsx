@@ -24,7 +24,7 @@ export default function HeaderForm() {
   return (
     <Form form={form} name="basic" layout="inline">
       <Form.Item name="collect_config_name">
-        <Input placeholder="请输入采集配置名称" />
+        <Input placeholder="请输入采集任务名称" />
       </Form.Item>
 
       <Form.Item>

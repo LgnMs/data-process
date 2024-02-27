@@ -2,6 +2,7 @@
 
 export interface DataSourceList {
   id: number;
+  name?: string;
   database_name: string;
   table_schema?: string;
   database_type: string;

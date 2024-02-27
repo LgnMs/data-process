@@ -6,6 +6,7 @@ import React from "react";
 import * as DatasourceList from "@/api/data_source_list";
 import { DataSourceList as IDatasourceList } from "@/api/models/DataSourceList";
 import { useMainContext } from "@/contexts/main";
+import dayjs from "dayjs";
 
 export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
@@ -26,8 +27,19 @@ export default function ContentTable() {
       dataIndex: "database_name",
     },
     {
+      title: "数据源名称",
+      dataIndex: "name",
+    },
+    {
       title: "数据库类型",
       dataIndex: "database_type",
+    },
+    {
+      title: "更新日期",
+      dataIndex: "update_time",
+      render: (text: number) => {
+        return dayjs(text).format("YYYY-MM-DD HH:mm:ss");
+      },
     },
     {
       title: "操作",

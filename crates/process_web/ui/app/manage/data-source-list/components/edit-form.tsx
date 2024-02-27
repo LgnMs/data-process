@@ -6,8 +6,9 @@ import {
   Form,
   Input,
   message,
-  Row, Select,
-  Space
+  Row,
+  Select,
+  Space,
 } from "antd";
 import React, { useEffect, useState } from "react";
 import * as DatasourceList from "@/api/data_source_list";
@@ -63,8 +64,6 @@ export default function EditForm(props: IEditFormProps) {
       if (state.dataSourceList.editFormData) {
         const data: any = clone(state.dataSourceList.editFormData);
 
-        data.data_source = JSON.stringify(data.data_source);
-        data.target_data_source = JSON.stringify(data.target_data_source);
 
         form.setFieldsValue(data);
         setMode("edit");
@@ -95,18 +94,33 @@ export default function EditForm(props: IEditFormProps) {
         labelAlign="left"
         labelWrap
         onFieldsChange={(changedFields) => {
-          changedFields.forEach((item) => {
-          });
+          changedFields.forEach((item) => {});
         }}
       >
         <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              label="数据库名称"
+              name="database_name"
+              rules={[{ required: true }]}
+            >
+              <Input placeholder="请输入" />
+            </Form.Item>
+          </Col>
           <Col span={16}>
-            <Form.Item label="数据库名称" name="database_name" rules={[{ required: true }]}>
+            <Form.Item
+              label="数据源名称"
+              name="name"
+            >
               <Input placeholder="请输入" />
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="数据库类型" name="database_type" rules={[{ required: true }]}>
+            <Form.Item
+              label="数据库类型"
+              name="database_type"
+              rules={[{ required: true }]}
+            >
               <Select
                 placeholder="请输入"
                 options={[
@@ -140,11 +154,14 @@ export default function EditForm(props: IEditFormProps) {
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="密码" name="password" rules={[{ required: true }]}>
+            <Form.Item
+              label="密码"
+              name="password"
+              rules={[{ required: true }]}
+            >
               <Input type="password" placeholder="请输入" />
             </Form.Item>
           </Col>
-
         </Row>
       </Form>
     </Drawer>

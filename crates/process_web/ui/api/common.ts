@@ -1,6 +1,9 @@
+import {message} from 'antd'
+
 export interface ResTemplate<T> {
   message: string;
   data: T | null;
+  success: boolean;
 }
 export interface Pagination<T> {
   total: number;
@@ -22,7 +25,11 @@ export interface PaginationPayload<T> {
 export async function http_get<T>(input: string): Promise<T> {
   const res = await fetch(input);
 
-  return res.json();
+  let data = await res.json();
+  if (!data.success) {
+    message.error(data.message);
+  }
+  return new Promise((resolve) => resolve(data));
 }
 
 export async function http_post<T>(
@@ -37,5 +44,10 @@ export async function http_post<T>(
     method: "POST",
     ...init,
   });
-  return res.json();
+
+  let data = await res.json();
+  if (!data.success) {
+    message.error(data.message);
+  }
+  return new Promise((resolve) => resolve(data));
 }

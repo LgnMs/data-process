@@ -18,9 +18,9 @@ pub struct Model {
     pub collect_config_id: Option<i32>,
     pub running_log: String,
     pub status: i32,
-    #[ts(type = "any")]
+    #[serde(skip_deserializing)]
     pub update_time: DateTime,
-    #[ts(type = "any")]
+    #[serde(skip_deserializing)]
     pub create_time: DateTime,
 }
 

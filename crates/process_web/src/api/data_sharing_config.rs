@@ -1,6 +1,4 @@
 use crate::api::common::{AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination};
-use crate::entity::data_source_list::Model;
-use crate::service::data_source_list_service::DataSourceListService;
 use crate::{bool_response, data_response, pagination_response};
 use axum::extract::{Path, State};
 use axum::routing::{get, post};
@@ -9,7 +7,9 @@ use serde::Deserialize;
 use std::sync::Arc;
 use serde_json::Value;
 use ts_rs::TS;
-use process_core::db::DataSource;
+
+use crate::entity::data_sharing_config::Model;
+use crate::service::data_sharing_config_service::DataSharingConfigService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
@@ -17,7 +17,7 @@ pub fn set_routes() -> Router<Arc<AppState>> {
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))
-        .route("/query_table_columns", post(query_table_columns))
+        .route("/get_data/:id", post(get_data))
         .route("/del/:id", get(del));
 
     routes
@@ -26,18 +26,18 @@ pub fn set_routes() -> Router<Arc<AppState>> {
 #[derive(Deserialize, TS)]
 #[ts(
     export,
-    export_to = "ui/api/models/auto-generates/DataSourceListParams.ts",
-    rename = "DataSourceListParams"
+    export_to = "ui/api/models/auto-generates/DataSharingConfigParams.ts",
+    rename = "DataSharingConfigParams"
 )]
 pub struct ListParams {
-    pub database_name: Option<String>,
+    pub name: Option<String>,
 }
 
 async fn find_by_id(
     state: State<Arc<AppState>>,
     Path(id): Path<i32>,
 ) -> anyhow::Result<ResJson<Model>, AppError> {
-    let res = DataSourceListService::find_by_id(&state.conn, id).await;
+    let res = DataSharingConfigService::find_by_id(&state.conn, id).await;
     data_response!(res)
 }
 
@@ -45,7 +45,7 @@ async fn list(
     state: State<Arc<AppState>>,
     Json(payload): Json<PaginationPayload<ListParams>>,
 ) -> anyhow::Result<ResJsonWithPagination<Model>, AppError> {
-    let res = DataSourceListService::list(
+    let res = DataSharingConfigService::list(
         &state.conn,
         payload.current,
         payload.page_size,
@@ -60,7 +60,7 @@ async fn add(
     state: State<Arc<AppState>>,
     Json(payload): Json<Model>,
 ) -> anyhow::Result<ResJson<Model>, AppError> {
-    let res = DataSourceListService::add(&state.conn, payload).await;
+    let res = DataSharingConfigService::add(&state.conn, payload).await;
 
     data_response!(res)
 }
@@ -70,7 +70,7 @@ async fn update_by_id(
     Path(id): Path<i32>,
     Json(payload): Json<Model>,
 ) -> anyhow::Result<ResJson<Model>, AppError> {
-    let res = DataSourceListService::update_by_id(&state.conn, id, payload).await;
+    let res = DataSharingConfigService::update_by_id(&state.conn, id, payload).await;
 
     data_response!(res)
 }
@@ -79,28 +79,17 @@ async fn del(
     state: State<Arc<AppState>>,
     Path(id): Path<i32>,
 ) -> anyhow::Result<ResJson<bool>, AppError> {
-    let res = DataSourceListService::delete(&state.conn, id).await;
+    let res = DataSharingConfigService::delete(&state.conn, id).await;
 
     bool_response!(res)
 }
 
-#[derive(Deserialize, TS)]
-#[ts(
-    export,
-    export_to = "ui/api/models/auto-generates/QueryTableColumnsParameters.ts",
-    rename = "QueryTableColumnsParameters"
-)]
-struct QueryTableColumnsParameters {
-    #[ts(type = "any")]
-    data_source: DataSource,
-    table_name: String
-}
 
-async fn query_table_columns(
-    _: State<Arc<AppState>>,
-    Json(payload): Json<QueryTableColumnsParameters>,
+async fn get_data(
+    state: State<Arc<AppState>>,
+    Path(id): Path<i32>,
 ) -> anyhow::Result<ResJson<Vec<Value>>, AppError> {
-    let res = DataSourceListService::query_table_columns(payload.data_source, payload.table_name).await;
+    let res = DataSharingConfigService::get_data(&state.conn, id).await;
 
     data_response!(res)
 }

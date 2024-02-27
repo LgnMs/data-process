@@ -3,17 +3,18 @@ import {
   Button,
   Col,
   Drawer,
-  Form,
+  Form, FormInstance,
   Input,
   message,
   Radio,
-  Row, Select,
+  Row,
+  Select,
   Space
 } from "antd";
 import React, { useEffect, useState } from "react";
 import * as SyncConfig from "@/api/sync_config";
 import * as DataSourceList from "@/api/data_source_list";
-import { DataSourceList as IDataSourceList } from "@/api/models/DataSourceList"
+import { DataSourceList as IDataSourceList } from "@/api/models/DataSourceList";
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
 import { clone } from "lodash";
@@ -34,7 +35,6 @@ export default function EditForm(props: IEditFormProps) {
   async function onSubmit() {
     await form.validateFields();
     const values = form.getFieldsValue(true);
-
 
     const data = {
       ...values,
@@ -84,55 +84,33 @@ export default function EditForm(props: IEditFormProps) {
     }
   }, [state.syncConfig.editFormOpen]);
 
-  async function getSourceDataBaseColumns() {
-    const data_source = form.getFieldValue('data_source')!;
-    const source_table_name = form.getFieldValue('source_table_name')!;
-    const res = await DataSourceList.query_table_columns({
-      data_source,
-      table_name: source_table_name
-    });
-    let cols: string[] = [];
-    res.data?.forEach((item, index) => {
-      for (const key in item) {
-        cols.push(item[key])
-      }
-    })
-    return cols;
-  }
   async function generateSourceSql() {
-    const data_source = form.getFieldValue('data_source')!;
-    const source_table_name = form.getFieldValue('source_table_name')!;
-    const table_schema = data_source?.table_schema;
-    let sql = "SELECT "
-    let cols: string[] = await getSourceDataBaseColumns();
-
-    const table_name = table_schema ? `${table_schema}.${source_table_name}` : source_table_name;
-    sql += `${cols.join(", ")} FROM ${table_name};`;
-
-    form.setFieldValue('query_sql', sql);
-
+    const sql = await generateQuerySql(form, "data_source", "source_table_name");
+    form.setFieldValue("query_sql", sql);
   }
 
   async function generateTargetSql() {
-    const data_source = form.getFieldValue('target_data_source')!;
-    const source_table_name = form.getFieldValue('target_table_name')!;
+    const data_source = form.getFieldValue("target_data_source")!;
+    const source_table_name = form.getFieldValue("target_table_name")!;
     const table_schema = data_source?.table_schema;
     const res = await DataSourceList.query_table_columns({
       data_source,
-      table_name: source_table_name
+      table_name: source_table_name,
     });
-    let sql = "INSERT INTO "
+    let sql = "INSERT INTO ";
     let cols: string[] = [];
     res.data?.forEach((item, index) => {
       for (const key in item) {
-        cols.push(item[key])
+        cols.push(item[key]);
       }
-    })
-    const table_name = table_schema ? `${table_schema}.${source_table_name}` : source_table_name;
+    });
+    const table_name = table_schema
+      ? `${table_schema}.${source_table_name}`
+      : source_table_name;
     //INSERT INTO public.sync_test_table (code, naem) VALUES('${code}', '${name}');
-    sql += `${table_name} (${cols.join(', ')}) VALUES();`;
+    sql += `${table_name} (${cols.join(", ")}) VALUES();`;
 
-    form.setFieldValue('target_query_sql_template', sql);
+    form.setFieldValue("target_query_sql_template", sql);
   }
 
   return (
@@ -156,8 +134,7 @@ export default function EditForm(props: IEditFormProps) {
         labelAlign="left"
         labelWrap
         onFieldsChange={(changedFields) => {
-          changedFields.forEach((item) => {
-          });
+          changedFields.forEach((item) => {});
         }}
       >
         <Row gutter={16}>
@@ -189,9 +166,15 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={24}>
             <Form.Item
               label={
-                <LabelTips tips={`例如：SELECT id, parent_code, parent_ci_id, code, "name", unit, value, ci_id, type_name FROM test_data;"`}>
+                <LabelTips
+                  tips={`例如：SELECT id, parent_code, parent_ci_id, code, "name", unit, value, ci_id, type_name FROM test_data;"`}
+                >
                   源表查询sql&nbsp;
-                  <Button type="primary" size="small" onClick={generateSourceSql}>
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={generateSourceSql}
+                  >
                     点击生成
                   </Button>
                 </LabelTips>
@@ -221,11 +204,15 @@ export default function EditForm(props: IEditFormProps) {
             </Form.Item>
           </Col>
           <Col span={24}>
-              <Form.Item
+            <Form.Item
               label={
                 <LabelTips tips="例如：INSERT INTO public.sync_test_table (code, naem) VALUES('${code}', '${name}');">
                   目标表查询sql模板&nbsp;
-                  <Button type="primary" size="small" onClick={generateTargetSql}>
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={generateTargetSql}
+                  >
                     点击生成
                   </Button>
                 </LabelTips>
@@ -269,38 +256,77 @@ export default function EditForm(props: IEditFormProps) {
   );
 }
 
-function DataSourceSelect(props: {
-  value?: IDataSourceList
-  onChange?: (data?: IDataSourceList) => void
+export function DataSourceSelect(props: {
+  value?: IDataSourceList;
+  onChange?: (data?: IDataSourceList) => void;
 }) {
   const pagination = {
-      current: 1,
-      page_size: 999,
-      data: null,
+    current: 1,
+    page_size: 999,
+    data: null,
   };
-  const { data,  } = useSWR(
-      [DataSourceList.LIST, pagination],
-      ([_, pagination]) => DataSourceList.list(pagination)
+  const { data } = useSWR(
+    [DataSourceList.LIST, pagination],
+    ([_, pagination]) => DataSourceList.list(pagination)
   );
 
   let options: any[] = [];
 
   if (data?.data) {
-    options = data.data.list.map(item => {
+    options = data.data.list.map((item) => {
       return {
         value: item.id,
-        label: item.database_name
-      }
-    })
+        label: item.name || item.database_name,
+      };
+    });
   }
-  return <Select allowClear placeholder="请选择" value={props.value?.id}  options={options} onChange={(value) => {
-    data?.data?.list.forEach(item => {
-      if (value === item.id) {
-        props.onChange?.(item)
-      }
-    })
-  }}
-                 onClear={() => {
-                   props.onChange?.()
-                 }}/>
+  return (
+    <Select
+      allowClear
+      placeholder="请选择"
+      value={props.value?.id}
+      options={options}
+      onChange={(value) => {
+        data?.data?.list.forEach((item) => {
+          if (value === item.id) {
+            props.onChange?.(item);
+          }
+        });
+      }}
+      onClear={() => {
+        props.onChange?.();
+      }}
+    />
+  );
+}
+
+export async function getSourceDataBaseColumns(form: FormInstance, data_source_filed: string, table_name_filed: string) {
+  const data_source = form.getFieldValue(data_source_filed)!;
+  const source_table_name = form.getFieldValue(table_name_filed)!;
+  const res = await DataSourceList.query_table_columns({
+    data_source,
+    table_name: source_table_name,
+  });
+  let cols: string[] = [];
+  res.data?.forEach((item, index) => {
+    for (const key in item) {
+      cols.push(item[key]);
+    }
+  });
+  return cols;
+}
+
+export async function generateQuerySql(form: FormInstance, data_source_filed: string, table_name_filed: string) {
+  const data_source = form.getFieldValue(data_source_filed)!;
+  const source_table_name = form.getFieldValue(table_name_filed)!;
+  const table_schema = data_source?.table_schema;
+  let sql = "SELECT ";
+  let cols: string[] = await getSourceDataBaseColumns(form, data_source_filed, table_name_filed);
+
+  const table_name = table_schema
+    ? `${table_schema}.${source_table_name}`
+    : source_table_name;
+  sql += `${cols.join(", ")} FROM ${table_name};`;
+
+  return sql;
 }

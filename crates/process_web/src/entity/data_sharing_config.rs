@@ -4,25 +4,22 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, TS, Deserialize)]
-#[sea_orm(table_name = "data_source_list")]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, TS, Default)]
+#[sea_orm(table_name = "data_sharing_config")]
 #[ts(
     export,
-    export_to = "ui/api/models/auto-generates/DataSourceList.ts",
-    rename = "DataSourceList"
+    export_to = "ui/api/models/auto-generates/DataSharingConfig.ts",
+    rename = "DataSharingConfig"
 )]
 pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
     pub id: i32,
-    pub name: Option<String>,
-    pub database_name: String,
-    pub table_schema: Option<String>,
-    pub database_type: String,
-    pub host: String,
-    pub port: String,
-    pub user: String,
-    pub password: String,
+    pub name: String,
+    pub table_name: String,
+    pub query_sql: String,
+    #[ts(type = "any")]
+    pub data_source: Json,
     #[serde(skip_deserializing)]
     pub del_flag: i32,
     #[serde(skip_deserializing)]
@@ -35,3 +32,4 @@ pub struct Model {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+

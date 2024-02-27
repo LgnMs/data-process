@@ -13,6 +13,7 @@ pub type ResJsonWithPagination<T> = ResJson<Pagination<Vec<T>>>;
 pub struct ResTemplate<T> {
     pub message: String,
     pub data: Option<T>,
+    pub success: bool
 }
 
 #[derive(Serialize, Deserialize)]

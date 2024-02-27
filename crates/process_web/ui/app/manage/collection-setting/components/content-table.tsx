@@ -8,6 +8,7 @@ import { useMainContext } from "@/contexts/main";
 import { CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import React from "react";
 import LabelTips from "@/app/manage/components/label-tips";
+import dayjs from "dayjs";
 
 export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
@@ -34,6 +35,13 @@ export default function ContentTable() {
     {
       title: "描述",
       dataIndex: "desc",
+    },
+    {
+      title: "更新日期",
+      dataIndex: "update_time",
+      render: (text: number) => {
+        return dayjs(text).format("YYYY-MM-DD HH:mm:ss");
+      },
     },
     {
       title: <LabelTips tips={`设置执行周期后启用`}>状态</LabelTips>,

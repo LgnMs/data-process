@@ -4,7 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   CloudSyncOutlined,
   NodeCollapseOutlined,
-  FileTextOutlined, DatabaseOutlined
+  FileTextOutlined,
+  DatabaseOutlined, ShareAltOutlined
 } from "@ant-design/icons";
 
 const { Sider } = Layout;
@@ -37,13 +38,18 @@ const Menus = [
     label: <MenuItem>同步任务</MenuItem>,
   },
   {
+    key: "/manage/data-sharing-config",
+    icon: <ShareAltOutlined />,
+    label: <MenuItem>共享配置</MenuItem>,
+  },
+  {
     key: "/manage",
     icon: <FileTextOutlined />,
     label: <MenuItem>日志</MenuItem>,
     children: [
       {
         key: "collection-log",
-          label: <MenuItem>采集任务日志</MenuItem>,
+        label: <MenuItem>采集任务日志</MenuItem>,
       },
       {
         key: "sync-log",
