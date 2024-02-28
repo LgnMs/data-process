@@ -92,13 +92,30 @@ impl DataSharingConfigService {
     pub async fn get_data(
         db: &DbConn,
         id: i32,
+        payload: Option<serde_json::Value>
     ) -> anyhow::Result<Vec<serde_json::Value>, DbErr> {
         let data = data_sharing_config::Entity::find_by_id(id)
             .one(db)
             .await?
             .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
+        let query_sql = match payload {
+            None => data.query_sql,
+            Some(x) => {
+                let obj = x.as_object().ok_or(DbErr::Custom("传递的参数无法解析".to_owned()))?;
+                let mut sql = data.query_sql;
+                for (key, value) in obj {
+                    let p_key = format!("${{{key}}}");
+                    if sql.contains(p_key.as_str()) {
+                        sql = sql.replace(p_key.as_str(), value.to_string().as_str());
+                    }
+                }
+
+                sql
+            }
+        };
+
         let data_source: DataSource = serde_json::from_value(data.data_source).unwrap();
-        process_core::db::find_all_sql(&data_source, data.query_sql)
+        process_core::db::find_all_sql(&data_source, query_sql)
             .await
             .map_err(|err| {
                 let s = format!("{}", err);

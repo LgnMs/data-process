@@ -84,12 +84,29 @@ async fn del(
     bool_response!(res)
 }
 
-
+/// 通过共享配置的id执行查询语句并返回，payload中的数据会作为参数替换查询语句中的${xxx}
+/// 例如
+/// ```shell
+/// curl --location 'http://127.0.0.1:8000/data_sharing_config/get_data/1' \
+/// --header 'Content-Type: application/json' \
+/// --data '{
+///     "id": 1,
+///     "limit": 5
+/// }'
+/// ```
+/// ```SQL
+///  原始语句：
+///  select id, from public.test_data where id > ${id} limit ${limit};
+///  输出：
+///  select id, from public.test_data where id > 1 limit 5;
+/// ```
+/// 
 async fn get_data(
     state: State<Arc<AppState>>,
     Path(id): Path<i32>,
+    Json(payload): Json<Option<Value>>,
 ) -> anyhow::Result<ResJson<Vec<Value>>, AppError> {
-    let res = DataSharingConfigService::get_data(&state.conn, id).await;
+    let res = DataSharingConfigService::get_data(&state.conn, id, payload).await;
 
     data_response!(res)
 }
