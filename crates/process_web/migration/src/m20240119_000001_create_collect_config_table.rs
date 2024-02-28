@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
             .create_table(
                 Table::create()
                     .table(CollectConfig::Table)
-                    .comment("数据采集配置")
+                    .comment("采集任务配置")
                     .if_not_exists()
                     .col(
                         ColumnDef::new(CollectConfig::Id)
@@ -122,12 +122,12 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(CollectConfig::UpdateTime)
-                            .timestamp()
+                            .date_time()
                             .not_null(),
                     )
                     .col(
                         ColumnDef::new(CollectConfig::CreateTime)
-                            .timestamp()
+                            .date_time()
                             .not_null(),
                     )
                     .to_owned(),

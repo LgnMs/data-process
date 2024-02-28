@@ -9,7 +9,7 @@
 ### setup
 1. 准备数据库 (下列数据库可选)
    - postgres >= 16.1
-   - mysql (TODO)
+   - mysql >= 8.x
 2. 创建数据库data_process_web、data_process_cache
 3. 安装运行环境
    - [rust](https://www.rust-lang.org/tools/install) >= 1.75.0
@@ -28,5 +28,3 @@ $ cd crates/process_web/ui && npm run dev
 
 - [ ] 采集Excel中的数据
 - [ ] 采集日志存储方式优化？
-- [ ] mysql数据库支持
-- [ ] 数据共享功能

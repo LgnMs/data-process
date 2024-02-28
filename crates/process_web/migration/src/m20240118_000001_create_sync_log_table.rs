@@ -12,13 +12,13 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .comment("数据采集日志")
+                    .comment("数据同步日志")
                     .table(SyncLog::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(SyncLog::Id).uuid().not_null().primary_key())
                     .col(
                         ColumnDef::new(SyncLog::RunningLog)
-                            .string()
+                            .text()
                             .not_null()
                             .comment("采集日志"),
                     )
@@ -35,8 +35,8 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .comment("采集配置项FK—ID"),
                     )
-                    .col(ColumnDef::new(SyncLog::UpdateTime).timestamp().not_null())
-                    .col(ColumnDef::new(SyncLog::CreateTime).timestamp().not_null())
+                    .col(ColumnDef::new(SyncLog::UpdateTime).date_time().not_null())
+                    .col(ColumnDef::new(SyncLog::CreateTime).date_time().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("sync_log_sync_config_fk")

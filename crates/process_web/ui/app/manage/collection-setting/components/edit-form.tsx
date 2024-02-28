@@ -173,7 +173,8 @@ export default function EditForm(props: IEditFormProps) {
       headers = [];
     }
 
-    const jsonHeaderIndex = headers.findIndex(
+    let jsonHeaderIndex = -1;
+    jsonHeaderIndex = headers?.findIndex(
       (header) =>
         header.key === "Content-Type" && header.value === "application/json"
     );
@@ -257,6 +258,7 @@ export default function EditForm(props: IEditFormProps) {
                           { value: "varchar", label: "字符串 varchar" },
                           { value: "integer", label: "数字 integer" },
                           { value: "timestamp", label: "日期 timestamp" },
+                          { value: "boolean", label: "布尔 boolean" },
                         ]}
                       ></Select>
                     </Form.Item>

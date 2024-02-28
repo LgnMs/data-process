@@ -68,3 +68,22 @@ pub struct PaginationPayload<T> {
     pub page_size: u64,
     pub data: Option<T>,
 }
+
+
+pub fn pg_to_mysql_type(pg_type: &str) -> Option<String> {
+    match pg_type.to_lowercase().as_str() {
+        "smallint" => Some("SMALLINT".to_string()),
+        "integer" => Some("INT".to_string()),
+        "bigint" => Some("BIGINT".to_string()),
+        "decimal" | "numeric" => Some("DECIMAL".to_string()),
+        "real" => Some("FLOAT".to_string()),
+        "double precision" => Some("DOUBLE".to_string()),
+        "boolean" => Some("BOOLEAN".to_string()),
+        "char" => Some("CHAR".to_string()),
+        "varchar" | "text" => Some("VARCHAR(255)".to_string()),
+        "date" => Some("DATE".to_string()),
+        "time" => Some("TIME".to_string()),
+        "timestamp" => Some("DATETIME".to_string()),
+        _ => None,
+    }
+}

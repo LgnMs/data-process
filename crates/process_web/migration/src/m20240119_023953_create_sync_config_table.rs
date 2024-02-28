@@ -12,6 +12,7 @@ impl MigrationTrait for Migration {
             .create_table(
                 Table::create()
                     .table(SyncConfig::Table)
+                    .comment("同步任务配置")
                     .if_not_exists()
                     .col(
                         ColumnDef::new(SyncConfig::Id)
@@ -76,12 +77,12 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(SyncConfig::UpdateTime)
-                            .timestamp()
+                            .date_time()
                             .not_null(),
                     )
                     .col(
                         ColumnDef::new(SyncConfig::CreateTime)
-                            .timestamp()
+                            .date_time()
                             .not_null(),
                     )
                     .to_owned(),

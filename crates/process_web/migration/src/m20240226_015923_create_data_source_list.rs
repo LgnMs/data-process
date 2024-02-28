@@ -10,6 +10,7 @@ impl MigrationTrait for Migration {
             .create_table(
                 Table::create()
                     .table(DataSourceList::Table)
+                    .comment("数据源列表")
                     .if_not_exists()
                     .col(
                         ColumnDef::new(DataSourceList::Id)
@@ -48,12 +49,12 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(DataSourceList::UpdateTime)
-                            .timestamp()
+                            .date_time()
                             .not_null(),
                     )
                     .col(
                         ColumnDef::new(DataSourceList::CreateTime)
-                            .timestamp()
+                            .date_time()
                             .not_null(),
                     )
                     .to_owned(),

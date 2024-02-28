@@ -15,7 +15,7 @@ use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
 use uuid::Uuid;
 
-use crate::api::common::AppState;
+use crate::api::common::{AppState, pg_to_mysql_type};
 use crate::entity::collect_config::Model;
 use crate::entity::{collect_config, collect_log};
 use crate::service::collect_log_service::CollectLogService;
@@ -208,22 +208,51 @@ impl CollectConfigService {
             let mut column_str = Vec::with_capacity(db_columns_config.len() + 1);
             let mut have_id_key = false;
 
-            for item in db_columns_config {
-                if item["key"] == "id" {
-                    column_str.insert(0, format!("{} {} NOT NULL", item["key"], item["type"]));
-                    have_id_key = true;
-                } else {
-                    column_str.push(format!("{} {} NULL", item["key"], item["type"]));
+            match cache_db.get_database_backend() {
+                DatabaseBackend::Postgres => {
+                    for item in db_columns_config {
+                        if item["key"] == "id" {
+                            column_str.insert(0, format!("{} {} NOT NULL", item["key"], item["type"]));
+                            have_id_key = true;
+                        } else {
+                            column_str.push(format!("{} {} NULL", item["key"], item["type"]));
+                        }
+                    }
+                }
+                DatabaseBackend::MySql => {
+                    for item in db_columns_config {
+                        if item["key"] == "id" {
+                            column_str.insert(0, format!("`{}` {} NOT NULL", item["key"].as_str().unwrap(), pg_to_mysql_type(item["type"].as_str().unwrap()).unwrap()));
+                            have_id_key = true;
+                        } else {
+                            column_str.push(format!("`{}` {} NULL", item["key"].as_str().unwrap(), pg_to_mysql_type(item["type"].as_str().unwrap()).unwrap()));
+                        }
+                    }
+                }
+                _ => {
+                    error!("不支持的数据库格式");
                 }
             }
+            
 
             if !have_id_key {
-                column_str.insert(0, r#"id serial NOT NULL"#.to_string());
+                match cache_db.get_database_backend() { 
+                    DatabaseBackend::Postgres => {
+                        column_str.insert(0, r#"id serial NOT NULL"#.to_string());
+                        column_str.push(format!(
+                            "CONSTRAINT {table_name}_{:?}_pk PRIMARY KEY (id)",
+                            Local::now().naive_local().timestamp()
+                        ));
+                    }
+                    DatabaseBackend::MySql => {
+                        column_str.insert(0, r#"id INT AUTO_INCREMENT NOT NULL"#.to_string());
+                        column_str.insert(0, r#"PRIMARY KEY (id)"#.to_string());
+                    }
+                    _ => {
+                        error!("不支持的数据库格式");
+                    }
+                } 
             }
-            column_str.push(format!(
-                "CONSTRAINT {table_name}_{:?}_pk PRIMARY KEY (id)",
-                Local::now().naive_local().timestamp()
-            ));
             template_str = format!("{} ({});", template_str, column_str.join(", "));
 
             cache_db

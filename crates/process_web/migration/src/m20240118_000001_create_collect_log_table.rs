@@ -23,7 +23,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(CollectLog::RunningLog)
-                            .string()
+                            .text()
                             .not_null()
                             .comment("采集日志"),
                     )
@@ -42,12 +42,12 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(CollectLog::UpdateTime)
-                            .timestamp()
+                            .date_time()
                             .not_null(),
                     )
                     .col(
                         ColumnDef::new(CollectLog::CreateTime)
-                            .timestamp()
+                            .date_time()
                             .not_null(),
                     )
                     .foreign_key(
