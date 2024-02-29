@@ -2,7 +2,7 @@ use anyhow::Result;
 
 pub trait JDBC {
     type Connection;
-    fn connect(&mut self, db_url: &str) -> Result<&Self::Connection>;
+    fn connect(&mut self, db_url: &str, username: &str, password: &str) -> Result<&Self::Connection>;
 
     fn create_statement(&mut self) -> Result<&Self::Connection>;
 

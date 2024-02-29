@@ -18,8 +18,7 @@ pub struct Model {
     pub name: String,
     pub table_name: String,
     pub query_sql: String,
-    #[ts(type = "any")]
-    pub data_source: Json,
+    pub data_source_id: i32,
     #[serde(skip_deserializing)]
     pub del_flag: i32,
     #[serde(skip_deserializing)]

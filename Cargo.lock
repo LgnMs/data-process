@@ -2236,6 +2236,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "j4rs",
+ "log",
  "serde",
  "serde_json",
 ]

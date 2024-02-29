@@ -2,7 +2,9 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use ts_rs::TS;
+use process_core::db::DataSource;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, TS, Deserialize)]
 #[sea_orm(table_name = "data_source_list")]
@@ -35,3 +37,17 @@ pub struct Model {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl Into<DataSource> for Model {
+    fn into(self) -> DataSource {
+        DataSource {
+            host: self.host,
+            port: self.port,
+            user: self.user,
+            password: self.password,
+            database_name: self.database_name,
+            table_schema: self.table_schema,
+            database_type: serde_json::from_value(json!(self.database_type)).unwrap(),
+        }
+    }
+}

@@ -31,6 +31,8 @@ export default function EditForm(props: IEditFormProps) {
   const { state, dispatch } = useMainContext()!;
   const [mode, setMode] = useState<"edit" | "add">("add");
   const [autoExec, setAutoExec] = useState(0);
+  const [genLoading, setGenLoading] = useState(false);
+  const [gen2Loading, setGen2Loading] = useState(false);
 
   async function onSubmit() {
     await form.validateFields();
@@ -85,12 +87,13 @@ export default function EditForm(props: IEditFormProps) {
   }, [state.syncConfig.editFormOpen]);
 
   async function generateSourceSql() {
-    const sql = await generateQuerySql(form, "data_source", "source_table_name");
+    const sql = await generateQuerySql(form, "data_source_id", "source_table_name");
     form.setFieldValue("query_sql", sql);
   }
 
   async function generateTargetSql() {
-    const data_source = form.getFieldValue("target_data_source")!;
+    const data_source_id = form.getFieldValue("target_data_source_id")!;
+    const data_source = (await DataSourceList.find_by_id(data_source_id)).data;
     const source_table_name = form.getFieldValue("target_table_name")!;
     const table_schema = data_source?.table_schema;
     const res = await DataSourceList.query_table_columns({
@@ -146,7 +149,7 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={8}>
             <Form.Item
               label="源表数据库"
-              name="data_source"
+              name="data_source_id"
               rules={[{ required: true }]}
             >
               {/*<Input placeholder="请输入" />*/}
@@ -173,7 +176,12 @@ export default function EditForm(props: IEditFormProps) {
                   <Button
                     type="primary"
                     size="small"
-                    onClick={generateSourceSql}
+                    onClick={async () => {
+                      setGenLoading(true);
+                      await generateSourceSql();
+                      setGenLoading(false);
+                    }}
+                    loading={genLoading}
                   >
                     点击生成
                   </Button>
@@ -188,7 +196,7 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={8}>
             <Form.Item
               label="目标表数据库"
-              name="target_data_source"
+              name="target_data_source_id"
               rules={[{ required: true }]}
             >
               <DataSourceSelect />
@@ -211,7 +219,12 @@ export default function EditForm(props: IEditFormProps) {
                   <Button
                     type="primary"
                     size="small"
-                    onClick={generateTargetSql}
+                    onClick={async () => {
+                      setGen2Loading(true);
+                      await generateTargetSql();
+                      setGen2Loading(false);
+                    }}
+                    loading={gen2Loading}
                   >
                     点击生成
                   </Button>
@@ -257,8 +270,8 @@ export default function EditForm(props: IEditFormProps) {
 }
 
 export function DataSourceSelect(props: {
-  value?: IDataSourceList;
-  onChange?: (data?: IDataSourceList) => void;
+  value?: number;
+  onChange?: (data?: number) => void;
 }) {
   const pagination = {
     current: 1,
@@ -284,14 +297,10 @@ export function DataSourceSelect(props: {
     <Select
       allowClear
       placeholder="请选择"
-      value={props.value?.id}
+      value={props.value}
       options={options}
       onChange={(value) => {
-        data?.data?.list.forEach((item) => {
-          if (value === item.id) {
-            props.onChange?.(item);
-          }
-        });
+        props.onChange?.(value);
       }}
       onClear={() => {
         props.onChange?.();
@@ -301,8 +310,9 @@ export function DataSourceSelect(props: {
 }
 
 export async function getSourceDataBaseColumns(form: FormInstance, data_source_filed: string, table_name_filed: string) {
-  const data_source = form.getFieldValue(data_source_filed)!;
+  const data_source_id = form.getFieldValue(data_source_filed)!;
   const source_table_name = form.getFieldValue(table_name_filed)!;
+  const data_source = (await DataSourceList.find_by_id(data_source_id)).data;
   const res = await DataSourceList.query_table_columns({
     data_source,
     table_name: source_table_name,
@@ -317,8 +327,9 @@ export async function getSourceDataBaseColumns(form: FormInstance, data_source_f
 }
 
 export async function generateQuerySql(form: FormInstance, data_source_filed: string, table_name_filed: string) {
-  const data_source = form.getFieldValue(data_source_filed)!;
+  const data_source_id = form.getFieldValue(data_source_filed)!;
   const source_table_name = form.getFieldValue(table_name_filed)!;
+  const data_source = (await DataSourceList.find_by_id(data_source_id)).data;
   const table_schema = data_source?.table_schema;
   let sql = "SELECT ";
   let cols: string[] = await getSourceDataBaseColumns(form, data_source_filed, table_name_filed);

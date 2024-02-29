@@ -14,6 +14,7 @@ use crate::api::common::AppState;
 use crate::api::sync_config::ListParams;
 use crate::entity::sync_config::Model;
 use crate::entity::{sync_config, sync_log};
+use crate::service::data_source_list_service::DataSourceListService;
 use crate::service::sync_log_service::SyncLogService;
 use crate::utils::{format_cron, job_err_to_db_err};
 
@@ -70,10 +71,10 @@ impl SyncConfigService {
         let data_clone = data.clone();
         let mut active_data = sync_config::ActiveModel {
             name: Set(data_clone.name),
-            data_source: Set(data_clone.data_source),
+            data_source_id: Set(data_clone.data_source_id),
             source_table_name: Set(data_clone.source_table_name),
             query_sql: Set(data_clone.query_sql),
-            target_data_source: Set(data_clone.target_data_source),
+            target_data_source_id: Set(data_clone.target_data_source_id),
             target_table_name: Set(data_clone.target_table_name),
             target_query_sql_template: Set(data_clone.target_query_sql_template),
             cron: Set(data_clone.cron),
@@ -180,7 +181,7 @@ impl SyncConfigService {
         let mut collect_log_string = String::new();
 
         collect_log_string.push_str(format!("同步配置： {:?}\n", data).as_str());
-        let res = process_data(&data).await;
+        let res = process_data(&state.conn, &data).await;
         match res {
             Ok(list) => {
                 collect_log_string.push_str(format!("SQL执行成功： {:?}\n", list).as_str());
@@ -227,18 +228,20 @@ impl SyncConfigService {
     }
 }
 
-async fn process_data(data: &Model) -> Result<Vec<String>> {
+async fn process_data(conn: &DbConn ,data: &Model) -> Result<Vec<String>> {
     let mut db = Db::new();
 
+    let data_source = DataSourceListService::find_by_id(conn, data.data_source_id).await?;
+    let target_data_source = DataSourceListService::find_by_id(conn, data.target_data_source_id).await?;
     db.receive(
         data.query_sql.clone(),
         DbConfig {
-            db_source_config: serde_json::from_value(data.data_source.clone())?,
+            db_source_config: data_source.into(),
         },
     )
     .await?
     .set_template_string(data.target_query_sql_template.clone())
-    .set_target_db_source_config(serde_json::from_value(data.target_data_source.clone())?)
+    .set_target_db_source_config(target_data_source.into())
     .export()
     .await
 }

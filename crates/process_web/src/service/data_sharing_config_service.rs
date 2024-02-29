@@ -6,6 +6,7 @@ use process_core::db::DataSource;
 use crate::api::data_sharing_config::ListParams;
 use crate::entity::{data_sharing_config};
 use crate::entity::data_sharing_config::Model;
+use crate::service::data_source_list_service::DataSourceListService;
 
 pub struct DataSharingConfigService;
 
@@ -56,7 +57,7 @@ impl DataSharingConfigService {
             name: Set(data.name),
             table_name: Set(data.table_name),
             query_sql: Set(data.query_sql),
-            data_source: Set(data.data_source),
+            data_source_id: Set(data.data_source_id),
             ..Default::default()
         };
         if let Some(id) = id {
@@ -94,10 +95,7 @@ impl DataSharingConfigService {
         id: i32,
         payload: Option<serde_json::Value>
     ) -> anyhow::Result<Vec<serde_json::Value>, DbErr> {
-        let data = data_sharing_config::Entity::find_by_id(id)
-            .one(db)
-            .await?
-            .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))?;
+        let data = Self::find_by_id(db, id).await?;
         let query_sql = match payload {
             None => data.query_sql,
             Some(x) => {
@@ -113,8 +111,9 @@ impl DataSharingConfigService {
                 sql
             }
         };
+        let data_source = DataSourceListService::find_by_id(db, data.data_source_id).await?;
 
-        let data_source: DataSource = serde_json::from_value(data.data_source).unwrap();
+        let data_source: DataSource = data_source.into();
         process_core::db::find_all_sql(&data_source, query_sql)
             .await
             .map_err(|err| {
@@ -123,3 +122,4 @@ impl DataSharingConfigService {
             })
     }
 }
+

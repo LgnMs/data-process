@@ -5,6 +5,8 @@ use process_jdbc::kingbase::Kingbase;
 use sea_orm::{ConnectionTrait, FromQueryResult, JsonValue, Statement};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use process_jdbc::mssql::MSSQL;
+use process_jdbc::oracle::Oracle;
 
 use crate::http::generate_sql_list;
 use crate::process::Export;
@@ -74,42 +76,82 @@ impl Db {
     }
 }
 
-// TODO: 适配更多的数据库
 pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Result<()> {
     match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
-                "postgres://{}:{}@{}/{}",
-                db_source.user, db_source.password, db_source.host, db_source.database_name
+                "postgres://{}:{}@{}:{}/{}",
+                db_source.user, db_source.password, db_source.host, db_source.port, db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
             for sql in query_sql_list {
-                println!("sql {sql}");
                 db.execute(Statement::from_string(db.get_database_backend(), sql))
                     .await?;
             }
             Ok(())
         }
-        Database::KINGBASE => {
+        Database::MYSQL => {
             let db_url = format!(
-                "jdbc:kingbase8://{}:{}/{}?user={}&password={}",
+                "mysql://{}:{}@{}:{}/{}",
+                db_source.user, db_source.password, db_source.host,db_source.port, db_source.database_name
+            );
+            let db = sea_orm::Database::connect(db_url.as_str()).await?;
+
+            for sql in query_sql_list {
+                db.execute(Statement::from_string(db.get_database_backend(), sql))
+                    .await?;
+            }
+            Ok(())
+        }
+        Database::MSSQL => {
+            let db_url = format!(
+                "jdbc:sqlserver://{}:{};databaseName={}",
                 db_source.host,
                 db_source.port,
                 db_source.database_name,
-                db_source.user,
-                db_source.password
             );
-            let mut conn = Kingbase::new().unwrap();
+            let mut conn = MSSQL::new().unwrap();
 
-            conn.connect(&db_url).unwrap();
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
 
             for sql in query_sql_list {
                 conn.execute_update(&sql)?
             }
             Ok(())
         }
-        _ => Ok(()),
+        Database::ORACLE => {
+            let db_url = format!(
+                "jdbc:oracle:thin:@//{}:{}/{}",
+                db_source.host,
+                db_source.port,
+                db_source.database_name,
+            );
+            let mut conn = Oracle::new().unwrap();
+
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+
+            for sql in query_sql_list {
+                conn.execute_update(&sql)?
+            }
+            Ok(())
+        }
+        Database::KINGBASE => {
+            let db_url = format!(
+                "jdbc:kingbase8://{}:{}/{}",
+                db_source.host,
+                db_source.port,
+                db_source.database_name,
+            );
+            let mut conn = Kingbase::new().unwrap();
+
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+
+            for sql in query_sql_list {
+                conn.execute_update(&sql)?
+            }
+            Ok(())
+        }
     }
 }
 
@@ -117,8 +159,8 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
     match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
-                "postgres://{}:{}@{}/{}",
-                db_source.user, db_source.password, db_source.host, db_source.database_name
+                "postgres://{}:{}@{}:{}/{}",
+                db_source.user, db_source.password, db_source.host, db_source.port, db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
@@ -130,23 +172,63 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
 
             Ok(data)
         }
+        Database::MYSQL => {
+            let db_url = format!(
+                "mysql://{}:{}@{}:{}/{}",
+                db_source.user, db_source.password, db_source.host,db_source.port, db_source.database_name
+            );
+            let db = sea_orm::Database::connect(db_url.as_str()).await?;
+
+            let data: Vec<JsonValue> = JsonValue::find_by_statement(
+                Statement::from_sql_and_values(db.get_database_backend(), query_sql, []),
+            )
+                .all(&db)
+                .await?;
+
+            Ok(data)
+        }
         Database::KINGBASE => {
             let db_url = format!(
-                "jdbc:kingbase8://{}:{}/{}?user={}&password={}",
+                "jdbc:kingbase8://{}:{}/{}",
                 db_source.host,
                 db_source.port,
                 db_source.database_name,
-                db_source.user,
-                db_source.password
             );
             let mut conn = Kingbase::new().unwrap();
 
-            conn.connect(&db_url).unwrap();
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
 
             let data = conn.execute_query(&query_sql).unwrap();
             Ok(data)
         }
-        _ => Ok(vec![]),
+        Database::MSSQL => {
+            let db_url = format!(
+                "jdbc:sqlserver://{}:{};databaseName={};Encrypt=false",
+                db_source.host,
+                db_source.port,
+                db_source.database_name,
+            );
+            let mut conn = MSSQL::new().unwrap();
+
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+
+            let data = conn.execute_query(&query_sql).unwrap();
+            Ok(data)
+        }
+        Database::ORACLE => {
+            let db_url = format!(
+                "jdbc:oracle:thin:@//{}:{}/{}",
+                db_source.host,
+                db_source.port,
+                db_source.database_name,
+            );
+            let mut conn = Oracle::new().unwrap();
+
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+
+            let data = conn.execute_query(&query_sql).unwrap();
+            Ok(data)
+        }
     }
 }
 

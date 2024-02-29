@@ -16,12 +16,10 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub name: String,
-    #[ts(type = "any")]
-    pub data_source: Json,
+    pub data_source_id: i32,
     pub source_table_name: String,
     pub query_sql: String,
-    #[ts(type = "any")]
-    pub target_data_source: Json,
+    pub target_data_source_id: i32,
     #[ts(type = "any")]
     pub target_table_name: String,
     #[ts(type = "any")]

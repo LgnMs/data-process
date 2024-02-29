@@ -27,6 +27,7 @@ export default function EditForm(props: IEditFormProps) {
   const [form] = Form.useForm();
   const { state, dispatch } = useMainContext()!;
   const [mode, setMode] = useState<"edit" | "add">("add");
+  const [genLoading, setGenLoading] = useState(false);
 
   async function onSubmit() {
     await form.validateFields();
@@ -65,7 +66,7 @@ export default function EditForm(props: IEditFormProps) {
   }
 
   async function generateSourceSql() {
-    const sql = await generateQuerySql(form, "data_source", "table_name");
+    const sql = await generateQuerySql(form, "data_source_id", "table_name");
     form.setFieldValue("query_sql", sql);
   }
 
@@ -115,7 +116,7 @@ export default function EditForm(props: IEditFormProps) {
           <Col span={8}>
             <Form.Item
               label="查询数据源"
-              name="data_source"
+              name="data_source_id"
               rules={[{ required: true }]}
             >
               <DataSourceSelect />
@@ -139,7 +140,12 @@ export default function EditForm(props: IEditFormProps) {
                   <Button
                     type="primary"
                     size="small"
-                    onClick={generateSourceSql}
+                    onClick={async () => {
+                      setGenLoading(true);
+                      await generateSourceSql();
+                      setGenLoading(false);
+                    }}
+                    loading={genLoading}
                   >
                     点击生成
                   </Button>

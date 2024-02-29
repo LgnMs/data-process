@@ -37,8 +37,8 @@ impl MigrationTrait for Migration {
                             .not_null()
                     )
                     .col(
-                        ColumnDef::new(DataSharingConfig::DataSource)
-                            .json()
+                        ColumnDef::new(DataSharingConfig::DataSourceId)
+                            .integer()
                             .not_null()
                     )
                     .col(
@@ -79,7 +79,7 @@ enum DataSharingConfig {
     Name,
     TableName,
     QuerySql,
-    DataSource,
+    DataSourceId,
     DelFlag,
     UpdateTime,
     CreateTime,

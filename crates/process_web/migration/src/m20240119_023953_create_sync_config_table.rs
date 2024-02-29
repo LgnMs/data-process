@@ -23,7 +23,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(SyncConfig::Name).string().not_null())
                     .col(
-                        ColumnDef::new(SyncConfig::DataSource)
+                        ColumnDef::new(SyncConfig::DataSourceId)
                             .json()
                             .not_null()
                             .comment("数据源"),
@@ -41,7 +41,7 @@ impl MigrationTrait for Migration {
                             .comment("数据源要执行的查询SQL"),
                     )
                     .col(
-                        ColumnDef::new(SyncConfig::TargetDataSource)
+                        ColumnDef::new(SyncConfig::TargetDataSourceId)
                             .json()
                             .not_null()
                             .comment("同步数据目标源"),
@@ -103,10 +103,10 @@ pub enum SyncConfig {
     Table,
     Id,
     Name,
-    DataSource,
+    DataSourceId,
     SourceTableName,
     QuerySql,
-    TargetDataSource,
+    TargetDataSourceId,
     TargetTableName,
     TargetQuerySqlTemplate,
     Cron,
