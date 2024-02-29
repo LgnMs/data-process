@@ -3,7 +3,7 @@
 // use process_jdbc::mssql::MSSQL;
 // use process_jdbc::oracle::Oracle;
 // 
-// fn main() {
+fn main() {
 //     // 人大金仓
 //     // let mut conn = Kingbase::new().unwrap();
 //     //
@@ -47,5 +47,4 @@
 //     //     .execute_query(r##"select * from user_tables;"##)
 //     //     .unwrap();
 //     // println!("{:?}", c);
-// }
-// 
+}
