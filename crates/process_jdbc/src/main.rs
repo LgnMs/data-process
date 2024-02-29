@@ -20,7 +20,7 @@ fn main() {
 // 
 //     // INSERT
 //     // conn.execute_update(r#"INSERT INTO "public"."test" (name) VALUES('ttd');"#)
-//     //     .expect("TODO: panic message");
+//     //     .expect("");
 // 
 // 
 //     // SQL SERVER
