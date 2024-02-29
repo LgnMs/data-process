@@ -14,7 +14,6 @@ import {
 import React, { useEffect, useState } from "react";
 import * as SyncConfig from "@/api/sync_config";
 import * as DataSourceList from "@/api/data_source_list";
-import { DataSourceList as IDataSourceList } from "@/api/models/DataSourceList";
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
 import { clone } from "lodash";
@@ -102,7 +101,7 @@ export default function EditForm(props: IEditFormProps) {
     });
     let sql = "INSERT INTO ";
     let cols: string[] = [];
-    res.data?.forEach((item, index) => {
+    res.data?.forEach((item) => {
       for (const key in item) {
         cols.push(item[key]);
       }
@@ -137,7 +136,7 @@ export default function EditForm(props: IEditFormProps) {
         labelAlign="left"
         labelWrap
         onFieldsChange={(changedFields) => {
-          changedFields.forEach((item) => {});
+          changedFields.forEach((_) => {});
         }}
       >
         <Row gutter={16}>
@@ -318,7 +317,7 @@ export async function getSourceDataBaseColumns(form: FormInstance, data_source_f
     table_name: source_table_name,
   });
   let cols: string[] = [];
-  res.data?.forEach((item, index) => {
+  res.data?.forEach((item) => {
     for (const key in item) {
       cols.push(item[key]);
     }

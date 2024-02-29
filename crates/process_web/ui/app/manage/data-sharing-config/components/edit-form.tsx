@@ -7,7 +7,6 @@ import {
   Input,
   message,
   Row,
-  Select,
   Space,
 } from "antd";
 import React, { useEffect, useState } from "react";
@@ -104,7 +103,7 @@ export default function EditForm(props: IEditFormProps) {
         labelAlign="left"
         labelWrap
         onFieldsChange={(changedFields) => {
-          changedFields.forEach((item) => {});
+          changedFields.forEach((_) => {});
         }}
       >
         <Row gutter={16}>
