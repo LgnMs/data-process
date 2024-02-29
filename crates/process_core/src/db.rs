@@ -111,12 +111,17 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
                 db_source.port,
                 db_source.database_name,
             );
-            let mut conn = MSSQL::new().unwrap();
+            let mut conn = MSSQL::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
+                .map_err(|err| {
+                    anyhow!("数据库连接失败！: {err}")
+                })?;
 
             for sql in query_sql_list {
-                conn.execute_update(&sql)?
+                conn.execute_update(&sql).map_err(|err| {
+                    anyhow!("数据库查询失败！: {err}")
+                })?;
             }
             Ok(())
         }
@@ -127,12 +132,17 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
                 db_source.port,
                 db_source.database_name,
             );
-            let mut conn = Oracle::new().unwrap();
+            let mut conn = Oracle::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
+                .map_err(|err| {
+                    anyhow!("数据库连接失败！: {err}")
+                })?;
 
             for sql in query_sql_list {
-                conn.execute_update(&sql)?
+                conn.execute_update(&sql).map_err(|err| {
+                    anyhow!("数据库查询失败！: {err}")
+                })?;
             }
             Ok(())
         }
@@ -143,12 +153,17 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
                 db_source.port,
                 db_source.database_name,
             );
-            let mut conn = Kingbase::new().unwrap();
+            let mut conn = Kingbase::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
+                .map_err(|err| {
+                    anyhow!("数据库连接失败！: {err}")
+                })?;
 
             for sql in query_sql_list {
-                conn.execute_update(&sql)?
+                conn.execute_update(&sql).map_err(|err| {
+                    anyhow!("数据库查询失败！: {err}")
+                })?;
             }
             Ok(())
         }
@@ -156,6 +171,13 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
 }
 
 pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<Value>> {
+    if let Some(index) = query_sql.to_lowercase().find("select") {
+        if index != 0 {
+            return Err(anyhow!("这条语句不是查询语句！"));
+        }
+    } else {
+        return Err(anyhow!("这条语句不是查询语句！"))
+    }
     match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
@@ -194,11 +216,16 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
                 db_source.port,
                 db_source.database_name,
             );
-            let mut conn = Kingbase::new().unwrap();
+            let mut conn = Kingbase::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
+                .map_err(|err| {
+                    anyhow!("数据库连接失败！: {err}")
+                })?;
 
-            let data = conn.execute_query(&query_sql).unwrap();
+            let data = conn.execute_query(&query_sql).map_err(|err| {
+                anyhow!("数据库查询失败！: {err}")
+            })?;
             Ok(data)
         }
         Database::MSSQL => {
@@ -208,11 +235,16 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
                 db_source.port,
                 db_source.database_name,
             );
-            let mut conn = MSSQL::new().unwrap();
+            let mut conn = MSSQL::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
+                .map_err(|err| {
+                    anyhow!("数据库连接失败！: {err}")
+                })?;
 
-            let data = conn.execute_query(&query_sql).unwrap();
+            let data = conn.execute_query(&query_sql).map_err(|err| {
+                anyhow!("数据库查询失败！: {err}")
+            })?;
             Ok(data)
         }
         Database::ORACLE => {
@@ -222,11 +254,16 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
                 db_source.port,
                 db_source.database_name,
             );
-            let mut conn = Oracle::new().unwrap();
+            let mut conn = Oracle::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str()).unwrap();
+            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
+                .map_err(|err| {
+                    anyhow!("数据库连接失败！: {err}")
+                })?;
 
-            let data = conn.execute_query(&query_sql).unwrap();
+            let data = conn.execute_query(&query_sql).map_err(|err| {
+                anyhow!("数据库查询失败！: {err}")
+            })?;
             Ok(data)
         }
     }
@@ -274,6 +311,13 @@ impl Export for Db {
             .as_ref()
             .ok_or(anyhow!("未设置template_string"))?;
 
+        if let Some(index) = template_sql.to_lowercase().find("insert into") {
+            if index != 0 {
+                return Err(anyhow!("这条语句不是插入语句！"));
+            }
+        } else {
+            return Err(anyhow!("这条语句不是插入语句！"))
+        }
         let sql_list = generate_sql_list(template_sql, data)?;
 
         if let Some(db_source) = &self.target_db_source_config {
