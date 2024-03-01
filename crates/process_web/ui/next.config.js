@@ -1,7 +1,12 @@
-/** @type {import('next').NextConfig} */
+const withMDX = require('@next/mdx')()
 const isProd = process.env.NODE_ENV === "production";
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
+  // Configure `pageExtensions` to include MDX files
+  pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
+  // Optionally, add any other Next.js config below
   async rewrites() {
     if (isProd) {
       return [
@@ -30,4 +35,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withMDX(nextConfig);

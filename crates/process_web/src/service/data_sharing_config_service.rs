@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
@@ -95,7 +94,7 @@ impl DataSharingConfigService {
         db: &DbConn,
         id: i32,
         payload: Option<serde_json::Value>
-    ) -> anyhow::Result<Vec<serde_json::Value>, DbErr> {
+    ) -> Result<Vec<serde_json::Value>, DbErr> {
         let data = Self::find_by_id(db, id).await?;
         let query_sql = match payload {
             None => data.query_sql,

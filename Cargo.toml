@@ -1,5 +1,5 @@
 [package]
-name = "data_process_center"
+name = "data_process"
 version = "0.1.0"
 edition = "2021"
 
@@ -17,3 +17,5 @@ members = [
   "crates/*"
 ]
 
+[profile.release]
+opt-level = 3

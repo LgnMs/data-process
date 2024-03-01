@@ -7,10 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prettier": "pnpm exec prettier . --write"
+    "prettier": "npm exec prettier . --write"
   },
   "dependencies": {
+    "@ant-design/cssinjs": "^1.18.4",
     "@ant-design/icons": "^5.2.5",
+    "@mdx-js/loader": "^3.0.1",
+    "@mdx-js/react": "^3.0.1",
+    "@next/mdx": "^14.1.0",
     "antd": "^5.12.8",
     "dayjs": "^1.11.10",
     "lodash": "^4.17.21",
@@ -23,9 +27,11 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.14.202",
+    "@types/mdx": "^2.0.11",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "archiver": "^7.0.0",
     "eslint": "8.56.0",
     "eslint-config-next": "14.0.1",
     "prettier": "2.8.7",
