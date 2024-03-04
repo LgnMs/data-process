@@ -1,16 +1,10 @@
 "use client";
-import { Space, Table, Tag, Typography } from "antd";
+import { Space, Table, Typography } from "antd";
 import useSWR from "swr";
 
 import * as SharingRequestLog from "@/api/sharing_request_log";
 import { SharingRequestLog as ISharingRequestLog } from "@/api/models/SharingRequestLog";
 import { useMainContext } from "@/contexts/main";
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  SyncOutlined,
-} from "@ant-design/icons";
 import React from "react";
 import dayjs from "dayjs";
 
