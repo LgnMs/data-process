@@ -13,7 +13,7 @@
 2. 创建数据库data_process_web、data_process_cache
 3. 安装运行环境
    - [rust](https://www.rust-lang.org/tools/install) >= 1.75.0
-   - [nodejs](https://nodejs.org/) >= v18.17.1
+   - [nodejs](https://nodejs.org/) >= v16.20.2
 
 4. 修改.env
 5. 运行

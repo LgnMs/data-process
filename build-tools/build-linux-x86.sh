@@ -23,5 +23,6 @@ cp -r "$ui_dir"/public/ "$ui_dir"/.next/standalone/public
 mkdir "$out_dir"/web-ui
 cp -r "$ui_dir"/.next/standalone/ "$out_dir"/web-ui
 
-cd "$target_dir" && tar -cvzf $project_name.tar.gz "$out_dir"
+cd "$out_dir" && tar -cvzf $project_name.tar.gz .
 echo "已输出到 $out_dir"
+echo "已压缩到 $project_name.tar.gz"
