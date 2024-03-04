@@ -1,15 +1,17 @@
-use crate::api::common::{AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination};
+use crate::api::common::{AppError, AppState, PaginationPayload, RequestInfo, ResJson, ResJsonWithPagination};
 use crate::{bool_response, data_response, pagination_response};
 use axum::extract::{Path, State};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::Deserialize;
 use std::sync::Arc;
-use serde_json::Value;
+use serde_json::{json, Value};
 use ts_rs::TS;
 
 use crate::entity::data_sharing_config::Model;
+use crate::entity::sharing_request_log;
 use crate::service::data_sharing_config_service::DataSharingConfigService;
+use crate::service::sharing_request_log_service::SharingRequestLogService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
@@ -103,10 +105,26 @@ async fn del(
 /// 
 async fn get_data(
     state: State<Arc<AppState>>,
+    request_info: RequestInfo,
     Path(id): Path<i32>,
     Json(payload): Json<Option<Value>>,
 ) -> anyhow::Result<ResJson<Vec<Value>>, AppError> {
+    let info: Value = json!(request_info);
+    let mut log_map = serde_json::Map::new();
+    log_map.insert("RequestInfo".to_string(), info);
+    if let Some(body) = &payload {
+        log_map.insert("body".to_string(), body.clone());
+    }
     let res = DataSharingConfigService::get_data(&state.conn, id, payload).await;
+
+    if let Err(err) = &res {
+        log_map.insert("err".to_string(), err.to_string().parse()?);
+    }
+    SharingRequestLogService::add(&state.conn, sharing_request_log::Model {
+        data_sharing_config_id: id,
+        log: json!(log_map).to_string(),
+        ..Default::default()
+    }).await?;
 
     data_response!(res)
 }

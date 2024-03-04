@@ -41,6 +41,12 @@ import {
   DataSharingConfigState,
   initDataSharingConfigState,
 } from "@/contexts/dataSharingConfigContext";
+import {
+  initSharingRequestLogState,
+  SharingRequestLogAction,
+  SharingRequestLogReducer,
+  SharingRequestLogState
+} from "@/contexts/sharingRequestLog";
 
 export interface IRoleInfo {
   id: string;
@@ -60,6 +66,7 @@ interface MainState {
   syncLog: SyncLogState;
   dataSourceList: DataSourceListState;
   dataSharingConfig: DataSharingConfigState;
+  sharingRequestLog: SharingRequestLogState;
 }
 
 type MainAction =
@@ -72,7 +79,8 @@ type MainAction =
   | SyncConfigAction
   | SyncLogAction
   | DataSourceListAction
-  | DataSharingConfigAction;
+  | DataSharingConfigAction
+  | SharingRequestLogAction;
 
 function reducer(state: MainState, action: MainAction) {
   if (action.type === "setToken") {
@@ -151,6 +159,16 @@ function reducer(state: MainState, action: MainAction) {
     };
   }
 
+  if (action.type.indexOf("sharingRequestLog") > -1) {
+    return {
+      ...state,
+      sharingRequestLog: SharingRequestLogReducer(
+        state.sharingRequestLog,
+        action as SharingRequestLogAction
+      ),
+    };
+  }
+
   throw Error("Unknown action");
 }
 
@@ -176,6 +194,7 @@ export function MainContextProvider(props: { children: ReactNode }) {
     syncLog: initSyncLogState,
     dataSourceList: initDataSourceListState,
     dataSharingConfig: initDataSharingConfigState,
+    sharingRequestLog: initSharingRequestLogState
   });
 
   return (

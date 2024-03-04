@@ -25,6 +25,7 @@ chrono = "0.4.31"
 migration = { path = "migration" }
 process_core = { path = "../process_core" }
 process_jdbc = { path = "../process_jdbc" }
+async-trait = "0.1.74"
 
 [dependencies.uuid]
 version = "1.7.0"

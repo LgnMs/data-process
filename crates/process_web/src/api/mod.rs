@@ -1,12 +1,3 @@
-pub mod collect_config;
-pub mod collect_log;
-pub mod common;
-pub mod data_source_list;
-pub mod mock;
-pub mod sync_config;
-pub mod sync_log;
-pub mod data_sharing_config;
-
 use anyhow::Result;
 use axum::http::{StatusCode, Uri};
 use axum::Router;
@@ -22,6 +13,16 @@ use tracing_subscriber::fmt::writer::MakeWriterExt;
 use crate::api::common::AppState;
 use crate::service::collect_config_service::CollectConfigService;
 use crate::service::sync_config_service::SyncConfigService;
+
+pub mod collect_config;
+pub mod collect_log;
+pub mod common;
+pub mod data_source_list;
+pub mod mock;
+pub mod sync_config;
+pub mod sync_log;
+pub mod data_sharing_config;
+pub mod sharing_request_log;
 
 #[tokio::main]
 pub async fn start() -> Result<()> {
@@ -69,6 +70,7 @@ pub async fn start() -> Result<()> {
         .nest("/sync_log", sync_log::set_routes())
         .nest("/data_source_list", data_source_list::set_routes())
         .nest("/data_sharing_config", data_sharing_config::set_routes())
+        .nest("/sharing_request_log", sharing_request_log::set_routes())
         .nest("/mock", mock::set_routes())
         .fallback(fallback)
         .with_state(state);

@@ -55,6 +55,10 @@ const Menus = [
         key: "sync-log",
         label: <MenuItem>同步任务日志</MenuItem>,
       },
+      {
+        key: "sharing-request-log",
+        label: <MenuItem>共享请求日志</MenuItem>,
+      },
     ],
   },
 ];

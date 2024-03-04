@@ -73,7 +73,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum DataSharingConfig {
+pub enum DataSharingConfig {
     Table,
     Id,
     Name,
