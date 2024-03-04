@@ -1,7 +1,7 @@
-<h4 align="center">
+<h4 style="text-align: center">
    数据处理平台
     <a href="https://github.com/LgnMs/data-process-center/actions/workflows/rust.yml" target="_blank">
-       <img src="https://github.com/LgnMs/data-process-center/actions/workflows/rust.yml/badge.svg" />
+       <img src="https://github.com/LgnMs/data-process-center/actions/workflows/rust.yml/badge.svg"  alt="icon"/>
     </a>
 </h4>
 
