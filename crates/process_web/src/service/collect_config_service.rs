@@ -331,7 +331,7 @@ impl CollectConfigService {
             running_log: "开始执行采集任务!".to_string(),
             ..Default::default()
         };
-        
+
         if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, model)
             .await
             .err()
@@ -481,8 +481,7 @@ pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
     }
 
     let (_, res) = collect_data_with_http(data, body_string.clone())
-        .await
-        .unwrap();
+        .await?;
 
     res
 }
