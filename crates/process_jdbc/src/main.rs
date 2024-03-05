@@ -1,6 +1,9 @@
-// use process_jdbc::common::{ExecuteJDBC, JDBC};
+use std::thread::sleep;
+use std::time;
+use std::time::Instant;
+use process_jdbc::common::{ExecuteJDBC, JDBC};
 // use process_jdbc::kingbase::Kingbase;
-// use process_jdbc::mssql::MSSQL;
+use process_jdbc::mssql::MSSQL;
 // use process_jdbc::oracle::Oracle;
 // 
 fn main() {
@@ -23,17 +26,16 @@ fn main() {
 //     //     .expect("");
 // 
 // 
-//     // SQL SERVER
-//     // let mut conn2 = MSSQL::new().unwrap();
-//     // 
-//     // conn2.connect("jdbc:sqlserver://192.168.10.71:1433;databaseName=gzdata;Encrypt=false", "gzdata_user", "1a2s3d4f")
-//     //     .unwrap();
-//     // 
-//     // // SELECT
-//     // let c = conn2
-//     //     .execute_query(r##"select name from sys.tables;"##)
-//     //     .unwrap();
-//     // println!("{:?}", c);
+//     SQL SERVER
+//     let mut conn2 = MSSQL::new().unwrap();
+
+    // let start = Instant::now();
+    // conn2.connect("jdbc:sqlserver://192.168.10.71:1433;databaseName=gzdata;Encrypt=false", "gzdata_user", "1a2s3d4f")
+    //     .unwrap();
+    // let duration = start.elapsed();
+    // println!("jdbc执行时间: {:?}", duration);
+    // JvmInstance::new().expect("TODO: panic message");
+
 // 
 //     
 //     // ORACLE

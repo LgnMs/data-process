@@ -1,4 +1,6 @@
-use anyhow::Result;
+use std::sync::OnceLock;
+use anyhow::{anyhow, Result};
+use j4rs::{ClasspathEntry, Jvm, JvmBuilder};
 
 pub trait JDBC {
     type Connection;
@@ -97,4 +99,39 @@ impl JdbcType {
             _ => None,
         }
     }
+}
+
+pub static JVM_IS_SETUP: OnceLock<bool> = OnceLock::new();
+
+pub struct JvmInstance(pub(crate) Jvm);
+
+impl JvmInstance {
+    pub fn new() -> Result<Jvm> {
+        let entry1 = ClasspathEntry::new("libs/kingbase8-8.6.0.jar");
+        let entry2 = ClasspathEntry::new("libs/mssql-jdbc-12.6.1.jre11.jar");
+        let entry3 = ClasspathEntry::new("libs/ojdbc10-19.22.0.0.jar");
+        let jvm = JvmBuilder::new()
+            .classpath_entry(entry1)
+            .classpath_entry(entry2)
+            .classpath_entry(entry3)
+            .build()?;
+        
+        JVM_IS_SETUP.get_or_init(|| true);
+        Ok(jvm)
+    }
+}
+
+pub fn jvm_is_setup() -> bool {
+    JVM_IS_SETUP.get().is_some()
+}
+
+pub fn get_jvm() -> Result<Jvm> {
+    if jvm_is_setup() {
+        println!("1");
+        Jvm::attach_thread().map_err(|err| anyhow!("{}", err))
+    } else {
+        println!("2");
+        JvmInstance::new()
+    }
+    
 }

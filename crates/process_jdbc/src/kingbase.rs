@@ -1,6 +1,7 @@
 use anyhow::Result;
 use j4rs::{ClasspathEntry, Instance, Jvm, JvmBuilder};
-use crate::{impl_execute_jdbc, impl_jdbc};
+use crate::{ impl_execute_jdbc, impl_jdbc};
+use crate::common::get_jvm;
 
 pub struct Kingbase {
     pub jvm: Jvm,
@@ -10,9 +11,7 @@ pub struct Kingbase {
 
 impl Kingbase {
     pub fn new() -> Result<Self> {
-        let entry = ClasspathEntry::new("libs/kingbase8-8.6.0.jar");
-        let jvm = JvmBuilder::new().classpath_entry(entry).build()?;
-
+        let jvm = get_jvm()?;
         Ok(Self {
             jvm,
             conn: None,

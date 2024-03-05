@@ -250,6 +250,11 @@ macro_rules! impl_execute_jdbc {
                     }
                     vec.push(json!(map));
                 }
+                self.jvm.invoke(
+                    &rs,
+                    "close",
+                    &vec![],
+                )?;
                 self.close()?;
                 Ok(vec)
             }
