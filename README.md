@@ -14,6 +14,7 @@
 3. 安装运行环境
    - [rust](https://www.rust-lang.org/tools/install) >= 1.75.0
    - [nodejs](https://nodejs.org/) >= v16.20.2
+   - （如果要操作MSSQL server，Oracle，Kingbase）java >= 11
 
 4. 修改.env
 5. 运行
