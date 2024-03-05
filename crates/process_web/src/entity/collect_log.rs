@@ -14,7 +14,7 @@ use ts_rs::TS;
 pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing)]
-    pub id: Uuid,
+    pub id: i32,
     pub collect_config_id: Option<i32>,
     #[sea_orm(column_type = "Text")]
     pub running_log: String,

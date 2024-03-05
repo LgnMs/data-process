@@ -152,26 +152,30 @@ impl SyncConfigService {
     }
 
     pub async fn execute_task(state: &Arc<AppState>, data: &Model) {
-        let sync_log_id = Uuid::new_v4();
-        let sync_log_model = sync_log::Model {
-            id: sync_log_id,
+        let mut sync_log_model = sync_log::Model {
             sync_config_id: data.id,
             status: 0,
             running_log: String::new(),
             ..Default::default()
         };
 
-        if let Some(err) = SyncLogService::add(&state.conn, sync_log_model).await.err() {
-            error!("任务日志添加失败 {err}");
-        };
+        match SyncLogService::add(&state.conn, sync_log_model.clone()).await {
+            Ok(db_log_data) => {
+                sync_log_model = db_log_data;
+            }
+            Err(err) => {
+                error!("任务日志添加失败 {err}");
+            }
+        }
 
+        let log_id = sync_log_model.id;
         let mut status = 1;
         let model = sync_log::Model {
             status,
             running_log: "开始执行采集任务!".to_string(),
             ..Default::default()
         };
-        if let Some(err) = SyncLogService::update_by_id(&state.conn, sync_log_id, model)
+        if let Some(err) = SyncLogService::update_by_id(&state.conn, log_id, model)
             .await
             .err()
         {
@@ -201,7 +205,7 @@ impl SyncConfigService {
             running_log: collect_log_string,
             ..Default::default()
         };
-        if let Some(err) = SyncLogService::update_by_id(&state.conn, sync_log_id, model)
+        if let Some(err) = SyncLogService::update_by_id(&state.conn, log_id, model)
             .await
             .err()
         {

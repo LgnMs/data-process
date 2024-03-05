@@ -15,7 +15,10 @@ impl MigrationTrait for Migration {
                     .comment("数据同步日志")
                     .table(SyncLog::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(SyncLog::Id).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(SyncLog::Id).integer()
+                             .not_null()
+                             .auto_increment()
+                             .primary_key(),)
                     .col(
                         ColumnDef::new(SyncLog::RunningLog)
                             .text()

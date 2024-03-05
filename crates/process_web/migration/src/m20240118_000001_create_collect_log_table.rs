@@ -17,8 +17,9 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(CollectLog::Id)
-                            .uuid()
+                            .integer()
                             .not_null()
+                            .auto_increment()
                             .primary_key(),
                     )
                     .col(

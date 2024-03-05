@@ -309,29 +309,30 @@ impl CollectConfigService {
     }
 
     pub async fn execute_task(state: &Arc<AppState>, data: &Model) {
-        let collect_log_id = Uuid::new_v4();
-        let collect_log_model = collect_log::Model {
-            id: collect_log_id,
+        let mut collect_log_model = collect_log::Model {
             collect_config_id: Some(data.id),
             status: 0,
             running_log: String::new(),
             ..Default::default()
         };
 
-        if let Some(err) = CollectLogService::add(&state.conn, collect_log_model)
-            .await
-            .err()
-        {
-            error!("任务日志添加失败 {err}");
-        };
-
+        match CollectLogService::add(&state.conn, collect_log_model.clone()).await {
+            Ok(db_log_data) => {
+                collect_log_model = db_log_data;
+            }
+            Err(err) => {
+                error!("任务日志添加失败 {err}");
+            }
+        }
+        let log_id = collect_log_model.id;
         let mut status = 1;
         let model = collect_log::Model {
             status,
             running_log: "开始执行采集任务!".to_string(),
             ..Default::default()
         };
-        if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model)
+        
+        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, model)
             .await
             .err()
         {
@@ -372,7 +373,7 @@ impl CollectConfigService {
             running_log: collect_log_string,
             ..Default::default()
         };
-        if let Some(err) = CollectLogService::update_by_id(&state.conn, collect_log_id, model)
+        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, model)
             .await
             .err()
         {

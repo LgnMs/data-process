@@ -3,12 +3,11 @@ use crate::entity::{sync_config, sync_log};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
-use uuid::Uuid;
 
 pub struct SyncLogService;
 
 impl SyncLogService {
-    pub async fn find_by_id(db: &DbConn, id: Uuid) -> Result<sync_log::Model, DbErr> {
+    pub async fn find_by_id(db: &DbConn, id: i32) -> Result<sync_log::Model, DbErr> {
         sync_log::Entity::find_by_id(id)
             .one(db)
             .await?
@@ -55,7 +54,7 @@ impl SyncLogService {
 
     pub async fn update_by_id(
         db: &DbConn,
-        id: Uuid,
+        id: i32,
         data: sync_log::Model,
     ) -> Result<sync_log::Model, DbErr> {
         SyncLogService::save(db, Some(id), data).await
@@ -63,7 +62,7 @@ impl SyncLogService {
 
     pub async fn save(
         db: &DbConn,
-        id: Option<Uuid>,
+        id: Option<i32>,
         data: sync_log::Model,
     ) -> Result<sync_log::Model, DbErr> {
         debug!("data: {:?}, id: {:?}", data, id);
@@ -84,7 +83,6 @@ impl SyncLogService {
             active_data.update_time = Set(now);
             active_data.update(db).await
         } else {
-            active_data.id = Set(data.id);
             active_data.sync_config_id = Set(data.sync_config_id);
             active_data.status = Set(0);
             active_data.running_log = Set(data.running_log);
@@ -94,7 +92,7 @@ impl SyncLogService {
         }
     }
 
-    pub async fn delete(db: &DbConn, id: Uuid) -> Result<DeleteResult, DbErr> {
+    pub async fn delete(db: &DbConn, id: i32) -> Result<DeleteResult, DbErr> {
         let sync_log: sync_log::ActiveModel = sync_log::Entity::find_by_id(id)
             .one(db)
             .await?

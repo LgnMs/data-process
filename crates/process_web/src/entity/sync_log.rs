@@ -12,8 +12,9 @@ use ts_rs::TS;
     rename = "SyncLog"
 )]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
-    pub id: Uuid,
+    #[sea_orm(primary_key)]
+    #[serde(skip_deserializing)]
+    pub id: i32,
     #[sea_orm(column_type = "Text")]
     pub running_log: String,
     pub status: i32,
