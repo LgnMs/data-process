@@ -1,9 +1,7 @@
-use std::sync::Arc;
-use std::time::Instant;
-use anyhow::Result;
-use j4rs::{ClasspathEntry, Instance, Jvm, JvmBuilder};
+use crate::common::get_jvm;
 use crate::{impl_execute_jdbc, impl_jdbc};
-use crate::common::{get_jvm, jvm_is_setup, JvmInstance};
+use anyhow::Result;
+use j4rs::{Instance, Jvm};
 
 pub struct MSSQL {
     pub jvm: Jvm,

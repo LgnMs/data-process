@@ -29,8 +29,8 @@ export default function ContentTable() {
     {
       title: "api",
       render: (_: any, record: IDataSharingConfig) => {
-        return `data_sharing_config/get_data/${record.id}`
-      }
+        return `data_sharing_config/get_data/${record.id}`;
+      },
     },
     {
       title: "更新日期",

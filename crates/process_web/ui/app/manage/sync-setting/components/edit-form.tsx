@@ -3,13 +3,14 @@ import {
   Button,
   Col,
   Drawer,
-  Form, FormInstance,
+  Form,
+  FormInstance,
   Input,
   message,
   Radio,
   Row,
   Select,
-  Space
+  Space,
 } from "antd";
 import React, { useEffect, useState } from "react";
 import * as SyncConfig from "@/api/sync_config";
@@ -86,7 +87,11 @@ export default function EditForm(props: IEditFormProps) {
   }, [state.syncConfig.editFormOpen]);
 
   async function generateSourceSql() {
-    const sql = await generateQuerySql(form, "data_source_id", "source_table_name");
+    const sql = await generateQuerySql(
+      form,
+      "data_source_id",
+      "source_table_name"
+    );
     form.setFieldValue("query_sql", sql);
   }
 
@@ -308,7 +313,11 @@ export function DataSourceSelect(props: {
   );
 }
 
-export async function getSourceDataBaseColumns(form: FormInstance, data_source_filed: string, table_name_filed: string) {
+export async function getSourceDataBaseColumns(
+  form: FormInstance,
+  data_source_filed: string,
+  table_name_filed: string
+) {
   const data_source_id = form.getFieldValue(data_source_filed)!;
   const source_table_name = form.getFieldValue(table_name_filed)!;
   const data_source = (await DataSourceList.find_by_id(data_source_id)).data;
@@ -325,13 +334,21 @@ export async function getSourceDataBaseColumns(form: FormInstance, data_source_f
   return cols;
 }
 
-export async function generateQuerySql(form: FormInstance, data_source_filed: string, table_name_filed: string) {
+export async function generateQuerySql(
+  form: FormInstance,
+  data_source_filed: string,
+  table_name_filed: string
+) {
   const data_source_id = form.getFieldValue(data_source_filed)!;
   const source_table_name = form.getFieldValue(table_name_filed)!;
   const data_source = (await DataSourceList.find_by_id(data_source_id)).data;
   const table_schema = data_source?.table_schema;
   let sql = "SELECT ";
-  let cols: string[] = await getSourceDataBaseColumns(form, data_source_filed, table_name_filed);
+  let cols: string[] = await getSourceDataBaseColumns(
+    form,
+    data_source_filed,
+    table_name_filed
+  );
 
   const table_name = table_schema
     ? `${table_schema}.${source_table_name}`

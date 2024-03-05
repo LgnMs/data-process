@@ -1,7 +1,7 @@
+use process_core::db::DataSource;
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
-use process_core::db::DataSource;
 
 use crate::api::data_source_list::ListParams;
 use crate::entity::data_source_list;
@@ -78,7 +78,6 @@ impl DataSourceListService {
             active_data.insert(db).await
         }
     }
-
 
     pub async fn query_table_columns(
         data_source: DataSource,

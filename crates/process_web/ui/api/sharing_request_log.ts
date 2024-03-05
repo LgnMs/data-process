@@ -12,7 +12,9 @@ export const PREFIX = "/sharing_request_log";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 
-export async function find_by_id(id: number): Promise<ResJson<SharingRequestLog>> {
+export async function find_by_id(
+  id: number
+): Promise<ResJson<SharingRequestLog>> {
   return http_get(`${FIND_BY_ID}${id}`);
 }
 
@@ -26,7 +28,9 @@ export async function list(
 }
 
 export const ADD = `${PREFIX}/add/`;
-export async function add(payload: SharingRequestLog): Promise<ResJson<SharingRequestLog>> {
+export async function add(
+  payload: SharingRequestLog
+): Promise<ResJson<SharingRequestLog>> {
   console.log(payload);
   return http_post(`${PREFIX}/add`, {
     body: JSON.stringify(payload),

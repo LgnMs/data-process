@@ -1,8 +1,8 @@
+use crate::api::sharing_request_log::ListParams;
+use crate::entity::{data_sharing_config, sharing_request_log};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
-use crate::api::sharing_request_log::ListParams;
-use crate::entity::{data_sharing_config, sharing_request_log};
 
 pub struct SharingRequestLogService;
 
@@ -48,7 +48,10 @@ impl SharingRequestLogService {
         return Ok((list, num_pages));
     }
 
-    pub async fn add(db: &DbConn, data: sharing_request_log::Model) -> Result<sharing_request_log::Model, DbErr> {
+    pub async fn add(
+        db: &DbConn,
+        data: sharing_request_log::Model,
+    ) -> Result<sharing_request_log::Model, DbErr> {
         SharingRequestLogService::save(db, None, data).await
     }
 
@@ -91,11 +94,12 @@ impl SharingRequestLogService {
     }
 
     pub async fn delete(db: &DbConn, id: i32) -> Result<DeleteResult, DbErr> {
-        let sharing_request_log: sharing_request_log::ActiveModel = sharing_request_log::Entity::find_by_id(id)
-            .one(db)
-            .await?
-            .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
-            .map(Into::into)?;
+        let sharing_request_log: sharing_request_log::ActiveModel =
+            sharing_request_log::Entity::find_by_id(id)
+                .one(db)
+                .await?
+                .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
+                .map(Into::into)?;
 
         sharing_request_log.delete(db).await
     }

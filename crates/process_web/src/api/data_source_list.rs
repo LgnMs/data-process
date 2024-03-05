@@ -5,11 +5,11 @@ use crate::{bool_response, data_response, pagination_response};
 use axum::extract::{Path, State};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use serde::Deserialize;
-use std::sync::Arc;
-use serde_json::Value;
-use ts_rs::TS;
 use process_core::db::DataSource;
+use serde::Deserialize;
+use serde_json::Value;
+use std::sync::Arc;
+use ts_rs::TS;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
@@ -93,14 +93,15 @@ async fn del(
 struct QueryTableColumnsParameters {
     #[ts(type = "any")]
     data_source: DataSource,
-    table_name: String
+    table_name: String,
 }
 
 async fn query_table_columns(
     _: State<Arc<AppState>>,
     Json(payload): Json<QueryTableColumnsParameters>,
 ) -> anyhow::Result<ResJson<Vec<Value>>, AppError> {
-    let res = DataSourceListService::query_table_columns(payload.data_source, payload.table_name).await;
+    let res =
+        DataSourceListService::query_table_columns(payload.data_source, payload.table_name).await;
 
     data_response!(res)
 }

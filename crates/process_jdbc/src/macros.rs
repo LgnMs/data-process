@@ -3,11 +3,15 @@
 #[macro_export]
 macro_rules! impl_jdbc {
     ($struct: ty) => {
-
         impl $crate::common::JDBC for $struct {
             type Connection = $struct;
 
-            fn connect(&mut self, jdbc_url: &str, username: &str, password: &str) -> Result<&Self::Connection> {
+            fn connect(
+                &mut self,
+                jdbc_url: &str,
+                username: &str,
+                password: &str,
+            ) -> Result<&Self::Connection> {
                 let jdbc_str_arg = InvocationArg::try_from(jdbc_url)?;
                 let username = InvocationArg::try_from(username)?;
                 let password = InvocationArg::try_from(password)?;
@@ -22,9 +26,9 @@ macro_rules! impl_jdbc {
             }
 
             fn create_statement(&mut self) -> Result<&Self::Connection> {
-                let st = self
-                    .jvm
-                    .invoke(self.conn.as_ref().unwrap(), "createStatement", &Vec::new())?;
+                let st =
+                    self.jvm
+                        .invoke(self.conn.as_ref().unwrap(), "createStatement", &Vec::new())?;
 
                 self.statement = Some(st);
 
@@ -52,20 +56,18 @@ macro_rules! impl_jdbc {
                 Ok(())
             }
         }
-        
-
     };
 }
 
 #[macro_export]
 macro_rules! impl_execute_jdbc {
     ($struct: ty) => {
-        use $crate::common::{JDBC, ExecuteJDBC};
-        use chrono::{TimeZone};
-        use serde_json::{Value, json};
+        use chrono::TimeZone;
         use j4rs::InvocationArg;
         use log::debug;
-        
+        use serde_json::{json, Value};
+        use $crate::common::{ExecuteJDBC, JDBC};
+
         impl ExecuteJDBC for $struct {
             type R = Value;
             fn execute_query(&mut self, query_str: &str) -> Result<Vec<Self::R>> {
@@ -82,7 +84,8 @@ macro_rules! impl_execute_jdbc {
 
                 let meta_data = self.jvm.invoke(&rs, "getMetaData", &vec![])?;
 
-                let column_count_instance = self.jvm.invoke(&meta_data, "getColumnCount", &vec![])?;
+                let column_count_instance =
+                    self.jvm.invoke(&meta_data, "getColumnCount", &vec![])?;
                 let column_count: i32 = self.jvm.to_rust(column_count_instance)?;
 
                 let mut vec = vec![];
@@ -223,7 +226,8 @@ macro_rules! impl_execute_jdbc {
                                             let s = x / 1000;
                                             let ns = x as u32 % 1000;
                                             let dt = ::chrono::Local.timestamp_opt(s, ns).unwrap();
-                                            let date_string = dt.format("%Y-%m-%d %H:%M:%S").to_string();
+                                            let date_string =
+                                                dt.format("%Y-%m-%d %H:%M:%S").to_string();
                                             Value::String(date_string)
                                         }
                                         Err(err) => {
@@ -250,11 +254,7 @@ macro_rules! impl_execute_jdbc {
                     }
                     vec.push(json!(map));
                 }
-                self.jvm.invoke(
-                    &rs,
-                    "close",
-                    &vec![],
-                )?;
+                self.jvm.invoke(&rs, "close", &vec![])?;
                 self.close()?;
                 Ok(vec)
             }
@@ -270,5 +270,5 @@ macro_rules! impl_execute_jdbc {
                 Ok(())
             }
         }
-    }
+    };
 }

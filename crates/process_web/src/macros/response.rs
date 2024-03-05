@@ -10,14 +10,14 @@ macro_rules! res_template {
         $crate::api::common::ResTemplate {
             message: $msg,
             data: Some(data),
-            success: $success
+            success: $success,
         }
     }};
     ($data: expr, $msg: expr, $success: expr) => {
         $crate::api::common::ResTemplate {
             message: $msg,
             data: $data,
-            success: $success
+            success: $success,
         }
     };
 }
@@ -28,7 +28,14 @@ macro_rules! res_template_ok {
         $crate::res_template!($list, $current, $page_size, $total, $msg, true)
     };
     ($list: expr, $current: expr, $page_size: expr, $total: expr) => {
-        $crate::res_template!($list, $current, $page_size, $total, "操作成功".to_string(), true)
+        $crate::res_template!(
+            $list,
+            $current,
+            $page_size,
+            $total,
+            "操作成功".to_string(),
+            true
+        )
     };
     ($data: expr, $msg: expr) => {
         $crate::res_template!($data, $msg, true)
@@ -44,7 +51,14 @@ macro_rules! res_template_err {
         $crate::res_template!($list, $current, $page_size, $total, $msg, false)
     };
     ($list: expr, $current: expr, $page_size: expr, $total: expr) => {
-        $crate::res_template!($list, $current, $page_size, $total, "操作失败".to_string(), false)
+        $crate::res_template!(
+            $list,
+            $current,
+            $page_size,
+            $total,
+            "操作失败".to_string(),
+            false
+        )
     };
     ($data: expr, $msg: expr) => {
         $crate::res_template!($data, $msg, false)

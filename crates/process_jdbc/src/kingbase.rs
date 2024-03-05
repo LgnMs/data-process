@@ -1,7 +1,7 @@
-use anyhow::Result;
-use j4rs::{ClasspathEntry, Instance, Jvm, JvmBuilder};
-use crate::{ impl_execute_jdbc, impl_jdbc};
 use crate::common::get_jvm;
+use crate::{impl_execute_jdbc, impl_jdbc};
+use anyhow::Result;
+use j4rs::{Instance, Jvm};
 
 pub struct Kingbase {
     pub jvm: Jvm,

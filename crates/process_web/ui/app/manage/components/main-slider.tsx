@@ -5,7 +5,8 @@ import {
   CloudSyncOutlined,
   NodeCollapseOutlined,
   FileTextOutlined,
-  DatabaseOutlined, ShareAltOutlined
+  DatabaseOutlined,
+  ShareAltOutlined,
 } from "@ant-design/icons";
 
 const { Sider } = Layout;

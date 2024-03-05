@@ -27,7 +27,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(DataSourceList::Name)
                             .comment(r#"数据源名称"#)
-                            .string()
+                            .string(),
                     )
                     .col(ColumnDef::new(DataSourceList::TableSchema).string())
                     .col(

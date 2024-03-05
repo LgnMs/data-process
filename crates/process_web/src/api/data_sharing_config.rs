@@ -1,11 +1,13 @@
-use crate::api::common::{AppError, AppState, PaginationPayload, RequestInfo, ResJson, ResJsonWithPagination};
+use crate::api::common::{
+    AppError, AppState, PaginationPayload, RequestInfo, ResJson, ResJsonWithPagination,
+};
 use crate::{bool_response, data_response, pagination_response};
 use axum::extract::{Path, State};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::Deserialize;
-use std::sync::Arc;
 use serde_json::{json, Value};
+use std::sync::Arc;
 use ts_rs::TS;
 
 use crate::entity::data_sharing_config::Model;
@@ -102,7 +104,7 @@ async fn del(
 ///  输出：
 ///  select id, from public.test_data where id > 1 limit 5;
 /// ```
-/// 
+///
 async fn get_data(
     state: State<Arc<AppState>>,
     request_info: RequestInfo,
@@ -120,11 +122,15 @@ async fn get_data(
     if let Err(err) = &res {
         log_map.insert("err".to_string(), err.to_string().parse()?);
     }
-    SharingRequestLogService::add(&state.conn, sharing_request_log::Model {
-        data_sharing_config_id: id,
-        log: json!(log_map).to_string(),
-        ..Default::default()
-    }).await?;
+    SharingRequestLogService::add(
+        &state.conn,
+        sharing_request_log::Model {
+            data_sharing_config_id: id,
+            log: json!(log_map).to_string(),
+            ..Default::default()
+        },
+    )
+    .await?;
 
     data_response!(res)
 }

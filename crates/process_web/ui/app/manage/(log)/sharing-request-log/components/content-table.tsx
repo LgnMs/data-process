@@ -21,7 +21,7 @@ export default function ContentTable() {
     {
       title: "id",
       dataIndex: "id",
-      width: 50
+      width: 50,
     },
     // {
     //   title: "共享配置id",
@@ -39,7 +39,7 @@ export default function ContentTable() {
       title: "日志",
       dataIndex: "log",
       ellipsis: true,
-      width: 600
+      width: 600,
     },
     {
       title: "更新日期",

@@ -2,11 +2,11 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use process_jdbc::common::{ExecuteJDBC, JDBC};
 use process_jdbc::kingbase::Kingbase;
+use process_jdbc::mssql::MSSQL;
+use process_jdbc::oracle::Oracle;
 use sea_orm::{ConnectionTrait, FromQueryResult, JsonValue, Statement};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use process_jdbc::mssql::MSSQL;
-use process_jdbc::oracle::Oracle;
 
 use crate::http::generate_sql_list;
 use crate::process::Export;
@@ -81,7 +81,11 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
         Database::POSTGRES => {
             let db_url = format!(
                 "postgres://{}:{}@{}:{}/{}",
-                db_source.user, db_source.password, db_source.host, db_source.port, db_source.database_name
+                db_source.user,
+                db_source.password,
+                db_source.host,
+                db_source.port,
+                db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
@@ -94,7 +98,11 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
         Database::MYSQL => {
             let db_url = format!(
                 "mysql://{}:{}@{}:{}/{}",
-                db_source.user, db_source.password, db_source.host,db_source.port, db_source.database_name
+                db_source.user,
+                db_source.password,
+                db_source.host,
+                db_source.port,
+                db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
@@ -107,63 +115,60 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
         Database::MSSQL => {
             let db_url = format!(
                 "jdbc:sqlserver://{}:{};databaseName={}",
-                db_source.host,
-                db_source.port,
-                db_source.database_name,
+                db_source.host, db_source.port, db_source.database_name,
             );
             let mut conn = MSSQL::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
-                .map_err(|err| {
-                    anyhow!("数据库连接失败！: {err}")
-                })?;
+            conn.connect(
+                &db_url,
+                db_source.user.as_str(),
+                db_source.password.as_str(),
+            )
+            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
             for sql in query_sql_list {
-                conn.execute_update(&sql).map_err(|err| {
-                    anyhow!("数据库查询失败！: {err}")
-                })?;
+                conn.execute_update(&sql)
+                    .map_err(|err| anyhow!("数据库查询失败！: {err}"))?;
             }
             Ok(())
         }
         Database::ORACLE => {
             let db_url = format!(
                 "jdbc:oracle:thin:@//{}:{}/{}",
-                db_source.host,
-                db_source.port,
-                db_source.database_name,
+                db_source.host, db_source.port, db_source.database_name,
             );
             let mut conn = Oracle::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
-                .map_err(|err| {
-                    anyhow!("数据库连接失败！: {err}")
-                })?;
+            conn.connect(
+                &db_url,
+                db_source.user.as_str(),
+                db_source.password.as_str(),
+            )
+            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
             for sql in query_sql_list {
-                conn.execute_update(&sql).map_err(|err| {
-                    anyhow!("数据库查询失败！: {err}")
-                })?;
+                conn.execute_update(&sql)
+                    .map_err(|err| anyhow!("数据库查询失败！: {err}"))?;
             }
             Ok(())
         }
         Database::KINGBASE => {
             let db_url = format!(
                 "jdbc:kingbase8://{}:{}/{}",
-                db_source.host,
-                db_source.port,
-                db_source.database_name,
+                db_source.host, db_source.port, db_source.database_name,
             );
             let mut conn = Kingbase::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
-                .map_err(|err| {
-                    anyhow!("数据库连接失败！: {err}")
-                })?;
+            conn.connect(
+                &db_url,
+                db_source.user.as_str(),
+                db_source.password.as_str(),
+            )
+            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
             for sql in query_sql_list {
-                conn.execute_update(&sql).map_err(|err| {
-                    anyhow!("数据库查询失败！: {err}")
-                })?;
+                conn.execute_update(&sql)
+                    .map_err(|err| anyhow!("数据库查询失败！: {err}"))?;
             }
             Ok(())
         }
@@ -176,13 +181,17 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             return Err(anyhow!("这条语句不是查询语句！"));
         }
     } else {
-        return Err(anyhow!("这条语句不是查询语句！"))
+        return Err(anyhow!("这条语句不是查询语句！"));
     }
     match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
                 "postgres://{}:{}@{}:{}/{}",
-                db_source.user, db_source.password, db_source.host, db_source.port, db_source.database_name
+                db_source.user,
+                db_source.password,
+                db_source.host,
+                db_source.port,
+                db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
@@ -197,73 +206,77 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
         Database::MYSQL => {
             let db_url = format!(
                 "mysql://{}:{}@{}:{}/{}",
-                db_source.user, db_source.password, db_source.host,db_source.port, db_source.database_name
+                db_source.user,
+                db_source.password,
+                db_source.host,
+                db_source.port,
+                db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
             let data: Vec<JsonValue> = JsonValue::find_by_statement(
                 Statement::from_sql_and_values(db.get_database_backend(), query_sql, []),
             )
-                .all(&db)
-                .await?;
+            .all(&db)
+            .await?;
 
             Ok(data)
         }
         Database::KINGBASE => {
             let db_url = format!(
                 "jdbc:kingbase8://{}:{}/{}",
-                db_source.host,
-                db_source.port,
-                db_source.database_name,
+                db_source.host, db_source.port, db_source.database_name,
             );
             let mut conn = Kingbase::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
-                .map_err(|err| {
-                    anyhow!("数据库连接失败！: {err}")
-                })?;
+            conn.connect(
+                &db_url,
+                db_source.user.as_str(),
+                db_source.password.as_str(),
+            )
+            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
-            let data = conn.execute_query(&query_sql).map_err(|err| {
-                anyhow!("数据库查询失败！: {err}")
-            })?;
+            let data = conn
+                .execute_query(&query_sql)
+                .map_err(|err| anyhow!("数据库查询失败！: {err}"))?;
             Ok(data)
         }
         Database::MSSQL => {
             let db_url = format!(
                 "jdbc:sqlserver://{}:{};databaseName={};Encrypt=false",
-                db_source.host,
-                db_source.port,
-                db_source.database_name,
+                db_source.host, db_source.port, db_source.database_name,
             );
             let mut conn = MSSQL::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
-                .map_err(|err| {
-                    anyhow!("数据库连接失败！: {err}")
-                })?;
+            conn.connect(
+                &db_url,
+                db_source.user.as_str(),
+                db_source.password.as_str(),
+            )
+            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
-            let data = conn.execute_query(&query_sql).map_err(|err| {
-                anyhow!("数据库查询失败！: {err}")
-            })?;
+            let data = conn
+                .execute_query(&query_sql)
+                .map_err(|err| anyhow!("数据库查询失败！: {err}"))?;
             Ok(data)
         }
         Database::ORACLE => {
             let db_url = format!(
                 "jdbc:oracle:thin:@//{}:{}/{}",
-                db_source.host,
-                db_source.port,
-                db_source.database_name,
+                db_source.host, db_source.port, db_source.database_name,
             );
             let mut conn = Oracle::new()?;
 
-            conn.connect(&db_url, db_source.user.as_str(), db_source.password.as_str())
-                .map_err(|err| {
-                    anyhow!("数据库连接失败！: {err}")
-                })?;
+            conn.connect(
+                &db_url,
+                db_source.user.as_str(),
+                db_source.password.as_str(),
+            )
+            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
-            let data = conn.execute_query(&query_sql).map_err(|err| {
-                anyhow!("数据库查询失败！: {err}")
-            })?;
+            let data = conn
+                .execute_query(&query_sql)
+                .map_err(|err| anyhow!("数据库查询失败！: {err}"))?;
             Ok(data)
         }
     }
@@ -316,7 +329,7 @@ impl Export for Db {
                 return Err(anyhow!("这条语句不是插入语句！"));
             }
         } else {
-            return Err(anyhow!("这条语句不是插入语句！"))
+            return Err(anyhow!("这条语句不是插入语句！"));
         }
         let sql_list = generate_sql_list(template_sql, data)?;
 

@@ -15,7 +15,7 @@ use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
 use uuid::Uuid;
 
-use crate::api::common::{AppState, pg_to_mysql_type};
+use crate::api::common::{pg_to_mysql_type, AppState};
 use crate::entity::collect_config::Model;
 use crate::entity::{collect_config, collect_log};
 use crate::service::collect_log_service::CollectLogService;
@@ -212,7 +212,8 @@ impl CollectConfigService {
                 DatabaseBackend::Postgres => {
                     for item in db_columns_config {
                         if item["key"] == "id" {
-                            column_str.insert(0, format!("{} {} NOT NULL", item["key"], item["type"]));
+                            column_str
+                                .insert(0, format!("{} {} NOT NULL", item["key"], item["type"]));
                             have_id_key = true;
                         } else {
                             column_str.push(format!("{} {} NULL", item["key"], item["type"]));
@@ -222,10 +223,21 @@ impl CollectConfigService {
                 DatabaseBackend::MySql => {
                     for item in db_columns_config {
                         if item["key"] == "id" {
-                            column_str.insert(0, format!("`{}` {} NOT NULL", item["key"].as_str().unwrap(), pg_to_mysql_type(item["type"].as_str().unwrap()).unwrap()));
+                            column_str.insert(
+                                0,
+                                format!(
+                                    "`{}` {} NOT NULL",
+                                    item["key"].as_str().unwrap(),
+                                    pg_to_mysql_type(item["type"].as_str().unwrap()).unwrap()
+                                ),
+                            );
                             have_id_key = true;
                         } else {
-                            column_str.push(format!("`{}` {} NULL", item["key"].as_str().unwrap(), pg_to_mysql_type(item["type"].as_str().unwrap()).unwrap()));
+                            column_str.push(format!(
+                                "`{}` {} NULL",
+                                item["key"].as_str().unwrap(),
+                                pg_to_mysql_type(item["type"].as_str().unwrap()).unwrap()
+                            ));
                         }
                     }
                 }
@@ -233,10 +245,9 @@ impl CollectConfigService {
                     error!("不支持的数据库格式");
                 }
             }
-            
 
             if !have_id_key {
-                match cache_db.get_database_backend() { 
+                match cache_db.get_database_backend() {
                     DatabaseBackend::Postgres => {
                         column_str.insert(0, r#"id serial NOT NULL"#.to_string());
                         column_str.push(format!(
@@ -251,7 +262,7 @@ impl CollectConfigService {
                     _ => {
                         error!("不支持的数据库格式");
                     }
-                } 
+                }
             }
             template_str = format!("{} ({});", template_str, column_str.join(", "));
 

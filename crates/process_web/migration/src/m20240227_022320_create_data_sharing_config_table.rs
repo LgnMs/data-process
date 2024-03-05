@@ -21,25 +21,21 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(
-                        ColumnDef::new(DataSharingConfig::Name)
-                            .string()
-                            .not_null()
-                    )
+                    .col(ColumnDef::new(DataSharingConfig::Name).string().not_null())
                     .col(
                         ColumnDef::new(DataSharingConfig::TableName)
                             .string()
-                            .not_null()
+                            .not_null(),
                     )
                     .col(
                         ColumnDef::new(DataSharingConfig::QuerySql)
                             .string()
-                            .not_null()
+                            .not_null(),
                     )
                     .col(
                         ColumnDef::new(DataSharingConfig::DataSourceId)
                             .integer()
-                            .not_null()
+                            .not_null(),
                     )
                     .col(
                         ColumnDef::new(DataSharingConfig::DelFlag)
@@ -51,12 +47,12 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(DataSharingConfig::UpdateTime)
                             .date_time()
-                            .not_null()
+                            .not_null(),
                     )
                     .col(
                         ColumnDef::new(DataSharingConfig::CreateTime)
                             .date_time()
-                            .not_null()
+                            .not_null(),
                     )
                     .to_owned(),
             )

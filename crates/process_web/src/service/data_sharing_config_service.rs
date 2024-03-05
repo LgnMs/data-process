@@ -1,10 +1,10 @@
+use process_core::db::DataSource;
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use tracing::debug;
-use process_core::db::DataSource;
 
 use crate::api::data_sharing_config::ListParams;
-use crate::entity::{data_sharing_config};
+use crate::entity::data_sharing_config;
 use crate::entity::data_sharing_config::Model;
 use crate::service::data_source_list_service::DataSourceListService;
 
@@ -76,7 +76,6 @@ impl DataSharingConfigService {
         }
     }
 
-
     pub async fn delete(db: &DbConn, id: i32) -> Result<Model, DbErr> {
         let data = data_sharing_config::Entity::find_by_id(id)
             .one(db)
@@ -93,13 +92,15 @@ impl DataSharingConfigService {
     pub async fn get_data(
         db: &DbConn,
         id: i32,
-        payload: Option<serde_json::Value>
+        payload: Option<serde_json::Value>,
     ) -> Result<Vec<serde_json::Value>, DbErr> {
         let data = Self::find_by_id(db, id).await?;
         let query_sql = match payload {
             None => data.query_sql,
             Some(x) => {
-                let obj = x.as_object().ok_or(DbErr::Custom("传递的参数无法解析".to_owned()))?;
+                let obj = x
+                    .as_object()
+                    .ok_or(DbErr::Custom("传递的参数无法解析".to_owned()))?;
                 let mut sql = data.query_sql;
                 for (key, value) in obj {
                     let p_key = format!("${{{key}}}");
@@ -122,4 +123,3 @@ impl DataSharingConfigService {
             })
     }
 }
-

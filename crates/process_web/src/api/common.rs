@@ -1,13 +1,13 @@
-use std::fmt::{Debug};
 use async_trait::async_trait;
-use axum::extract::{FromRequestParts};
+use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use sea_orm::DatabaseConnection;
-use serde::{Deserialize, Serialize, Serializer};
 use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize, Serializer};
+use std::fmt::Debug;
 use tokio_cron_scheduler::JobScheduler;
 
 pub type ResJson<T> = Json<ResTemplate<T>>;
@@ -18,7 +18,7 @@ pub type ResJsonWithPagination<T> = ResJson<Pagination<Vec<T>>>;
 pub struct ResTemplate<T> {
     pub message: String,
     pub data: Option<T>,
-    pub success: bool
+    pub success: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -74,7 +74,6 @@ pub struct PaginationPayload<T> {
     pub data: Option<T>,
 }
 
-
 pub fn pg_to_mysql_type(pg_type: &str) -> Option<String> {
     match pg_type.to_lowercase().as_str() {
         "smallint" => Some("SMALLINT".to_string()),
@@ -93,14 +92,14 @@ pub fn pg_to_mysql_type(pg_type: &str) -> Option<String> {
     }
 }
 
-
 #[derive(Debug)]
-pub struct RequestInfo(
-    pub Parts
-);
+pub struct RequestInfo(pub Parts);
 
 impl Serialize for RequestInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let mut request_info = serializer.serialize_struct("request_info", 5)?;
         request_info.serialize_field("headers", &format!("{:?}", self.0.headers))?;
         request_info.serialize_field("method", &format!("{}", self.0.method))?;
@@ -114,13 +113,12 @@ impl Serialize for RequestInfo {
 // 实现FromRequest trait以从请求中提取信息
 #[async_trait]
 impl<S> FromRequestParts<S> for RequestInfo
-    where
-        S: Send + Sync,
+where
+    S: Send + Sync,
 {
     type Rejection = (StatusCode, &'static str);
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-
         Ok(RequestInfo(parts.clone()))
     }
 }

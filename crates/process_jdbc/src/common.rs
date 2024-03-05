@@ -1,10 +1,15 @@
-use std::sync::OnceLock;
 use anyhow::{anyhow, Result};
 use j4rs::{ClasspathEntry, Jvm, JvmBuilder};
+use std::sync::OnceLock;
 
 pub trait JDBC {
     type Connection;
-    fn connect(&mut self, db_url: &str, username: &str, password: &str) -> Result<&Self::Connection>;
+    fn connect(
+        &mut self,
+        db_url: &str,
+        username: &str,
+        password: &str,
+    ) -> Result<&Self::Connection>;
 
     fn create_statement(&mut self) -> Result<&Self::Connection>;
 
@@ -115,7 +120,7 @@ impl JvmInstance {
             .classpath_entry(entry2)
             .classpath_entry(entry3)
             .build()?;
-        
+
         JVM_IS_SETUP.get_or_init(|| true);
         Ok(jvm)
     }
@@ -133,5 +138,4 @@ pub fn get_jvm() -> Result<Jvm> {
         println!("2");
         JvmInstance::new()
     }
-    
 }

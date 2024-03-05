@@ -1,5 +1,5 @@
-use sea_orm_migration::prelude::*;
 use crate::m20240227_022320_create_data_sharing_config_table::DataSharingConfig;
+use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -47,7 +47,10 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("data_sharing_config_fk")
-                            .from(SharingRequestLog::Table, SharingRequestLog::DataSharingConfigId)
+                            .from(
+                                SharingRequestLog::Table,
+                                SharingRequestLog::DataSharingConfigId,
+                            )
                             .to(DataSharingConfig::Table, DataSharingConfig::Id),
                     )
                     .to_owned(),

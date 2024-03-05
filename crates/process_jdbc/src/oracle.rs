@@ -1,7 +1,7 @@
-use anyhow::Result;
-use j4rs::{ClasspathEntry, Instance, Jvm, JvmBuilder};
-use crate::{impl_execute_jdbc, impl_jdbc};
 use crate::common::get_jvm;
+use crate::{impl_execute_jdbc, impl_jdbc};
+use anyhow::Result;
+use j4rs::{Instance, Jvm};
 
 pub struct Oracle {
     pub jvm: Jvm,
@@ -12,7 +12,7 @@ pub struct Oracle {
 impl Oracle {
     pub fn new() -> Result<Self> {
         let jvm = get_jvm()?;
-        
+
         Ok(Self {
             jvm,
             conn: None,

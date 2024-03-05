@@ -228,11 +228,12 @@ impl SyncConfigService {
     }
 }
 
-async fn process_data(conn: &DbConn ,data: &Model) -> Result<Vec<String>> {
+async fn process_data(conn: &DbConn, data: &Model) -> Result<Vec<String>> {
     let mut db = Db::new();
 
     let data_source = DataSourceListService::find_by_id(conn, data.data_source_id).await?;
-    let target_data_source = DataSourceListService::find_by_id(conn, data.target_data_source_id).await?;
+    let target_data_source =
+        DataSourceListService::find_by_id(conn, data.target_data_source_id).await?;
     db.receive(
         data.query_sql.clone(),
         DbConfig {

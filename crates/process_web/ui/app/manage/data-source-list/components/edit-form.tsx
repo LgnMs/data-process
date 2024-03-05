@@ -64,7 +64,6 @@ export default function EditForm(props: IEditFormProps) {
       if (state.dataSourceList.editFormData) {
         const data: any = clone(state.dataSourceList.editFormData);
 
-
         form.setFieldsValue(data);
         setMode("edit");
       } else {
@@ -108,10 +107,7 @@ export default function EditForm(props: IEditFormProps) {
             </Form.Item>
           </Col>
           <Col span={16}>
-            <Form.Item
-              label="数据源名称"
-              name="name"
-            >
+            <Form.Item label="数据源名称" name="name">
               <Input placeholder="请输入" />
             </Form.Item>
           </Col>

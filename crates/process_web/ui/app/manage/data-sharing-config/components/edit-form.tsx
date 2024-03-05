@@ -1,20 +1,14 @@
 import { useSWRConfig } from "swr";
-import {
-  Button,
-  Col,
-  Drawer,
-  Form,
-  Input,
-  message,
-  Row,
-  Space,
-} from "antd";
+import { Button, Col, Drawer, Form, Input, message, Row, Space } from "antd";
 import React, { useEffect, useState } from "react";
 import * as DataSharingConfig from "@/api/data_sharing_config";
 import { ICommonDataSharingConfigProps } from "@/app/manage/data-sharing-config/page";
 import { useMainContext } from "@/contexts/main";
 import { clone } from "lodash";
-import { DataSourceSelect, generateQuerySql } from "@/app/manage/sync-setting/components/edit-form";
+import {
+  DataSourceSelect,
+  generateQuerySql,
+} from "@/app/manage/sync-setting/components/edit-form";
 import LabelTips from "@/app/manage/components/label-tips";
 
 interface IEditFormProps extends ICommonDataSharingConfigProps {
@@ -122,10 +116,7 @@ export default function EditForm(props: IEditFormProps) {
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item
-              label="表名"
-              name="table_name"
-            >
+            <Form.Item label="表名" name="table_name">
               <Input placeholder="请输入" />
             </Form.Item>
           </Col>

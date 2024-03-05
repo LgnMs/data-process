@@ -1,4 +1,4 @@
-import {message} from 'antd'
+import { message } from "antd";
 
 export interface ResTemplate<T> {
   message: string;

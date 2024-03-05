@@ -10,19 +10,22 @@ export interface SharingRequestLogState {
 
 export type SharingRequestLogAction =
   | {
-  type: "sharingRequestLog.setPagination";
-  pagination: SharingRequestLogState["pagination"];
-}
+      type: "sharingRequestLog.setPagination";
+      pagination: SharingRequestLogState["pagination"];
+    }
   | {
-  type: "sharingRequestLog.setDrawerOpen";
-  drawerOpen: SharingRequestLogState["drawerOpen"];
-}
+      type: "sharingRequestLog.setDrawerOpen";
+      drawerOpen: SharingRequestLogState["drawerOpen"];
+    }
   | {
-  type: "sharingRequestLog.setDrawerData";
-  drawerData: SharingRequestLogState["drawerData"];
-};
+      type: "sharingRequestLog.setDrawerData";
+      drawerData: SharingRequestLogState["drawerData"];
+    };
 
-export function SharingRequestLogReducer(state: SharingRequestLogState, action: SharingRequestLogAction) {
+export function SharingRequestLogReducer(
+  state: SharingRequestLogState,
+  action: SharingRequestLogAction
+) {
   if (action.type === "sharingRequestLog.setPagination") {
     return {
       ...state,

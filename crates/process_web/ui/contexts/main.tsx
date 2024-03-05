@@ -45,7 +45,7 @@ import {
   initSharingRequestLogState,
   SharingRequestLogAction,
   SharingRequestLogReducer,
-  SharingRequestLogState
+  SharingRequestLogState,
 } from "@/contexts/sharingRequestLog";
 
 export interface IRoleInfo {
@@ -194,7 +194,7 @@ export function MainContextProvider(props: { children: ReactNode }) {
     syncLog: initSyncLogState,
     dataSourceList: initDataSourceListState,
     dataSharingConfig: initDataSharingConfigState,
-    sharingRequestLog: initSharingRequestLogState
+    sharingRequestLog: initSharingRequestLogState,
   });
 
   return (
