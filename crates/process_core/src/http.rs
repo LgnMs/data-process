@@ -149,8 +149,8 @@ impl Serde for Http {
                     item.children_key.as_str(),
                     item.id_key.as_str(),
                 ) {
-                    None => {}
-                    Some(x) => {
+                    Err(_) => {}
+                    Ok(x) => {
                         let a = x.to_string();
                         println!("a {a}");
                         self.data = x;
@@ -160,7 +160,7 @@ impl Serde for Http {
         }
 
         if let Some(map_rules) = &self.map_rules {
-            self.data = map_data(&self.data, map_rules).ok_or(anyhow!("映射数据不成功"))?;
+            self.data = map_data(&self.data, map_rules)?;
         }
 
         Ok(self.clone())
@@ -216,7 +216,7 @@ pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<Stri
     for key in key_vec {
         let rel_key = &key[2..key.len() - 1];
         let value = find_value(rel_key, data, true)
-            .ok_or(anyhow!("未在rel_key: {rel_key} data:{}中找到数据", data))?;
+            .map_err(|err | anyhow!("{err} 未在rel_key: {rel_key} data:{}中找到数据", data))?;
         if let Some(list) = value.as_array() {
             for i in 0..list.len() {
                 let item: &str;

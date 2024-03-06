@@ -34,39 +34,39 @@ export function MainHeader() {
       /> */}
         <span className={styles[`${namespace}-logo-title`]}>数据处理中心</span>
       </div>
-      {
-        <Space style={{ color: "#fff" }}>
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: "1",
-                  label: (
-                    <Space>
-                      <LogoutOutlined rev={undefined} />
-                      注销
-                    </Space>
-                  ),
-                  onClick: () => {
-                    dispatch({ type: "setToken", token: "" });
-                    dispatch({ type: "setRoles", roles: [] });
-                    dispatch({ type: "setPermissions", permissions: [] });
-                    // logout()
-                  },
-                },
-              ],
-            }}
-            arrow
-          >
-            <div>
-              <Avatar icon={<UserOutlined rev={undefined} />} />
-              <span style={{ display: "inline-block", verticalAlign: "-3px" }}>
-                {state.userInfo?.nickName || state.userInfo?.userName}
-              </span>
-            </div>
-          </Dropdown>
-        </Space>
-      }
+      {/*{*/}
+      {/*  <Space style={{ color: "#fff" }}>*/}
+      {/*    <Dropdown*/}
+      {/*      menu={{*/}
+      {/*        items: [*/}
+      {/*          {*/}
+      {/*            key: "1",*/}
+      {/*            label: (*/}
+      {/*              <Space>*/}
+      {/*                <LogoutOutlined rev={undefined} />*/}
+      {/*                注销*/}
+      {/*              </Space>*/}
+      {/*            ),*/}
+      {/*            onClick: () => {*/}
+      {/*              dispatch({ type: "setToken", token: "" });*/}
+      {/*              dispatch({ type: "setRoles", roles: [] });*/}
+      {/*              dispatch({ type: "setPermissions", permissions: [] });*/}
+      {/*              // logout()*/}
+      {/*            },*/}
+      {/*          },*/}
+      {/*        ],*/}
+      {/*      }}*/}
+      {/*      arrow*/}
+      {/*    >*/}
+      {/*      <div>*/}
+      {/*        <Avatar icon={<UserOutlined rev={undefined} />} />*/}
+      {/*        <span style={{ display: "inline-block", verticalAlign: "-3px" }}>*/}
+      {/*          {state.userInfo?.nickName || state.userInfo?.userName}*/}
+      {/*        </span>*/}
+      {/*      </div>*/}
+      {/*    </Dropdown>*/}
+      {/*  </Space>*/}
+      {/*}*/}
     </Header>
   );
 }

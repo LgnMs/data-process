@@ -1,5 +1,4 @@
 import React from "react";
-import type { Metadata } from "next";
 import MainLayout from "@/app/manage/components/main-layout";
 import StyledComponentsRegistry from "@/lib/antd-registry";
 

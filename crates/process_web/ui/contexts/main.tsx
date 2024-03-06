@@ -48,13 +48,6 @@ import {
   SharingRequestLogState,
 } from "@/contexts/sharingRequestLog";
 
-export interface IRoleInfo {
-  id: string;
-  roleCode: string;
-  roleDesc: string;
-  roleName: string;
-}
-
 interface MainState {
   token: string;
   roles: string[];
@@ -172,9 +165,7 @@ function reducer(state: MainState, action: MainAction) {
   throw Error("Unknown action");
 }
 
-// TODO 处理原来的用户信息
 interface IMainContext {
-  roleInfos: IRoleInfo[];
 }
 
 export const MainContext = createContext<{

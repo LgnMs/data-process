@@ -9,6 +9,8 @@ import dayjs from "dayjs";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
 import "dayjs/locale/zh-cn";
 import { MainContextProvider } from "@/contexts/main";
+import useSWR from "swr";
+import { http_post } from "@/api/common";
 
 dayjs.extend(quarterOfYear);
 
@@ -18,8 +20,24 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  let loading = false;
+  const { data, isLoading } = useSWR<any>("/auth/authorize",
+    () => http_post(
+      "/auth/authorize",
+      {
+          body: JSON.stringify({
+            client_id: "foo",
+            client_secret: "bar"
+          })
+      }
+    )
+  )
+  loading = isLoading;
+  if (!isLoading && data.data) {
+    sessionStorage.setItem("Authorization", `${data.data.token_type} ${data.data.access_token}`)
+  }
 
-  return (
+  return !loading && (
     <MainContextProvider>
       <ConfigProvider locale={zhCN}>
         <Layout style={{ position: "relative" }}>

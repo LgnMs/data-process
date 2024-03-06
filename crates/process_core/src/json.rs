@@ -1,8 +1,9 @@
+use anyhow::anyhow;
 use serde_json::{json, Value};
 use tracing::error;
 
 /// should_flat 是否展开获取到的数据
-pub fn find_value(key: &str, value: &Value, should_flat: bool) -> Option<Value> {
+pub fn find_value(key: &str, value: &Value, should_flat: bool) -> anyhow::Result<Value> {
     let mut current_key = key;
     let current_index: &str;
     let mut current_value = Some(value.clone());
@@ -12,18 +13,18 @@ pub fn find_value(key: &str, value: &Value, should_flat: bool) -> Option<Value> 
         current_value = Some(
             current_value
                 .as_ref()
-                .unwrap()
+                .ok_or(anyhow!("查找数据失败"))?
                 .get(current_index)
-                .unwrap()
+                .ok_or(anyhow!("查找数据失败"))?
                 .clone(),
         );
         current_key = &current_key[index + 1..];
-        return find_value(current_key, &current_value.unwrap(), should_flat);
+        return find_value(current_key, &current_value.ok_or(anyhow!("查找数据失败"))?, should_flat);
     } else if let Some(index) = current_key.find("#") {
         current_index = &current_key[..index];
 
-        current_value = match current_value.as_ref().unwrap().get(current_index) {
-            None => match current_value.unwrap().as_array() {
+        current_value = match current_value.as_ref().ok_or(anyhow!("查找数据失败"))?.get(current_index) {
+            None => match current_value.ok_or(anyhow!("查找数据失败"))?.as_array() {
                 None => {
                     error!("未找到索引 {current_index} 对应的数据");
                     None
@@ -41,35 +42,32 @@ pub fn find_value(key: &str, value: &Value, should_flat: bool) -> Option<Value> 
         current_key = &current_key[index + 1..];
 
         return match current_value {
-            None => None,
+            None => Err(anyhow!("")),
             Some(x) => find_value(current_key, &x, should_flat),
         };
     } else {
         current_index = current_key;
 
-        current_value = re_find(current_index, &current_value.unwrap(), should_flat);
+        current_value = Some(re_find(current_index, &current_value.ok_or(anyhow!("查找数据失败"))?, should_flat)?);
     }
 
-    match current_value {
-        None => None,
-        Some(x) => Some(x.clone()),
-    }
+    current_value.ok_or(anyhow!("查找数据失败"))
 }
 
-pub fn re_find(key: &str, value: &Value, should_flat: bool) -> Option<Value> {
+pub fn re_find(key: &str, value: &Value, should_flat: bool) -> anyhow::Result<Value> {
     match value.get(key) {
         None => match value.as_array() {
-            None => None,
+            None => Err(anyhow!("re_find {value}数据失败")),
             Some(list) => {
                 let mut has_array = false;
                 let mut list = list
                     .iter()
                     .map(|x| match re_find(key, x, should_flat) {
-                        None => {
+                        Err(_) => {
                             has_array = false;
                             json!(null)
                         }
-                        Some(x) => {
+                        Ok(x) => {
                             if x.is_array() {
                                 has_array = true;
                             }
@@ -84,15 +82,15 @@ pub fn re_find(key: &str, value: &Value, should_flat: bool) -> Option<Value> {
                         .collect();
                 }
 
-                Some(json!(list))
+                Ok(json!(list))
             }
         },
-        Some(val) => Some(val.clone()),
+        Some(val) => Ok(val.clone()),
     }
 }
 
 /// 只支持同一层级结构数据转换
-pub fn map_data(origin_data: &Value, map_rules: &Vec<[String; 2]>) -> Option<Value> {
+pub fn map_data(origin_data: &Value, map_rules: &Vec<[String; 2]>) -> anyhow::Result<Value> {
     let mut new_value = json!({});
 
     for rule in map_rules {
@@ -103,9 +101,9 @@ pub fn map_data(origin_data: &Value, map_rules: &Vec<[String; 2]>) -> Option<Val
     }
 
     if new_value == json!({}) {
-        None
+        Err(anyhow!("map_data 数据转换失败"))
     } else {
-        Some(new_value)
+        Ok(new_value)
     }
 }
 
@@ -193,11 +191,11 @@ pub fn flat_nested_object(
     root_key: &str,
     children_key: &str,
     id_key: &str,
-) -> Option<Value> {
+) -> anyhow::Result<Value> {
     let root_value = find_value(root_key, value, true);
 
     let mut data_list = vec![];
-    if let Some(mut root_value) = root_value {
+    if let Ok(mut root_value) = root_value {
         if let Some(list) = root_value.as_array_mut() {
             for item in list {
                 flat_nested_callback(item, None, &mut data_list, children_key, id_key);
@@ -217,9 +215,9 @@ pub fn flat_nested_object(
             .unwrap()
             .insert(current_key.to_string(), json!(data_list));
 
-        return Some(new_value);
+        return Ok(new_value);
     }
-    None
+    Err(anyhow!("展开嵌套数据失败： {value}"))
 }
 
 fn flat_nested_callback(
@@ -244,7 +242,7 @@ fn flat_nested_callback(
     data_list.push(new_value);
 
     let children = find_value(children_key, value, true);
-    if let Some(mut child) = children {
+    if let Ok(mut child) = children {
         if let Some(list) = child.as_array_mut() {
             for item in list {
                 flat_nested_callback(item, Some(&value), data_list, children_key, id_key);

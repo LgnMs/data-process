@@ -22,13 +22,29 @@ export interface PaginationPayload<T> {
   data: T | null;
 }
 
-export async function http_get<T>(input: string): Promise<T> {
-  const res = await fetch(input);
-
+async function handler_err(res: Response) {
+  if (res.status === 400) {
+    message.error(`status: 400 ${res.statusText} 没有认证信息或认证信息已过期`);
+    return null
+  }
   let data = await res.json();
   if (!data.success) {
     message.error(data.message);
   }
+
+  return data
+}
+
+export async function http_get<T>(input: string): Promise<T> {
+  const headers = new Headers();
+  if (sessionStorage.getItem("Authorization")) {
+    headers.append("Authorization", sessionStorage.getItem("Authorization")!);
+  }
+
+  const res = await fetch(input, { headers });
+
+  const data = await handler_err(res);
+
   return new Promise((resolve) => resolve(data));
 }
 
@@ -38,16 +54,16 @@ export async function http_post<T>(
 ): Promise<T> {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-
+  if (sessionStorage.getItem("Authorization")) {
+    headers.append("Authorization", sessionStorage.getItem("Authorization")!);
+  }
   const res = await fetch(input, {
     headers,
     method: "POST",
     ...init,
   });
 
-  let data = await res.json();
-  if (!data.success) {
-    message.error(data.message);
-  }
+  const data = await handler_err(res);
+
   return new Promise((resolve) => resolve(data));
 }

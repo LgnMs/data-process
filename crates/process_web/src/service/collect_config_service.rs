@@ -480,8 +480,7 @@ pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
         }
     }
 
-    let (_, res) = collect_data_with_http(data, body_string.clone())
-        .await?;
+    let (_, res) = collect_data_with_http(data, body_string.clone()).await?;
 
     res
 }
@@ -535,7 +534,7 @@ pub async fn collect_data_with_http(
     let mut has_next_page = true;
 
     if let Some(filed_of_result_data) = data.filed_of_result_data.as_ref() {
-        if let Some(found_data) =
+        if let Ok(found_data) =
             find_value(filed_of_result_data.borrow(), &http_receive.data, false)
         {
             if let Some(array) = found_data.as_array() {

@@ -1,16 +1,18 @@
 use anyhow::Result;
 use axum::http::{StatusCode, Uri};
-use axum::Router;
+use axum::{middleware, Router};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::*;
 use std::env;
 use std::sync::Arc;
 use tokio_cron_scheduler::JobScheduler;
+use tower::ServiceBuilder;
 use tracing::Level;
 use tracing_appender::rolling;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
 use crate::api::common::AppState;
+use crate::api::auth::jwt_middleware;
 use crate::service::collect_config_service::CollectConfigService;
 use crate::service::sync_config_service::SyncConfigService;
 
@@ -23,6 +25,7 @@ pub mod mock;
 pub mod sharing_request_log;
 pub mod sync_config;
 pub mod sync_log;
+mod auth;
 
 #[tokio::main]
 pub async fn start() -> Result<()> {
@@ -64,6 +67,7 @@ pub async fn start() -> Result<()> {
 
     // build our application with a route
     let app = Router::new()
+        .nest("/auth", auth::set_routes())
         .nest("/collect_config", collect_config::set_routes())
         .nest("/collect_log", collect_log::set_routes())
         .nest("/sync_config", sync_config::set_routes())
@@ -73,6 +77,10 @@ pub async fn start() -> Result<()> {
         .nest("/sharing_request_log", sharing_request_log::set_routes())
         .nest("/mock", mock::set_routes())
         .fallback(fallback)
+        .layer(
+            ServiceBuilder::new()
+                .layer(middleware::from_fn(jwt_middleware))
+        )
         .with_state(state);
 
     println!("listener on {server_url}");

@@ -57,13 +57,13 @@ fn find_value_test() {
         ]
     });
 
-    let a = find_value("data#id", &origin_data, true);
-    let b = find_value("data#list#a", &origin_data, true);
-    let c = find_value("data#children#list#a", &origin_data, true);
+    let a = find_value("data#id", &origin_data, true).expect("err");
+    let b = find_value("data#list#a", &origin_data, true).expect("err");
+    let c = find_value("data#children#list#a", &origin_data, true).expect("err");
 
-    assert_eq!(a, Some(json!(vec![1, 2])));
-    assert_eq!(b, Some(json!(vec![2, 3])));
-    assert_eq!(c, Some(json!(vec![2, 3, 4])));
+    assert_eq!(a, json!(vec![1, 2]));
+    assert_eq!(b, json!(vec![2, 3]));
+    assert_eq!(c, json!(vec![2, 3, 4]));
 
     let origin_data2 = json!({
         "result": {
@@ -93,18 +93,18 @@ fn find_value_test() {
         }
     });
 
-    let d = find_value("result.data#id", &origin_data2, true);
-    assert_eq!(d, Some(json!(vec![1])));
+    let d = find_value("result.data#id", &origin_data2, true).expect("err");
+    assert_eq!(d, json!(vec![1]));
 
-    let e = find_value("result.code", &origin_data2, true);
-    assert_eq!(e, Some(json!(200)));
+    let e = find_value("result.code", &origin_data2, true).expect("err");
+    assert_eq!(e, json!(200));
 
     let origin_data3 = json!([
         {"a": 1}, {"a": 2}, {"a": 3}
     ]);
 
-    let e = find_value("a", &origin_data3, true);
-    assert_eq!(e, Some(json!(vec![1, 2, 3])));
+    let e = find_value("a", &origin_data3, true).expect("err");
+    assert_eq!(e, json!(vec![1, 2, 3]));
 }
 
 #[test]
@@ -159,7 +159,7 @@ fn map_data_test() {
         ["data#children#list#b".to_string(), "data#b".to_string()],
     ];
 
-    let new_data = map_data(&origin_data, &transform_rules);
+    let new_data = map_data(&origin_data, &transform_rules).expect("err");
 
     let b = json!({
         "data":[
@@ -173,7 +173,7 @@ fn map_data_test() {
             }
         ]
     });
-    assert_eq!(new_data, Some(b));
+    assert_eq!(new_data, b);
 }
 
 #[test]
