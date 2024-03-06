@@ -1,3 +1,4 @@
+#! /bin/bash
 root=$(dirname "$(dirname "$0")");
 project_name="data_process"
 target_dir="$root/target"
