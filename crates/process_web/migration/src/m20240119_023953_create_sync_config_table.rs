@@ -37,6 +37,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(SyncConfig::QuerySql)
                             .string()
+                            .string_len(3000)
                             .not_null()
                             .comment("数据源要执行的查询SQL"),
                     )
@@ -55,6 +56,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(SyncConfig::TargetQuerySqlTemplate)
                             .string()
+                            .string_len(3000)
                             .not_null()
                             .comment("目标数据库要执行的sql模板"),
                     )

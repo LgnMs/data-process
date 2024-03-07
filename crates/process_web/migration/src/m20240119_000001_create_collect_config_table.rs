@@ -63,6 +63,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(CollectConfig::TemplateString)
                             .string()
+                            .string_len(3000)
                             .not_null()
                             .comment("导出字符串模板"),
                     )
