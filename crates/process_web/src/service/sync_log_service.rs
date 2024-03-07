@@ -2,6 +2,7 @@ use crate::api::sync_log::ListParams;
 use crate::entity::{sync_config, sync_log};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
+use serde_json::json;
 use tracing::debug;
 
 pub struct SyncLogService;
@@ -33,13 +34,13 @@ impl SyncLogService {
             .limit(page_size)
             .filter(conditions)
             .order_by_desc(sync_log::Column::UpdateTime)
-            .into_json()
             .all(db)
             .await?;
 
         let mut list = vec![];
-        for (mut a, b) in db_res {
-            a["sync_config"] = b.unwrap();
+        for (a, b) in db_res {
+            let mut a = json!(a);
+            a["sync_config"] = json!(b.unwrap_or_default());
             list.push(a);
         }
 

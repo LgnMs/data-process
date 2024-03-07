@@ -24,7 +24,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(SyncConfig::Name).string().not_null())
                     .col(
                         ColumnDef::new(SyncConfig::DataSourceId)
-                            .json()
+                            .integer()
                             .not_null()
                             .comment("数据源"),
                     )
@@ -42,7 +42,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(SyncConfig::TargetDataSourceId)
-                            .json()
+                            .integer()
                             .not_null()
                             .comment("同步数据目标源"),
                     )

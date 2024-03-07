@@ -1,6 +1,7 @@
 use crate::api::collect_log::ListParams;
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
+use serde_json::json;
 use tracing::debug;
 
 use crate::entity::collect_config;
@@ -35,16 +36,16 @@ impl CollectLogService {
             .limit(page_size)
             .filter(conditions)
             .order_by_desc(collect_log::Column::UpdateTime)
-            .into_json()
             .all(db)
             .await?;
 
         let mut list = vec![];
-        for (mut a, b) in db_res {
-            a["collect_config"] = b.unwrap();
+        for (a, b) in db_res {
+            let mut a = json!(a);
+            a["collect_config"] = json!(b.unwrap_or_default());
             list.push(a);
         }
-
+        
         let num_pages = collect_log::Entity::find().all(db).await?.len() as u64;
 
         return Ok((list, num_pages));

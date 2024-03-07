@@ -33,7 +33,7 @@ export default function MainLayout({
     )
   )
   loading = isLoading;
-  if (!isLoading && data.data) {
+  if (!isLoading && data?.data) {
     sessionStorage.setItem("Authorization", `${data.data.token_type} ${data.data.access_token}`)
   }
 

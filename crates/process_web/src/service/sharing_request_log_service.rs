@@ -2,6 +2,7 @@ use crate::api::sharing_request_log::ListParams;
 use crate::entity::{data_sharing_config, sharing_request_log};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
+use serde_json::json;
 use tracing::debug;
 
 pub struct SharingRequestLogService;
@@ -33,13 +34,13 @@ impl SharingRequestLogService {
             .limit(page_size)
             .filter(conditions)
             .order_by_desc(sharing_request_log::Column::UpdateTime)
-            .into_json()
             .all(db)
             .await?;
 
         let mut list = vec![];
-        for (mut a, b) in db_res {
-            a["data_sharing_config"] = b.unwrap();
+        for (a, b) in db_res {
+            let mut a = json!(a);
+            a["data_sharing_config"] = json!(b.unwrap_or_default());
             list.push(a);
         }
 
