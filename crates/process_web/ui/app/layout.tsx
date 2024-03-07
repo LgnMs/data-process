@@ -7,8 +7,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "数据处理中心",
-  description: "数据处理中心",
+  title: process.env.NEXT_PUBLIC_TITLE,
+  description: process.env.NEXT_PUBLIC_TITLE,
 };
 
 export default function RootLayout({

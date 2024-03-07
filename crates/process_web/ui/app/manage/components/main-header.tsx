@@ -32,7 +32,7 @@ export function MainHeader() {
         height={32}
         alt="logo"
       /> */}
-        <span className={styles[`${namespace}-logo-title`]}>数据处理中心</span>
+        <span className={styles[`${namespace}-logo-title`]}>{process.env.NEXT_PUBLIC_TITLE}</span>
       </div>
       {/*{*/}
       {/*  <Space style={{ color: "#fff" }}>*/}
