@@ -97,7 +97,7 @@ export default function EditForm(props: IEditFormProps) {
         labelAlign="left"
         labelWrap
         onFieldsChange={(changedFields) => {
-          changedFields.forEach((item) => {});
+          changedFields.forEach((_) => {});
         }}
       >
         <Row gutter={16}>
