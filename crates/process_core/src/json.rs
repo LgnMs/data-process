@@ -57,7 +57,7 @@ pub fn find_value(key: &str, value: &Value, should_flat: bool) -> anyhow::Result
 pub fn re_find(key: &str, value: &Value, should_flat: bool) -> anyhow::Result<Value> {
     match value.get(key) {
         None => match value.as_array() {
-            None => Err(anyhow!("re_find {value}数据失败")),
+            None => Err(anyhow!("re_find {value}数据失败\n")),
             Some(list) => {
                 let mut has_array = false;
                 let mut list = list
