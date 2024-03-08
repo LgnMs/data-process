@@ -17,7 +17,7 @@
     logout() {
       const { location } = window;
       const originUrl = `${location.origin}${location.pathname === '/' ? '' : location.pathname}`;
-      removeToken()
+      window.sessionStorage.removeItem("token")
       window.location.href = `${USER_ADMIN_HOST}/logout?remoteUrl=${originUrl}`;
     }
   }
