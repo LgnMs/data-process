@@ -40,6 +40,7 @@ impl Keys {
     }
 }
 
+// TODO 接入认证信息
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Claims {
     sub: String,

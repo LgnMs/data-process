@@ -15,6 +15,7 @@ import * as DatasourceList from "@/api/data_source_list";
 import { ICommonDataSourceProps } from "@/app/manage/data-source-list/page";
 import { useMainContext } from "@/contexts/main";
 import { clone } from "lodash";
+import { encrypt } from "@/lib/encrypt";
 
 interface IEditFormProps extends ICommonDataSourceProps {
   open: boolean;
@@ -32,7 +33,10 @@ export default function EditForm(props: IEditFormProps) {
 
     const data = {
       ...values,
+      password: encrypt(values.password)
     };
+    console.log(data)
+
 
     let res;
     if (mode === "add") {
