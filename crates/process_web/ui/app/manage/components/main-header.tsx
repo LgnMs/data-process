@@ -8,8 +8,6 @@ const { Header } = Layout;
 export function MainHeader() {
   const { state } = useMainContext()!;
 
-  const { dispatch } = useMainContext()!;
-
   const namespace = "main-header";
 
   return (

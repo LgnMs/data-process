@@ -173,9 +173,6 @@ function reducer(state: MainState, action: MainAction) {
   throw Error("Unknown action");
 }
 
-interface IMainContext {
-}
-
 export const MainContext = createContext<{
   state: MainState;
   dispatch: Dispatch<MainAction>;
