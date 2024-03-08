@@ -3,7 +3,7 @@ import {
   ReactNode,
   createContext,
   useContext,
-  useReducer,
+  useReducer, useEffect
 } from "react";
 import {
   CollectConfigAction,
@@ -53,6 +53,7 @@ interface MainState {
   roles: string[];
   permissions: string[];
   userInfo: Record<string, any> | null;
+  config: Record<string, any> | null;
   collectConfig: CollectConfigState;
   collectLog: CollectLogState;
   syncConfig: SyncConfigState;
@@ -63,6 +64,7 @@ interface MainState {
 }
 
 type MainAction =
+  | { type: "setConfig"; config: MainState["config"] }
   | { type: "setToken"; token: MainState["token"] }
   | { type: "setRoles"; roles: MainState["roles"] }
   | { type: "setPermissions"; permissions: MainState["permissions"] }
@@ -76,6 +78,12 @@ type MainAction =
   | SharingRequestLogAction;
 
 function reducer(state: MainState, action: MainAction) {
+  if (action.type === "setConfig") {
+    return {
+      ...state,
+      config: action.config,
+    };
+  }
   if (action.type === "setToken") {
     return {
       ...state,
@@ -186,7 +194,20 @@ export function MainContextProvider(props: { children: ReactNode }) {
     dataSourceList: initDataSourceListState,
     dataSharingConfig: initDataSharingConfigState,
     sharingRequestLog: initSharingRequestLogState,
+    config: null
   });
+
+  useEffect(() => {
+    fetch(`${window.location.origin}/config.json`)
+      .then(res => res.json())
+      .then(config => {
+        dispatch({
+          type: "setConfig",
+          config
+        })
+      });
+
+  }, [])
 
   return (
     <MainContext.Provider value={{ state, dispatch }}>

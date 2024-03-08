@@ -8,7 +8,7 @@ import {
 import { DataSharingConfigParams } from "@/api/models/DataSharingConfigParams";
 import { DataSharingConfig } from "@/api/models/DataSharingConfig";
 
-export const PREFIX = "/data_sharing_config";
+export const PREFIX = "/api/data_sharing_config";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 

@@ -6,10 +6,14 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_TITLE,
-  description: process.env.NEXT_PUBLIC_TITLE,
-};
+export async function generateMetadata() {
+  const config = await fetch(`http://localhost:${process.env.PORT}/config.json`, { cache: 'no-store' }).then(res => res.json());
+
+  return {
+    title: config.title,
+    description: config.description,
+  }
+}
 
 export default function RootLayout({
   children,

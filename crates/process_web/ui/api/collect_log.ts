@@ -8,7 +8,7 @@ import {
 } from "@/api/common";
 import { CollectLogListParams } from "@/api/models/CollectLogListParams";
 
-export const PREFIX = "/collect_log";
+export const PREFIX = "/api/collect_log";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 

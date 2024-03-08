@@ -8,7 +8,7 @@ import {
 } from "@/api/common";
 import { SyncConfigListParams } from "@/api/models/SyncConfigListParams";
 
-export const PREFIX = "/sync_config";
+export const PREFIX = "/api/sync_config";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 

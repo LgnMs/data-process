@@ -8,7 +8,7 @@ import {
 } from "@/api/common";
 import { SharingRequestLogParams } from "@/api/models/SharingRequestLogParams";
 
-export const PREFIX = "/sharing_request_log";
+export const PREFIX = "/api/sharing_request_log";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 

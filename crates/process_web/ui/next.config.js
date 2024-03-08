@@ -11,15 +11,16 @@ const nextConfig = {
     if (isProd) {
       return [
         {
-          source: "/:path*",
-          destination: `${process.env.NEXT_PUBLIC_API_HOST}/:path*`,
+          source: "/api/:path*",
+          destination: `${process.env.API_HOST}/:path*`,
         },
       ];
     } else {
       return [
         {
-          source: "/:path*",
-          destination: `${process.env.NEXT_PUBLIC_API_HOST}/:path*`,
+          source: "/api/:path*",
+
+          destination: `${process.env.API_HOST}/:path*`,
         },
       ];
     }

@@ -8,7 +8,7 @@ import {
 } from "@/api/common";
 import { SyncLogListParams } from "@/api/models/SyncLogListParams";
 
-export const PREFIX = "/sync_log";
+export const PREFIX = "/api/sync_log";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 

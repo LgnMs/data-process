@@ -21,9 +21,9 @@ export default function MainLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   let loading = false;
-  const { data, isLoading } = useSWR<any>("/auth/authorize",
+  const { data, isLoading } = useSWR<any>("/api/auth/authorize",
     () => http_post(
-      "/auth/authorize",
+      "/api/auth/authorize",
       {
           body: JSON.stringify({
             client_id: "foo",

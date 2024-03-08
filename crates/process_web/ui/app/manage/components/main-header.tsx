@@ -1,10 +1,9 @@
-import { Avatar, Dropdown, Layout, Space } from "antd";
-import Image from "next/image";
-import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
+import { Layout } from "antd";
 import styles from "./main.module.scss";
 import { useMainContext } from "@/contexts/main";
 
 const { Header } = Layout;
+
 
 export function MainHeader() {
   const { state } = useMainContext()!;
@@ -12,6 +11,7 @@ export function MainHeader() {
   const { dispatch } = useMainContext()!;
 
   const namespace = "main-header";
+
   return (
     <Header
       style={{
@@ -32,7 +32,7 @@ export function MainHeader() {
         height={32}
         alt="logo"
       /> */}
-        <span className={styles[`${namespace}-logo-title`]}>{process.env.NEXT_PUBLIC_TITLE}</span>
+        <span className={styles[`${namespace}-logo-title`]}>{state.config?.title}</span>
       </div>
       {/*{*/}
       {/*  <Space style={{ color: "#fff" }}>*/}

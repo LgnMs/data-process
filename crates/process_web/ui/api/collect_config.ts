@@ -8,7 +8,7 @@ import {
 } from "@/api/common";
 import { CollectConfigListParams } from "@/api/models/CollectConfigListParams";
 
-export const PREFIX = "/collect_config";
+export const PREFIX = "/api/collect_config";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 

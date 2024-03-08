@@ -9,7 +9,7 @@ import {
 import { DataSourceListParams } from "@/api/models/DataSourceListParams";
 import { QueryTableColumnsParameters } from "@/api/models/QueryTableColumnsParameters";
 
-export const PREFIX = "/data_source_list";
+export const PREFIX = "/api/data_source_list";
 
 export const FIND_BY_ID = `${PREFIX}/find_by_id/`;
 
