@@ -1,6 +1,6 @@
 import React from "react";
 import { Inter } from "next/font/google";
-import type { Metadata } from "next";
+import Script from "next/script";
 
 import "./globals.css";
 
@@ -23,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={inter.className}>{children}</body>
+      { process.env.USE_REMOTE_AUTH === "true" && <Script src="/remote-auth.js" /> }
     </html>
   );
 }
