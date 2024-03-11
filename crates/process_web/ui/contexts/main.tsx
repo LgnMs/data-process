@@ -251,9 +251,12 @@ export function MainContextProvider(props: { children: ReactNode }) {
             `${res.data.token_type} ${res.data.access_token}`
           );
         }
-      });
 
-      setLoading(false);
+        setLoading(false);
+      }).catch(err => {
+        setLoading(false);
+      })
+
     });
   }, []);
 
