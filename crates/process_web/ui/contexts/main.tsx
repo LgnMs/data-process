@@ -181,6 +181,7 @@ export function MainContextProvider(props: { children: ReactNode }) {
           type: "setConfig",
           config
         })
+        document.title = config.title
       });
 
     let authInfoStr = sessionStorage.getItem("authInfo");

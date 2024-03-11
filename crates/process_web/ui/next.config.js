@@ -16,7 +16,7 @@ const nextConfig = {
         },
         {
           source: "/remote-auth/:path*",
-          destination: `${process.env.REMOTE_AUTH_HOST}/:path*`,
+          destination: `${process.env.REMOTE_AUTH_API_HOST}/:path*`,
         },
       ];
     } else {
