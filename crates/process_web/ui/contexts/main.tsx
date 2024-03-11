@@ -48,12 +48,16 @@ import {
   SharingRequestLogState,
 } from "@/contexts/sharingRequestLog";
 
+
+interface AuthInfo {
+  name: string,
+  authId: string,
+}
+
 interface MainState {
-  token: string;
-  roles: string[];
-  permissions: string[];
-  userInfo: Record<string, any> | null;
   config: Record<string, any> | null;
+  // 认证信息，启用USE_REMOTE_AUTH后在public/remote-auth.js 中存入sessionStore
+  authInfo: AuthInfo | null;
   collectConfig: CollectConfigState;
   collectLog: CollectLogState;
   syncConfig: SyncConfigState;
@@ -65,10 +69,7 @@ interface MainState {
 
 type MainAction =
   | { type: "setConfig"; config: MainState["config"] }
-  | { type: "setToken"; token: MainState["token"] }
-  | { type: "setRoles"; roles: MainState["roles"] }
-  | { type: "setPermissions"; permissions: MainState["permissions"] }
-  | { type: "setUserInfo"; userInfo: MainState["userInfo"] }
+  | { type: "setAuthInfo"; authInfo: MainState["authInfo"] }
   | CollectConfigAction
   | CollectLogAction
   | SyncConfigAction
@@ -83,29 +84,10 @@ function reducer(state: MainState, action: MainAction) {
       ...state,
       config: action.config,
     };
-  }
-  if (action.type === "setToken") {
+  }  if (action.type === "setAuthInfo") {
     return {
       ...state,
-      token: action.token,
-    };
-  }
-  if (action.type === "setRoles") {
-    return {
-      ...state,
-      roles: action.roles,
-    };
-  }
-  if (action.type === "setPermissions") {
-    return {
-      ...state,
-      permissions: action.permissions,
-    };
-  }
-  if (action.type === "setUserInfo") {
-    return {
-      ...state,
-      userInfo: action.userInfo,
+      authInfo: action.authInfo,
     };
   }
   if (action.type.indexOf("collectConfig") > -1) {
@@ -180,10 +162,6 @@ export const MainContext = createContext<{
 
 export function MainContextProvider(props: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, {
-    token: "",
-    roles: [],
-    permissions: [],
-    userInfo: null,
     collectConfig: initCollectConfigState,
     collectLog: initCollectLogState,
     syncConfig: initSyncConfigState,
@@ -191,7 +169,8 @@ export function MainContextProvider(props: { children: ReactNode }) {
     dataSourceList: initDataSourceListState,
     dataSharingConfig: initDataSharingConfigState,
     sharingRequestLog: initSharingRequestLogState,
-    config: null
+    config: null,
+    authInfo: null,
   });
 
   useEffect(() => {
@@ -203,6 +182,19 @@ export function MainContextProvider(props: { children: ReactNode }) {
           config
         })
       });
+
+    let authInfoStr = sessionStorage.getItem("authInfo");
+    let authInfo: AuthInfo | null = null;
+    if (authInfoStr) {
+      try  {
+        authInfo = JSON.parse(authInfoStr);
+      } catch (_) {
+      }
+    }
+    dispatch({
+      type: 'setAuthInfo',
+      authInfo
+    })
 
   }, [])
 

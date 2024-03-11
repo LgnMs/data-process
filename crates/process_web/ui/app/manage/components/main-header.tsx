@@ -1,12 +1,14 @@
-import { Layout } from "antd";
+import { Avatar, Dropdown, Layout, Space } from "antd";
 import styles from "./main.module.scss";
 import { useMainContext } from "@/contexts/main";
+import React from "react";
+import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 
 
 export function MainHeader() {
-  const { state } = useMainContext()!;
+  const { state, dispatch } = useMainContext()!;
 
   const namespace = "main-header";
 
@@ -32,39 +34,37 @@ export function MainHeader() {
       /> */}
         <span className={styles[`${namespace}-logo-title`]}>{state.config?.title}</span>
       </div>
-      {/*{*/}
-      {/*  <Space style={{ color: "#fff" }}>*/}
-      {/*    <Dropdown*/}
-      {/*      menu={{*/}
-      {/*        items: [*/}
-      {/*          {*/}
-      {/*            key: "1",*/}
-      {/*            label: (*/}
-      {/*              <Space>*/}
-      {/*                <LogoutOutlined rev={undefined} />*/}
-      {/*                注销*/}
-      {/*              </Space>*/}
-      {/*            ),*/}
-      {/*            onClick: () => {*/}
-      {/*              dispatch({ type: "setToken", token: "" });*/}
-      {/*              dispatch({ type: "setRoles", roles: [] });*/}
-      {/*              dispatch({ type: "setPermissions", permissions: [] });*/}
-      {/*              // logout()*/}
-      {/*            },*/}
-      {/*          },*/}
-      {/*        ],*/}
-      {/*      }}*/}
-      {/*      arrow*/}
-      {/*    >*/}
-      {/*      <div>*/}
-      {/*        <Avatar icon={<UserOutlined rev={undefined} />} />*/}
-      {/*        <span style={{ display: "inline-block", verticalAlign: "-3px" }}>*/}
-      {/*          {state.userInfo?.nickName || state.userInfo?.userName}*/}
-      {/*        </span>*/}
-      {/*      </div>*/}
-      {/*    </Dropdown>*/}
-      {/*  </Space>*/}
-      {/*}*/}
+      {
+        <Space style={{ color: "#fff" }}>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: "1",
+                  label: (
+                    <Space>
+                      <LogoutOutlined rev={undefined} />
+                      注销
+                    </Space>
+                  ),
+                  onClick: () => {
+                    dispatch({ type: "setAuthInfo", authInfo: null });
+                    (window as any).auth?.logout();
+                  },
+                },
+              ],
+            }}
+            arrow
+          >
+            <div>
+              <Avatar icon={<UserOutlined rev={undefined} />} />
+              <span style={{ display: "inline-block", verticalAlign: "-3px" }}>
+                {state.authInfo?.name}
+              </span>
+            </div>
+          </Dropdown>
+        </Space>
+      }
     </Header>
   );
 }
