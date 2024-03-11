@@ -43,8 +43,8 @@ impl Keys {
 // TODO 接入认证信息
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Claims {
-    sub: String,
-    company: String,
+    auth_id: String,
+    auth_secret: String,
     exp: usize,
 }
 
@@ -56,12 +56,13 @@ struct AuthBody {
 
 #[derive(Debug, Deserialize)]
 struct AuthPayload {
-    client_id: String,
-    client_secret: String,
+    auth_id: String,
+    auth_secret: String,
 }
 
 #[derive(Debug)]
 pub enum AuthError {
+    #[allow(dead_code)]
     WrongCredentials,
     MissingCredentials,
     TokenCreation,
@@ -109,7 +110,7 @@ where
 
 impl Display for Claims {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Email: {}\nCompany: {}", self.sub, self.company)
+        write!(f, "auth_id: {}\nauth_secret: {}", self.auth_id, self.auth_secret)
     }
 }
 
@@ -141,16 +142,16 @@ pub fn set_routes() -> Router<Arc<AppState>> {
 // - visit the protected area using the authorized token
 async fn authorize(Json(payload): Json<AuthPayload>) -> Result<ResJson<AuthBody>, AuthError> {
     // Check if the user sent the credentials
-    if payload.client_id.is_empty() || payload.client_secret.is_empty() {
+    if payload.auth_id.is_empty() || payload.auth_secret.is_empty() {
         return Err(AuthError::MissingCredentials);
     }
     // TODO 接入认证信息逻辑
-    if payload.client_id != "foo" || payload.client_secret != "bar" {
-        return Err(AuthError::WrongCredentials);
-    }
+    // if payload.auth_id != "foo" || payload.auth_secret != "bar" {
+    //     return Err(AuthError::WrongCredentials);
+    // }
     let claims = Claims {
-        sub: "b@b.com".to_owned(),
-        company: "ACME".to_owned(),
+        auth_id: payload.auth_id,
+        auth_secret: payload.auth_secret,
         // Mandatory expiry time as UTC timestamp
         exp: 2000000000, // May 2033
     };

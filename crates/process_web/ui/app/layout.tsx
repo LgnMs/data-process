@@ -14,7 +14,9 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={inter.className}>{children}</body>
-      { process.env.USE_REMOTE_AUTH === "true" && <Script src="/remote-auth.js" /> }
+      {process.env.USE_REMOTE_AUTH === "true" && (
+        <Script id="remote-auth" src="/remote-auth.js" />
+      )}
     </html>
   );
 }

@@ -6,7 +6,6 @@ import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 
-
 export function MainHeader() {
   const { state, dispatch } = useMainContext()!;
 
@@ -32,7 +31,9 @@ export function MainHeader() {
         height={32}
         alt="logo"
       /> */}
-        <span className={styles[`${namespace}-logo-title`]}>{state.config?.title}</span>
+        <span className={styles[`${namespace}-logo-title`]}>
+          {state.config?.title}
+        </span>
       </div>
       {
         <Space style={{ color: "#fff" }}>
@@ -48,8 +49,10 @@ export function MainHeader() {
                     </Space>
                   ),
                   onClick: () => {
-                    dispatch({ type: "setAuthInfo", authInfo: null });
-                    (window as any).auth?.logout();
+                    if ((window as any).auth) {
+                      dispatch({ type: "setAuthInfo", authInfo: null });
+                      (window as any).auth.logout();
+                    }
                   },
                 },
               ],

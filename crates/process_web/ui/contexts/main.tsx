@@ -3,7 +3,9 @@ import {
   ReactNode,
   createContext,
   useContext,
-  useReducer, useEffect
+  useReducer,
+  useEffect,
+  useState,
 } from "react";
 import {
   CollectConfigAction,
@@ -47,11 +49,13 @@ import {
   SharingRequestLogReducer,
   SharingRequestLogState,
 } from "@/contexts/sharingRequestLog";
-
+import { http_post, ResTemplate } from "@/api/common";
+import { reject } from "lodash";
 
 interface AuthInfo {
-  name: string,
-  authId: string,
+  name: string;
+  auth_id: string;
+  auth_secret: string;
 }
 
 interface MainState {
@@ -84,7 +88,8 @@ function reducer(state: MainState, action: MainAction) {
       ...state,
       config: action.config,
     };
-  }  if (action.type === "setAuthInfo") {
+  }
+  if (action.type === "setAuthInfo") {
     return {
       ...state,
       authInfo: action.authInfo,
@@ -172,37 +177,92 @@ export function MainContextProvider(props: { children: ReactNode }) {
     config: null,
     authInfo: null,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${window.location.origin}/config.json`)
-      .then(res => res.json())
-      .then(config => {
+      .then((res) => res.json())
+      .then((config) => {
         dispatch({
           type: "setConfig",
-          config
-        })
-        document.title = config.title
+          config,
+        });
+        document.title = config.title;
       });
 
-    let authInfoStr = sessionStorage.getItem("authInfo");
-    let authInfo: AuthInfo | null = null;
-    if (authInfoStr) {
-      try  {
-        authInfo = JSON.parse(authInfoStr);
-      } catch (_) {
-      }
-    }
-    dispatch({
-      type: 'setAuthInfo',
-      authInfo
-    })
+    new Promise<string>((resolve, reject) => {
+      let authInfoStr;
+      let ticks = 0;
+      let haveRemoteAuthScript = false;
+      let timer = setInterval(() => {
+        if (document.getElementById("remote-auth")) {
+          haveRemoteAuthScript = true;
+          authInfoStr = sessionStorage.getItem("authInfo");
+          if (authInfoStr !== null) {
+            clearInterval(timer);
+            resolve(authInfoStr);
+          }
+        }
 
-  }, [])
+        if (haveRemoteAuthScript && ticks > 15) {
+          reject(
+            Error(
+              "remote-auth.js 中未正确设置authInfo {\n" +
+                "  name: string,\n" +
+                "  authId: string,\n" +
+                "  authSecret: string,\n" +
+                "}"
+            )
+          );
+        } else if (ticks > 3) {
+          clearInterval(timer);
+          authInfoStr =
+            '{"name": "admin", "auth_id": "admin", "auth_secret": "admin"}';
+          resolve(authInfoStr);
+        }
+        ticks += 1;
+      }, 200);
+    }).then((data) => {
+      let authInfo: AuthInfo | null = null;
+      if (data) {
+        try {
+          authInfo = JSON.parse(data);
+        } catch (_) {
+          return reject("remote-auth.js 中设置的authInfo无法转换为JSON");
+        }
+      }
+      dispatch({
+        type: "setAuthInfo",
+        authInfo,
+      });
+
+      http_post<ResTemplate<{ token_type: string; access_token: string }>>(
+        "/api/auth/authorize",
+        {
+          body: JSON.stringify({
+            auth_id: authInfo?.auth_id,
+            auth_secret: authInfo?.auth_secret,
+          }),
+        }
+      ).then((res) => {
+        if (res.data) {
+          sessionStorage.setItem(
+            "Authorization",
+            `${res.data.token_type} ${res.data.access_token}`
+          );
+        }
+      });
+
+      setLoading(false);
+    });
+  }, []);
 
   return (
-    <MainContext.Provider value={{ state, dispatch }}>
-      {props.children}
-    </MainContext.Provider>
+    !loading && (
+      <MainContext.Provider value={{ state, dispatch }}>
+        {props.children}
+      </MainContext.Provider>
+    )
   );
 }
 

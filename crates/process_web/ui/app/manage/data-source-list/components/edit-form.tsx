@@ -33,10 +33,9 @@ export default function EditForm(props: IEditFormProps) {
 
     const data = {
       ...values,
-      password: encrypt(values.password)
+      password: encrypt(values.password),
     };
-    console.log(data)
-
+    console.log(data);
 
     let res;
     if (mode === "add") {

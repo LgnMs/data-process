@@ -25,14 +25,18 @@ export interface PaginationPayload<T> {
 async function handler_err(res: Response) {
   if (res.status === 400) {
     message.error(`status: 400 ${res.statusText} 没有认证信息或认证信息已过期`);
-    return null
+    return null;
+  }
+  if (res.status === 401) {
+    message.error(`status: 401 ${res.statusText} 认证信息不正确`);
+    return null;
   }
   let data = await res.json();
-  if (!data.success) {
+  if (!data.success && data.message) {
     message.error(data.message);
   }
 
-  return data
+  return data;
 }
 
 export async function http_get<T>(input: string): Promise<T> {
