@@ -10,7 +10,7 @@ export default function LabelTips(props: {
     <Tooltip title={props.tips}>
       <Space>
         <span>{props.children}</span>
-        <QuestionCircleFilled rev={undefined} />
+        <QuestionCircleFilled />
       </Space>
     </Tooltip>
   );

@@ -1,4 +1,13 @@
 const withMDX = require("@next/mdx")();
+const { readFileSync } = require('fs');
+const path = require('path');
+
+const getConfig = () => {
+  const filePath = path.resolve(__dirname, 'public/config.json');
+  const rawConfig = readFileSync(filePath);
+  return JSON.parse(rawConfig.toString());
+};
+
 const isProd = process.env.NODE_ENV === "production";
 
 /** @type {import('next').NextConfig} */
@@ -8,15 +17,16 @@ const nextConfig = {
   pageExtensions: ["js", "jsx", "mdx", "ts", "tsx"],
   // Optionally, add any other Next.js config below
   async rewrites() {
+    const config = getConfig();
     if (isProd) {
       return [
         {
           source: "/api/:path*",
-          destination: `${process.env.API_HOST}/:path*`,
+          destination: `${config.API_HOST}/:path*`,
         },
         {
           source: "/remote-auth/:path*",
-          destination: `${process.env.REMOTE_AUTH_API_HOST}/:path*`,
+          destination: `${config.REMOTE_AUTH_API_HOST}/:path*`,
         },
       ];
     } else {
@@ -24,11 +34,11 @@ const nextConfig = {
         {
           source: "/api/:path*",
 
-          destination: `${process.env.API_HOST}/:path*`,
+          destination: `${config.API_HOST}/:path*`,
         },
         {
           source: "/remote-auth/:path*",
-          destination: `${process.env.REMOTE_AUTH_API_HOST}/:path*`,
+          destination: `${config.REMOTE_AUTH_API_HOST}/:path*`,
         },
       ];
     }
