@@ -187,8 +187,8 @@ impl SyncConfigService {
         collect_log_string.push_str(format!("同步配置： {:?}\n", data).as_str());
         let res = process_data(&state.conn, &data).await;
         match res {
-            Ok(list) => {
-                collect_log_string.push_str(format!("SQL执行成功： {:?}\n", list).as_str());
+            Ok(_) => {
+                // collect_log_string.push_str(format!("SQL执行成功： {:?}\n", list).as_str());
                 status = 2;
                 collect_log_string.push_str("同步任务执行成功!\n");
             }
