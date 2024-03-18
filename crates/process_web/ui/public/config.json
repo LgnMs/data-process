@@ -1,4 +1,7 @@
 {
   "title": "数据处理中心",
-  "description": "数据处理中心"
+  "description": "数据处理中心",
+  "API_HOST": "http://127.0.0.1:18000",
+  "REMOTE_AUTH_API_HOST": "http://127.0.0.1:8080",
+  "USE_REMOTE_AUTH": false
 }
