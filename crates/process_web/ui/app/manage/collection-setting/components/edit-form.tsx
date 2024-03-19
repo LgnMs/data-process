@@ -255,10 +255,13 @@ export default function EditForm(props: IEditFormProps) {
                     >
                       <Select
                         options={[
-                          { value: "varchar", label: "字符串 varchar" },
-                          { value: "integer", label: "数字 integer" },
-                          { value: "timestamp", label: "日期 timestamp" },
+                          { value: "varchar", label: "字符串" },
+                          { value: "integer", label: "数字" },
+                          { value: "timestamp", label: "日期" },
                           { value: "boolean", label: "布尔 boolean" },
+                          { value: "double precision", label: "双精度 double precision" },
+                          { value: "text", label: "文本 text" },
+                          { value: "bigint", label: "bigint" },
                         ]}
                       ></Select>
                     </Form.Item>
