@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use process_jdbc::common::{ExecuteJDBC, JDBC};
 use process_jdbc::kingbase::Kingbase;
 use process_jdbc::mssql::MSSQL;
@@ -7,7 +9,7 @@ use process_jdbc::oracle::Oracle;
 use sea_orm::{ConnectionTrait, FromQueryResult, JsonValue, Statement};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use tracing::{error, warn};
+use tracing::{debug, warn};
 
 use crate::http::generate_sql_list;
 use crate::process::Export;
@@ -78,12 +80,14 @@ impl Db {
 }
 
 pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) -> Result<()> {
+    debug!("db_source {:?}", db_source);
+    let password = decode_db_password(&db_source.password);
     match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
                 "postgres://{}:{}@{}:{}/{}",
                 db_source.user,
-                db_source.password,
+                password,
                 db_source.host,
                 db_source.port,
                 db_source.database_name
@@ -100,7 +104,7 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
             let db_url = format!(
                 "mysql://{}:{}@{}:{}/{}",
                 db_source.user,
-                db_source.password,
+                password,
                 db_source.host,
                 db_source.port,
                 db_source.database_name
@@ -123,7 +127,7 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
             conn.connect(
                 &db_url,
                 db_source.user.as_str(),
-                db_source.password.as_str(),
+                password.as_str(),
             )
             .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
@@ -143,7 +147,7 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
             conn.connect(
                 &db_url,
                 db_source.user.as_str(),
-                db_source.password.as_str(),
+                password.as_str(),
             )
             .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
@@ -163,7 +167,7 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
             conn.connect(
                 &db_url,
                 db_source.user.as_str(),
-                db_source.password.as_str(),
+                password.as_str(),
             )
             .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
@@ -176,7 +180,9 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
     }
 }
 
+
 pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<Value>> {
+    debug!("db_source {:?}", db_source);
     if let Some(index) = query_sql.to_lowercase().find("select") {
         if index != 0 {
             return Err(anyhow!("这条语句不是查询语句！"));
@@ -184,12 +190,13 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
     } else {
         return Err(anyhow!("这条语句不是查询语句！"));
     }
+    let password = decode_db_password(&db_source.password);
     match db_source.database_type {
         Database::POSTGRES => {
             let db_url = format!(
                 "postgres://{}:{}@{}:{}/{}",
                 db_source.user,
-                db_source.password,
+                password,
                 db_source.host,
                 db_source.port,
                 db_source.database_name
@@ -208,7 +215,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             let db_url = format!(
                 "mysql://{}:{}@{}:{}/{}",
                 db_source.user,
-                db_source.password,
+                password,
                 db_source.host,
                 db_source.port,
                 db_source.database_name
@@ -233,7 +240,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             conn.connect(
                 &db_url,
                 db_source.user.as_str(),
-                db_source.password.as_str(),
+                password.as_str(),
             )
             .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
@@ -252,7 +259,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             match conn.connect(
                 &db_url,
                 db_source.user.as_str(),
-                db_source.password.as_str(),
+                password.as_str(),
             ) {
                 Ok(_) => {}
                 Err(err) => {
@@ -264,7 +271,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
                     conn.connect(
                         &db_url,
                         db_source.user.as_str(),
-                        db_source.password.as_str(),
+                        password.as_str(),
                     )
                         .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
                 }
@@ -285,7 +292,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             conn.connect(
                 &db_url,
                 db_source.user.as_str(),
-                db_source.password.as_str(),
+                password.as_str(),
             )
             .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
@@ -295,6 +302,27 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             Ok(data)
         }
     }
+}
+
+fn decode_db_password(password: &String) -> String {
+    let password = {
+        // 加密过程查看crates/process_web/ui/lib/encrypt.ts
+        let a = BASE64_STANDARD.decode(password).unwrap_or_default();
+        let b = String::from_utf8(a).unwrap_or_default();
+
+        match b.contains("DpSALt") {
+            true => {
+                let c = &b[6..];
+                let d = BASE64_STANDARD.decode(c).unwrap_or_default();
+                String::from_utf8(d).unwrap_or_default()
+            }
+            false => {
+                password.clone()
+            }
+        }
+    };
+
+    password
 }
 
 #[async_trait]
