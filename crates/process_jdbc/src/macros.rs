@@ -1,6 +1,5 @@
 // J4RS_CONSOLE_LOG_LEVEL=debug
 
-use log::debug;
 #[macro_export]
 macro_rules! impl_jdbc {
     ($struct: ty) => {
