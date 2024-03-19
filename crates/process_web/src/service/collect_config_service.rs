@@ -346,6 +346,7 @@ impl CollectConfigService {
         let res = process_data(&data).await;
         match res {
             Ok(list) => {
+                collect_log_string.push_str(format!("接口调用成功，共返回 {} 条数据", list.len()).as_str());
                 // collect_log_string.push_str(format!("成功生成SQL： {:?}\n", list).as_str());
                 match Self::cache_data(&state.cache_conn, &list).await {
                     Ok(_) => {
