@@ -1,6 +1,6 @@
 // 当USE_REMOTE_AUTH=true时加载这个脚本
 (() => {
-  const USER_ADMIN_HOST = "http://10.194.142.125:8013";
+  const USER_ADMIN_HOST = "http://127.0.0.1:8900";
   // 若后端不支持CORS访问，请求本地/remote-auth将进行代理转发
   const USER_ADMIN_API_HOST = location.origin + "/remote-auth";
   function hasToken() {
