@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use chrono::Local;
 use sea_orm::DbErr;
 use std::collections::HashMap;
+use std::str::FromStr;
 use tokio_cron_scheduler::JobSchedulerError;
 
 /// ```md
@@ -14,8 +15,10 @@ use tokio_cron_scheduler::JobSchedulerError;
 /// 将前端存储的cron格式进行转化
 /// ```
 pub fn format_cron(cron: String) -> String {
-    format!("0 {} *", cron)
+    let cron_list = cron.split(' ').collect::<Vec<&str>>();
+    format!("0 {} {} {} {} {} *", cron_list[0], cron_list[1], cron_list[2], cron_list[3], u32::from_str(cron_list[4]).unwrap_or(0) + 1)
 }
+
 
 /// 根据特定字符串获取当地时间日期，支持加减法计算
 /// 例如："now+1d-24h-60m+60s.%Y-%m-%d %H:%M:%S"
