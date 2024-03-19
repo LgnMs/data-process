@@ -31,6 +31,10 @@ async function handler_err(res: Response) {
     message.error(`status: 401 ${res.statusText} 认证信息不正确`);
     return null;
   }
+  if (res.status !== 200) {
+    message.error(`status: ${res.status}`);
+    return null;
+  }
   let data = await res.json();
   if (!data.success && data.message) {
     message.error(data.message);

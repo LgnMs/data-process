@@ -13,7 +13,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const config = await getConfig();
-  console.log(config)
 
   return (
     <html lang="zh-CN">

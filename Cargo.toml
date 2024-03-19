@@ -12,6 +12,9 @@ dotenvy = "0.15.7"
 
 process_web = { path = "crates/process_web" }
 
+[build-dependencies]
+j4rs = { version =  "0.17.2" }
+
 [workspace]
 members = [
   "crates/*"

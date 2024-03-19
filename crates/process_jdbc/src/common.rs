@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use j4rs::{ClasspathEntry, Jvm, JvmBuilder};
 use std::sync::OnceLock;
+use log::debug;
 
 pub trait JDBC {
     type Connection;
@@ -112,10 +113,14 @@ pub struct JvmInstance(pub(crate) Jvm);
 
 impl JvmInstance {
     pub fn new() -> Result<Jvm> {
+        let current_dir = std::env::current_dir()?;
+        debug!("jar dir is {:?}", current_dir);
+
         let entry1 = ClasspathEntry::new("libs/kingbase8-8.6.0.jar");
         let entry2 = ClasspathEntry::new("libs/mssql-jdbc-12.6.1.jre11.jar");
         let entry3 = ClasspathEntry::new("libs/ojdbc10-19.22.0.0.jar");
         let jvm = JvmBuilder::new()
+            .with_default_classloader()
             .classpath_entry(entry1)
             .classpath_entry(entry2)
             .classpath_entry(entry3)
@@ -132,10 +137,8 @@ pub fn jvm_is_setup() -> bool {
 
 pub fn get_jvm() -> Result<Jvm> {
     if jvm_is_setup() {
-        println!("1");
         Jvm::attach_thread().map_err(|err| anyhow!("{}", err))
     } else {
-        println!("2");
         JvmInstance::new()
     }
 }
