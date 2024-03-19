@@ -6,7 +6,7 @@ import {
   NodeCollapseOutlined,
   FileTextOutlined,
   DatabaseOutlined,
-  ShareAltOutlined,
+  ShareAltOutlined, PieChartOutlined
 } from "@ant-design/icons";
 
 const { Sider } = Layout;
@@ -23,6 +23,11 @@ function MenuItem(props: { children: ReactNode; status?: string }) {
 }
 
 const Menus = [
+  {
+    key: "/manage/statistics",
+    icon: <PieChartOutlined />,
+    label: <MenuItem>首页</MenuItem>,
+  },
   {
     key: "/manage/data-source-list",
     icon: <DatabaseOutlined />,
