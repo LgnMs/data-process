@@ -1,5 +1,6 @@
 // J4RS_CONSOLE_LOG_LEVEL=debug
 
+use log::debug;
 #[macro_export]
 macro_rules! impl_jdbc {
     ($struct: ty) => {
@@ -12,6 +13,7 @@ macro_rules! impl_jdbc {
                 username: &str,
                 password: &str,
             ) -> Result<&Self::Connection> {
+                debug!("jdbc url: {}", jdbc_url);
                 let jdbc_str_arg = InvocationArg::try_from(jdbc_url)?;
                 let username = InvocationArg::try_from(username)?;
                 let password = InvocationArg::try_from(password)?;

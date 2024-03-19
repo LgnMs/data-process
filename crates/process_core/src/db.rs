@@ -7,6 +7,7 @@ use process_jdbc::oracle::Oracle;
 use sea_orm::{ConnectionTrait, FromQueryResult, JsonValue, Statement};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use tracing::{error, warn};
 
 use crate::http::generate_sql_list;
 use crate::process::Export;
@@ -243,17 +244,31 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
         }
         Database::MSSQL => {
             let db_url = format!(
-                "jdbc:sqlserver://{}:{};databaseName={};Encrypt=false",
+                "jdbc:sqlserver://{}:{};DatabaseName={};",
                 db_source.host, db_source.port, db_source.database_name,
             );
             let mut conn = MSSQL::new()?;
 
-            conn.connect(
+            match conn.connect(
                 &db_url,
                 db_source.user.as_str(),
                 db_source.password.as_str(),
-            )
-            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
+            ) {
+                Ok(_) => {}
+                Err(err) => {
+                    warn!("数据库加密连接失败！尝试使用未加密连接: {err}");
+                    let db_url = format!(
+                        "jdbc:sqlserver://{}:{};DatabaseName={};trustServerCertificate=true",
+                        db_source.host, db_source.port, db_source.database_name,
+                    );
+                    conn.connect(
+                        &db_url,
+                        db_source.user.as_str(),
+                        db_source.password.as_str(),
+                    )
+                        .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
+                }
+            }
 
             let data = conn
                 .execute_query(&query_sql)
