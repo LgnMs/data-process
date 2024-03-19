@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use crate::api::common::{
     AppError, AppState, PaginationPayload, RequestInfo, ResJson, ResJsonWithPagination,
 };
@@ -90,6 +91,7 @@ async fn del(
 
 /// 通过共享配置的id执行查询语句并返回，payload中的数据会作为参数替换查询语句中的${xxx}
 /// 例如
+/// api_id是id与api_id拼接的字符串
 /// ```shell
 /// curl --location 'http://127.0.0.1:8000/data_sharing_config/get_data/1' \
 /// --header 'Content-Type: application/json' \
@@ -108,7 +110,7 @@ async fn del(
 async fn get_data(
     state: State<Arc<AppState>>,
     request_info: RequestInfo,
-    Path(id): Path<i32>,
+    Path(api_id): Path<String>,
     Json(payload): Json<Option<Value>>,
 ) -> anyhow::Result<ResJson<Vec<Value>>, AppError> {
     let info: Value = json!(request_info);
@@ -117,11 +119,14 @@ async fn get_data(
     if let Some(body) = &payload {
         log_map.insert("body".to_string(), body.clone());
     }
-    let res = DataSharingConfigService::get_data(&state.conn, id, payload).await;
+    let id = i32::from_str(&api_id[..1])?;
+    let api_id = api_id[1..].to_string();
+    let res = DataSharingConfigService::get_data(&state.conn, api_id, payload).await;
 
     if let Err(err) = &res {
         log_map.insert("err".to_string(), err.to_string().parse()?);
     }
+
     SharingRequestLogService::add(
         &state.conn,
         sharing_request_log::Model {

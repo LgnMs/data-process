@@ -18,6 +18,14 @@ impl DataSharingConfigService {
             .ok_or(DbErr::Custom("Cannot find data by id.".to_owned()))
     }
 
+    pub async fn find_by_api_id(db: &DbConn, api_id: String) -> Result<Model, DbErr> {
+        data_sharing_config::Entity::find()
+            .filter(data_sharing_config::Column::ApiId.eq(api_id))
+            .one(db)
+            .await?
+            .ok_or(DbErr::Custom("Cannot find data by api_id.".to_owned()))
+    }
+
     pub async fn list(
         db: &DbConn,
         page: u64,
@@ -68,8 +76,14 @@ impl DataSharingConfigService {
 
             active_data.id = Unchanged(db_data.id);
             active_data.update_time = Set(now);
+
+            if db_data.api_id.is_none() {
+                active_data.api_id = Set(Some(uuid::Uuid::new_v4().simple().to_string()));
+            }
+
             active_data.update(db).await
         } else {
+            active_data.api_id = Set(Some(uuid::Uuid::new_v4().simple().to_string()));
             active_data.create_time = Set(now);
             active_data.update_time = Set(now);
             active_data.insert(db).await
@@ -92,10 +106,10 @@ impl DataSharingConfigService {
     // TODO 增加授权认证
     pub async fn get_data(
         db: &DbConn,
-        id: i32,
+        api_id: String,
         payload: Option<serde_json::Value>,
     ) -> Result<Vec<serde_json::Value>, DbErr> {
-        let data = Self::find_by_id(db, id).await?;
+        let data = Self::find_by_api_id(db, api_id).await?;
         let query_sql = match payload {
             None => data.query_sql,
             Some(x) => {

@@ -29,7 +29,7 @@ export default function ContentTable() {
     {
       title: "api",
       render: (_: any, record: IDataSharingConfig) => {
-        return `data_sharing_config/get_data/${record.id}`;
+        return `data_sharing_config/get_data/${record.id}${record.api_id}`;
       },
     },
     {

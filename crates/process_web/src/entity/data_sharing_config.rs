@@ -19,6 +19,7 @@ pub struct Model {
     pub table_name: String,
     pub query_sql: String,
     pub data_source_id: i32,
+    pub api_id: Option<String>,
     #[serde(skip_deserializing)]
     pub del_flag: i32,
     #[serde(skip_deserializing)]

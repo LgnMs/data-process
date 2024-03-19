@@ -72,6 +72,7 @@ impl MigrationTrait for Migration {
 pub enum DataSharingConfig {
     Table,
     Id,
+    ApiId,
     Name,
     TableName,
     QuerySql,

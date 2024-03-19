@@ -2,6 +2,7 @@
 
 export interface DataSharingConfig {
   id: number;
+  api_id: string;
   name: string;
   query_sql: string;
   data_source: any;
