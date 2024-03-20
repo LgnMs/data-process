@@ -16,7 +16,15 @@ use tokio_cron_scheduler::JobSchedulerError;
 /// ```
 pub fn format_cron(cron: String) -> String {
     let cron_list = cron.split(' ').collect::<Vec<&str>>();
-    format!("0 {} {} {} {} {} *", cron_list[0], cron_list[1], cron_list[2], cron_list[3], u32::from_str(cron_list[4]).unwrap_or(0) + 1)
+    match u32::from_str(cron_list[4]) {
+        Ok(n) => {
+            format!("0 {} {} {} {} {} *", cron_list[0], cron_list[1], cron_list[2], cron_list[3], n + 1)
+        }
+        Err(_) => {
+            format!("0 {} *", cron)
+        }
+    }
+
 }
 
 
