@@ -106,6 +106,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
                 client
                     .request(parameters.method, url)
                     .body(parameters.body.unwrap_or("".to_string()))
+                    .timeout(Duration::from_secs(120))
                     .send()
                     .await?
                     .text()
@@ -114,6 +115,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
             _ => {
                 client
                     .request(parameters.method, url)
+                    .timeout(Duration::from_secs(120))
                     .send()
                     .await?
                     .text()
