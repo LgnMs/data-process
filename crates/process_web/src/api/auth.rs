@@ -6,7 +6,9 @@ use async_trait::async_trait;
 use axum::extract::{FromRequestParts, Request};
 use axum::http::request::Parts;
 use axum::http::StatusCode;
+use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
+use axum::routing::post;
 use axum::{Json, RequestPartsExt, Router};
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::Authorization;
@@ -15,11 +17,15 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation}
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use axum::middleware::Next;
-use axum::routing::{post};
 
 use crate::api::common::{AppState, ResJson};
-use crate::{data_response};
+use crate::data_response;
+
+pub fn set_routes() -> Router<Arc<AppState>> {
+    let routes = Router::new().route("/authorize", post(authorize));
+
+    routes
+}
 
 static KEYS: Lazy<Keys> = Lazy::new(|| {
     let secret = env::var("JWT_SECRET").expect("JWT_SECRET is not set in .env file");
@@ -110,7 +116,11 @@ where
 
 impl Display for Claims {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "auth_id: {}\nauth_secret: {}", self.auth_id, self.auth_secret)
+        write!(
+            f,
+            "auth_id: {}\nauth_secret: {}",
+            self.auth_id, self.auth_secret
+        )
     }
 }
 
@@ -122,14 +132,6 @@ impl AuthBody {
         }
     }
 }
-
-pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new()
-        .route("/authorize", post(authorize));
-
-    routes
-}
-
 
 // - get an authorization token:
 //
@@ -155,7 +157,7 @@ async fn authorize(Json(payload): Json<AuthPayload>) -> Result<ResJson<AuthBody>
         // Mandatory expiry time as UTC timestamp
         exp: 2000000000, // May 2033
     };
-    
+
     // Create the authorization token
     let token = encode(&Header::default(), &claims, &KEYS.encoding)
         .map_err(|_| AuthError::TokenCreation)?;
@@ -167,10 +169,12 @@ async fn authorize(Json(payload): Json<AuthPayload>) -> Result<ResJson<AuthBody>
 }
 
 // Claims 作为extract 在没有提取到对应的token时抛出错误
-pub async fn jwt_middleware(_: Claims, request: Request, next: Next) ->  Result<Response, StatusCode> {
-
+pub async fn jwt_middleware(
+    _: Claims,
+    request: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
     let response = next.run(request).await;
-
 
     Ok(response)
 }

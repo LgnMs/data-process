@@ -98,6 +98,12 @@ pub fn get_datetime_by_string(value_str: &str) -> anyhow::Result<String> {
     Err(anyhow!("无法解析字符串"))
 }
 
+#[test]
+fn test_get_datetime_by_string() {
+    let time_string = get_datetime_by_string(&r#"now-2d.%Y%m%d"#.to_string());
+    println!("time_string {time_string:?}");
+}
+
 pub fn get_date(str: &str) -> anyhow::Result<chrono::Duration> {
     let number = str[..str.len() - 1].parse::<i64>()?;
     if str.contains("d") {
