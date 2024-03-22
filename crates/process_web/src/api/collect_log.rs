@@ -5,6 +5,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use sea_orm::prelude::DateTime;
 use serde::Deserialize;
 use std::sync::Arc;
 use ts_rs::TS;
@@ -42,6 +43,8 @@ async fn find_by_id(
 )]
 pub struct ListParams {
     pub collect_config_name: Option<String>,
+    #[ts(type = "any")]
+    pub date: Option<[DateTime; 2]>,
 }
 
 async fn list(

@@ -218,7 +218,7 @@ pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<Stri
     for key in key_vec {
         let rel_key = &key[2..key.len() - 1];
         let value = find_value(rel_key, data, true)
-            .map_err(|err | anyhow!("{err} 未在rel_key: {rel_key} data:{}中找到数据", data))?;
+            .map_err(|err| anyhow!("{err} 未在rel_key: {rel_key} data:{}中找到数据", data))?;
         if let Some(list) = value.as_array() {
             for i in 0..list.len() {
                 let item: &str;

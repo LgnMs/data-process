@@ -19,11 +19,19 @@ pub fn find_value(key: &str, value: &Value, should_flat: bool) -> anyhow::Result
                 .clone(),
         );
         current_key = &current_key[index + 1..];
-        return find_value(current_key, &current_value.ok_or(anyhow!("查找数据失败"))?, should_flat);
+        return find_value(
+            current_key,
+            &current_value.ok_or(anyhow!("查找数据失败"))?,
+            should_flat,
+        );
     } else if let Some(index) = current_key.find("#") {
         current_index = &current_key[..index];
 
-        current_value = match current_value.as_ref().ok_or(anyhow!("查找数据失败"))?.get(current_index) {
+        current_value = match current_value
+            .as_ref()
+            .ok_or(anyhow!("查找数据失败"))?
+            .get(current_index)
+        {
             None => match current_value.ok_or(anyhow!("查找数据失败"))?.as_array() {
                 None => {
                     error!("未找到索引 {current_index} 对应的数据");
@@ -48,7 +56,11 @@ pub fn find_value(key: &str, value: &Value, should_flat: bool) -> anyhow::Result
     } else {
         current_index = current_key;
 
-        current_value = Some(re_find(current_index, &current_value.ok_or(anyhow!("查找数据失败"))?, should_flat)?);
+        current_value = Some(re_find(
+            current_index,
+            &current_value.ok_or(anyhow!("查找数据失败"))?,
+            should_flat,
+        )?);
     }
 
     current_value.ok_or(anyhow!("查找数据失败"))

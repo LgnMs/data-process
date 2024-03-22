@@ -1,6 +1,23 @@
+use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
+use axum::{Json, Router, routing::post};
+use axum::extract::State;
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, QueryFilter, QueryOrder, Statement,
+};
+use sea_orm::prelude::DateTime;
+use serde::{Deserialize, Serialize};
+
+use migration::Condition;
+
+use crate::data_response;
+use crate::entity::collect_log;
+
+use super::common::{AppError, AppState, ResJson};
+
 /// 1. 总采集量
 ///     - 通过采集任务采集到的数据总量
 ///     - 时间维度下每日采集的数据量（面积图形式展示）
@@ -28,35 +45,21 @@ use anyhow::{anyhow, Result};
 ///         - 调用量
 /// 7. 任务占比
 ///     - 三种类型任务再系统中的占比详情
-use axum::{Json, Router, routing::post};
-use axum::extract::State;
-use sea_orm::{ConnectionTrait, DbBackend, Statement};
-use sea_orm::prelude::DateTime;
-use serde::{Deserialize, Serialize};
-
-use crate::data_response;
-
-use super::common::{AppError, AppState, ResJson};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new().route("/collect_running_info", post(collect_running_info));
+    let routes = Router::new()
+        .route("/collect_running_info", post(collect_running_info))
+        .route("/collect_running_info_day_list", post(collect_running_info_day_list));
 
     routes
 }
 
-
 /// 采集数据量总览
 #[derive(Serialize, Deserialize)]
-struct CollectRunningInfo {
-    sum_total: i64,
+pub struct CollectRunningInfo {
+    pub sum_total: i64,
     // list: Vec<CollectRunningInfoDay>,
     // number_of_runs_list: Vec<CollectRunInfo>
-}
-
-/// 每日采集的数据量
-struct CollectRunningInfoDay {
-    sum_total: i32,
-    date: DateTime
 }
 
 struct CollectRunInfo {
@@ -67,9 +70,12 @@ struct CollectRunInfo {
 
 #[derive(Serialize, Deserialize)]
 struct CollectRunningInfoReq {
+    date: Option<[DateTime; 2]>,
 }
 
-pub async fn collect_running_info(state: State<Arc<AppState>>, Json(payload): Json<CollectRunningInfoReq>,) -> Result<ResJson<CollectRunningInfo>, AppError> {
+pub async fn collect_running_info(
+    state: State<Arc<AppState>>,
+) -> Result<ResJson<CollectRunningInfo>, AppError> {
     let cache_db = &state.cache_conn;
     let query_table_name_sql: &str;
 
@@ -78,7 +84,8 @@ pub async fn collect_running_info(state: State<Arc<AppState>>, Json(payload): Js
             query_table_name_sql = "show tables;";
         }
         DbBackend::Postgres => {
-            query_table_name_sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';";
+            query_table_name_sql =
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';";
         }
         _ => {
             return Err(anyhow!("不支持的数据库格式").into());
@@ -88,7 +95,7 @@ pub async fn collect_running_info(state: State<Arc<AppState>>, Json(payload): Js
     let table_list = cache_db
         .query_all(Statement::from_string(
             cache_db.get_database_backend(),
-            query_table_name_sql
+            query_table_name_sql,
         ))
         .await?;
 
@@ -99,7 +106,7 @@ pub async fn collect_running_info(state: State<Arc<AppState>>, Json(payload): Js
         let count = cache_db
             .query_one(Statement::from_string(
                 cache_db.get_database_backend(),
-                format!("select count(id) from {}", table_name)
+                format!("select count(id) from {}", table_name),
             ))
             .await?;
 
@@ -110,9 +117,56 @@ pub async fn collect_running_info(state: State<Arc<AppState>>, Json(payload): Js
         sum_total += number;
     }
 
-    let res: Result<CollectRunningInfo> = Ok(CollectRunningInfo {
-        sum_total
-    });
+    let res: Result<CollectRunningInfo> = Ok(CollectRunningInfo { sum_total });
 
+    data_response!(res)
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CollectRunningInfoDayListReq {
+    pub date: Vec<DateTime>,
+}
+
+pub async fn collect_running_info_day_list(
+    state: State<Arc<AppState>>,
+    Json(payload): Json<CollectRunningInfoDayListReq>,
+) -> Result<ResJson<HashMap<String, i32>>, AppError> {
+    let mut conditions = Condition::all();
+    conditions = conditions
+        .add(collect_log::Column::UpdateTime.gte(payload.date[0]))
+        .add(collect_log::Column::UpdateTime.lte(payload.date[1]));
+
+    let list = collect_log::Entity::find()
+        .filter(conditions)
+        .order_by_desc(collect_log::Column::UpdateTime)
+        .all(&state.conn)
+        .await?;
+
+    let mut info_day_map: HashMap<String, i32> = HashMap::new();
+
+    for item in list {
+        let log = item.running_log;
+        let date = item.update_time.format("%Y-%m-%d").to_string();
+        let s = "接口调用成功，共返回 ";
+        let e = " 条数据采集任务执行成功!";
+        let index1 = log.find(s);
+        let index2 = log.find(e);
+        if index1.is_none() || index2.is_none() {
+            continue;
+        }
+        let l = index1.unwrap() + s.as_bytes().len();
+        let r = index2.unwrap();
+        let num_str = &log[l..r];
+        println!("ss {:?}",num_str);
+        let count = i32::from_str(num_str).unwrap_or_default();
+        info_day_map
+            .entry(date)
+            .and_modify(|number| {
+                *number += count
+            })
+            .or_insert(count);
+    }
+
+    let res: Result<HashMap<String, i32>> = Ok(info_day_map);
     data_response!(res)
 }

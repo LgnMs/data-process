@@ -346,7 +346,8 @@ impl CollectConfigService {
         let res = process_data(&data).await;
         match res {
             Ok(list) => {
-                collect_log_string.push_str(format!("接口调用成功，共返回 {} 条数据", list.len()).as_str());
+                collect_log_string
+                    .push_str(format!("接口调用成功，共返回 {} 条数据", list.len()).as_str());
                 // collect_log_string.push_str(format!("成功生成SQL： {:?}\n", list).as_str());
                 match Self::cache_data(&state.cache_conn, &list).await {
                     Ok(_) => {
@@ -535,8 +536,7 @@ pub async fn collect_data_with_http(
     let mut has_next_page = true;
 
     if let Some(filed_of_result_data) = data.filed_of_result_data.as_ref() {
-        if let Ok(found_data) =
-            find_value(filed_of_result_data.borrow(), &http_receive.data, false)
+        if let Ok(found_data) = find_value(filed_of_result_data.borrow(), &http_receive.data, false)
         {
             if let Some(array) = found_data.as_array() {
                 if array.is_empty() {

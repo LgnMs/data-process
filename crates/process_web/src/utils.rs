@@ -18,15 +18,20 @@ pub fn format_cron(cron: String) -> String {
     let cron_list = cron.split(' ').collect::<Vec<&str>>();
     match u32::from_str(cron_list[4]) {
         Ok(n) => {
-            format!("0 {} {} {} {} {} *", cron_list[0], cron_list[1], cron_list[2], cron_list[3], n + 1)
+            format!(
+                "0 {} {} {} {} {} *",
+                cron_list[0],
+                cron_list[1],
+                cron_list[2],
+                cron_list[3],
+                n + 1
+            )
         }
         Err(_) => {
             format!("0 {} *", cron)
         }
     }
-
 }
-
 
 /// 根据特定字符串获取当地时间日期，支持加减法计算
 /// 例如："now+1d-24h-60m+60s.%Y-%m-%d %H:%M:%S"

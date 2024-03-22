@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use process_jdbc::common::{ExecuteJDBC, JDBC};
 use process_jdbc::kingbase::Kingbase;
 use process_jdbc::mssql::MSSQL;
@@ -86,11 +86,7 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
         Database::POSTGRES => {
             let db_url = format!(
                 "postgres://{}:{}@{}:{}/{}",
-                db_source.user,
-                password,
-                db_source.host,
-                db_source.port,
-                db_source.database_name
+                db_source.user, password, db_source.host, db_source.port, db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
@@ -103,11 +99,7 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
         Database::MYSQL => {
             let db_url = format!(
                 "mysql://{}:{}@{}:{}/{}",
-                db_source.user,
-                password,
-                db_source.host,
-                db_source.port,
-                db_source.database_name
+                db_source.user, password, db_source.host, db_source.port, db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
@@ -124,12 +116,8 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
             );
             let mut conn = MSSQL::new()?;
 
-            conn.connect(
-                &db_url,
-                db_source.user.as_str(),
-                password.as_str(),
-            )
-            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
+            conn.connect(&db_url, db_source.user.as_str(), password.as_str())
+                .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
             for sql in query_sql_list {
                 conn.execute_update(&sql)
@@ -144,12 +132,8 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
             );
             let mut conn = Oracle::new()?;
 
-            conn.connect(
-                &db_url,
-                db_source.user.as_str(),
-                password.as_str(),
-            )
-            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
+            conn.connect(&db_url, db_source.user.as_str(), password.as_str())
+                .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
             for sql in query_sql_list {
                 conn.execute_update(&sql)
@@ -164,12 +148,8 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
             );
             let mut conn = Kingbase::new()?;
 
-            conn.connect(
-                &db_url,
-                db_source.user.as_str(),
-                password.as_str(),
-            )
-            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
+            conn.connect(&db_url, db_source.user.as_str(), password.as_str())
+                .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
             for sql in query_sql_list {
                 conn.execute_update(&sql)
@@ -179,7 +159,6 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
         }
     }
 }
-
 
 pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<Value>> {
     debug!("db_source {:?}", db_source);
@@ -195,11 +174,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
         Database::POSTGRES => {
             let db_url = format!(
                 "postgres://{}:{}@{}:{}/{}",
-                db_source.user,
-                password,
-                db_source.host,
-                db_source.port,
-                db_source.database_name
+                db_source.user, password, db_source.host, db_source.port, db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
@@ -214,11 +189,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
         Database::MYSQL => {
             let db_url = format!(
                 "mysql://{}:{}@{}:{}/{}",
-                db_source.user,
-                password,
-                db_source.host,
-                db_source.port,
-                db_source.database_name
+                db_source.user, password, db_source.host, db_source.port, db_source.database_name
             );
             let db = sea_orm::Database::connect(db_url.as_str()).await?;
 
@@ -237,12 +208,8 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             );
             let mut conn = Kingbase::new()?;
 
-            conn.connect(
-                &db_url,
-                db_source.user.as_str(),
-                password.as_str(),
-            )
-            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
+            conn.connect(&db_url, db_source.user.as_str(), password.as_str())
+                .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
             let data = conn
                 .execute_query(&query_sql)
@@ -256,11 +223,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             );
             let mut conn = MSSQL::new()?;
 
-            match conn.connect(
-                &db_url,
-                db_source.user.as_str(),
-                password.as_str(),
-            ) {
+            match conn.connect(&db_url, db_source.user.as_str(), password.as_str()) {
                 Ok(_) => {}
                 Err(err) => {
                     warn!("数据库加密连接失败！尝试使用未加密连接: {err}");
@@ -268,11 +231,7 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
                         "jdbc:sqlserver://{}:{};DatabaseName={};trustServerCertificate=true",
                         db_source.host, db_source.port, db_source.database_name,
                     );
-                    conn.connect(
-                        &db_url,
-                        db_source.user.as_str(),
-                        password.as_str(),
-                    )
+                    conn.connect(&db_url, db_source.user.as_str(), password.as_str())
                         .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
                 }
             }
@@ -289,12 +248,8 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
             );
             let mut conn = Oracle::new()?;
 
-            conn.connect(
-                &db_url,
-                db_source.user.as_str(),
-                password.as_str(),
-            )
-            .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
+            conn.connect(&db_url, db_source.user.as_str(), password.as_str())
+                .map_err(|err| anyhow!("数据库连接失败！: {err}"))?;
 
             let data = conn
                 .execute_query(&query_sql)
@@ -316,9 +271,7 @@ fn decode_db_password(password: &String) -> String {
                 let d = BASE64_STANDARD.decode(c).unwrap_or_default();
                 String::from_utf8(d).unwrap_or_default()
             }
-            false => {
-                password.clone()
-            }
+            false => password.clone(),
         }
     };
 
