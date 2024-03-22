@@ -342,6 +342,20 @@ impl CollectConfigService {
         let mut collect_log_string = String::new();
 
         collect_log_string.push_str(format!("采集配置： {:?}\n", data).as_str());
+        
+        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
+            status,
+            running_log: collect_log_string,
+            ..Default::default()
+        })
+            .await
+            .err()
+        {
+            error!("status: {status} 运行完毕；日志更新失败: {err}");
+        };
+
+        collect_log_string = String::new();
+        
         // TODO 如果是循环请求修改为分批次插入
         let res = process_data(&data).await;
         match res {
@@ -358,7 +372,7 @@ impl CollectConfigService {
                         let err_str = format!("{}\n", err);
                         collect_log_string.push_str(err_str.as_str());
                         status = 3;
-                        error!("status: {status} 运行失败；日志更新失败: {err_str}");
+                        error!("status: {status} 运行失败； {err_str}");
                     }
                 };
             }
@@ -366,22 +380,22 @@ impl CollectConfigService {
                 let err_str = format!("{}\n", err);
                 collect_log_string.push_str(err_str.as_str());
                 status = 3;
-                error!("status: {status} 运行失败；日志更新失败: {err_str}");
+                error!("status: {status} 运行失败； {err_str}");
             }
         }
 
-        let model = collect_log::Model {
+        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
             status,
             running_log: collect_log_string,
             ..Default::default()
-        };
-        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, model)
+        })
             .await
             .err()
         {
             error!("status: {status} 运行完毕；日志更新失败: {err}");
         };
     }
+
 
     /// 初始化所有的采集系统调度任务
     pub async fn setup_collect_config_cron(state: &Arc<AppState>) -> anyhow::Result<()> {
@@ -460,21 +474,28 @@ pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
                     body_string = body_string.replace(value2.as_str(), &value);
                 }
 
-                let (has_next_page, res) =
-                    collect_data_with_http(&data, Some(body_string.to_string())).await?;
-                let new_vec = res?;
+                match collect_data_with_http(&data, Some(body_string.to_string())).await {
+                    Ok((has_next_page, res)) => {
+                        let new_vec = res?;
 
-                should_stop = !has_next_page;
-                data_res = [data_res, new_vec].concat();
-                loop_counts += 1;
+                        should_stop = !has_next_page;
+                        data_res = [data_res, new_vec].concat();
+                        loop_counts += 1;
 
-                if data_res.len() >= max_number_of_result_data as usize {
-                    should_stop = true;
+                        if data_res.len() >= max_number_of_result_data as usize {
+                            should_stop = true;
+                        }
+
+                        if loop_counts >= max_count_of_request as i64 {
+                            should_stop = true;
+                        }
+                    }
+                    Err(err) => {
+                        debug!("循环请求因为异常中断, {}", err);
+                        should_stop = true;
+                    }
                 }
-
-                if loop_counts >= max_count_of_request as i64 {
-                    should_stop = true;
-                }
+                
             }
             debug!("分页请求结束, {:?}", data_res);
 
