@@ -196,12 +196,15 @@ impl CollectConfigService {
                     cache_db.get_database_backend(),
                     item,
                 ))
-                .await {
+                .await
+            {
                 Ok(msg) => {
                     println!("{:?}", msg);
-                },
+                }
                 Err(err) => {
-                    err_msg.push_str(format!("第{}条SQL执行失败，{}", i+1, err.to_string()).as_str());
+                    err_msg.push_str(
+                        format!("第{}条SQL执行失败，{}", i + 1, err.to_string()).as_str(),
+                    );
                     err_msg.push_str("\n");
                 }
             }
@@ -341,41 +344,29 @@ impl CollectConfigService {
                 error!("任务日志添加失败 {err}");
             }
         }
-        let status= 1;
+        let status = 1;
         let log_id = collect_log_model.id;
-        let model = collect_log::Model {
-            status,
-            running_log: "开始执行采集任务!".to_string(),
-            ..Default::default()
-        };
-
-        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, model)
-            .await
-            .err()
-        {
-            error!("status: {status} 运行中；日志更新失败: {err}");
-        };
-
         let mut collect_log_string = String::new();
 
-        collect_log_string.push_str(format!("采集配置： {:?}\n", data).as_str());
-        
-        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-            status,
-            running_log: collect_log_string,
-            ..Default::default()
-        })
-            .await
-            .err()
+        collect_log_string.push_str(format!("开始执行采集任务!\n采集配置： {:?}\n", data).as_str());
+
+        if let Some(err) = CollectLogService::update_by_id(
+            &state.conn,
+            log_id,
+            collect_log::Model {
+                status,
+                running_log: collect_log_string,
+                ..Default::default()
+            },
+        )
+        .await
+        .err()
         {
             error!("status: {status} 运行完毕；日志更新失败: {err}");
         };
 
-        // TODO 如果是循环请求修改为分批次插入
         let _ = process_data(&data, state, log_id).await;
-
     }
-
 
     /// 初始化所有的采集系统调度任务
     pub async fn setup_collect_config_cron(state: &Arc<AppState>) -> anyhow::Result<()> {
@@ -396,9 +387,11 @@ impl CollectConfigService {
     }
 }
 
-
-pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> anyhow::Result<Vec<String>>
-{
+pub async fn process_data(
+    data: &Model,
+    state: &Arc<AppState>,
+    log_id: i32,
+) -> anyhow::Result<Vec<String>> {
     let body_string = format_body_string(data.body.as_ref());
 
     if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
@@ -463,7 +456,6 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                         should_stop = !has_next_page;
                         data_res = [data_res, new_vec].concat();
                         loop_counts += 1;
-                        
 
                         if data_res.len() >= max_number_of_result_data as usize {
                             should_stop = true;
@@ -472,7 +464,7 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                         if loop_counts >= max_count_of_request as i64 {
                             should_stop = true;
                         }
-                        
+
                         if should_stop {
                             let mut res_data_str = String::new();
                             let mut collect_log_string = String::new();
@@ -484,7 +476,9 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                             }
 
                             let mut status;
-                            match CollectConfigService::cache_data(&state.cache_conn, &data_res).await {
+                            match CollectConfigService::cache_data(&state.cache_conn, &data_res)
+                                .await
+                            {
                                 Ok(_) => {
                                     let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 返回的数据为", data_res.len());
                                     collect_log_string.push_str(log.as_str());
@@ -501,29 +495,36 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                                 }
                             };
 
-                            if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-                                status,
-                                running_log: collect_log_string,
-                                ..Default::default()
-                            })
-                                .await
-                                .err()
+                            if let Some(err) = CollectLogService::update_by_id(
+                                &state.conn,
+                                log_id,
+                                collect_log::Model {
+                                    status,
+                                    running_log: collect_log_string,
+                                    ..Default::default()
+                                },
+                            )
+                            .await
+                            .err()
                             {
                                 error!("status: 3 运行完毕；日志更新失败: {err}");
                             };
                         }
-                        
                     }
                     Err(err) => {
                         let log = anyhow!("循环请求因为异常中断,将在3s后再次尝试发起请求,重新请求次数为{re_request_times}次,上限为3次 {}", err);
                         debug!("{}", log);
-                        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-                            status: 1,
-                            running_log: log.to_string(),
-                            ..Default::default()
-                        })
-                            .await
-                            .err()
+                        if let Some(err) = CollectLogService::update_by_id(
+                            &state.conn,
+                            log_id,
+                            collect_log::Model {
+                                status: 1,
+                                running_log: log.to_string(),
+                                ..Default::default()
+                            },
+                        )
+                        .await
+                        .err()
                         {
                             error!("status: 3 运行完毕；日志更新失败: {err}");
                         };
@@ -535,13 +536,17 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                             should_stop = true;
                             let log = anyhow!("多次请求后依然失败 {} ", err);
                             debug!("{}", log);
-                            if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-                                status: 3,
-                                running_log: log.to_string(),
-                                ..Default::default()
-                            })
-                                .await
-                                .err()
+                            if let Some(err) = CollectLogService::update_by_id(
+                                &state.conn,
+                                log_id,
+                                collect_log::Model {
+                                    status: 3,
+                                    running_log: log.to_string(),
+                                    ..Default::default()
+                                },
+                            )
+                            .await
+                            .err()
                             {
                                 error!("status: 3 运行完毕；日志更新失败: {err}");
                             };
@@ -550,7 +555,7 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                 }
 
                 // 如果数据大于10000条就开始入库
-                if data_res.len() > 10000 || (loop_counts != 0 && loop_counts % 50 == 0 ) {
+                if data_res.len() > 10000 || (loop_counts != 0 && loop_counts % 50 == 0) {
                     let mut collect_log_string = String::new();
                     let mut res_data_str = String::new();
                     if let Some(str) = data_res.get(0) {
@@ -574,19 +579,22 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                             collect_log_string.push_str(err.as_str());
                         }
                     };
-                    if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-                        status: 1,
-                        running_log: collect_log_string,
-                        ..Default::default()
-                    })
-                        .await
-                        .err()
+                    if let Some(err) = CollectLogService::update_by_id(
+                        &state.conn,
+                        log_id,
+                        collect_log::Model {
+                            status: 1,
+                            running_log: collect_log_string,
+                            ..Default::default()
+                        },
+                    )
+                    .await
+                    .err()
                     {
                         error!("status: 1 运行完毕；日志更新失败: {err}");
                     };
                     data_res.clear();
                 }
-                
             }
             debug!("分页请求结束, {:?}", data_res);
 
@@ -608,12 +616,14 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                     }
                     match CollectConfigService::cache_data(&state.cache_conn, list).await {
                         Ok(_) => {
-                            let log = format!("本轮采集{}条数据开始插入!\n 返回的数据为", list.len());
+                            let log =
+                                format!("本轮采集{}条数据开始插入!\n 返回的数据为", list.len());
                             collect_log_string.push_str(log.as_str());
                             collect_log_string.push_str(res_data_str.as_str());
                         }
                         Err(err) => {
-                            let log = format!("本轮采集{}条数据开始插入!\n 返回的数据为", list.len());
+                            let log =
+                                format!("本轮采集{}条数据开始插入!\n 返回的数据为", list.len());
                             collect_log_string.push_str(log.as_str());
                             collect_log_string.push_str(res_data_str.as_str());
                             collect_log_string.push_str("\n");
@@ -626,13 +636,17 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                 }
             }
 
-            if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-                status: 2,
-                running_log: format!("采集任务执行成功!\n 处理后的数据为{res_data_str}"),
-                ..Default::default()
-            })
-                .await
-                .err()
+            if let Some(err) = CollectLogService::update_by_id(
+                &state.conn,
+                log_id,
+                collect_log::Model {
+                    status: 2,
+                    running_log: format!("采集任务执行成功!\n 处理后的数据为{res_data_str}"),
+                    ..Default::default()
+                },
+            )
+            .await
+            .err()
             {
                 error!("status: 3 运行完毕；日志更新失败: {err}");
             };
@@ -641,13 +655,17 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
         Err(err) => {
             let log = anyhow!("{}", err);
             debug!("{}", log);
-            if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-                status: 3,
-                running_log: log.to_string(),
-                ..Default::default()
-            })
-                .await
-                .err()
+            if let Some(err) = CollectLogService::update_by_id(
+                &state.conn,
+                log_id,
+                collect_log::Model {
+                    status: 3,
+                    running_log: log.to_string(),
+                    ..Default::default()
+                },
+            )
+            .await
+            .err()
             {
                 error!("status: 3 运行完毕；日志更新失败: {err}");
             };

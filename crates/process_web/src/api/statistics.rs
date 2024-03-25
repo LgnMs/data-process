@@ -3,12 +3,12 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use axum::{Json, Router, routing::post};
 use axum::extract::State;
+use axum::{routing::post, Json, Router};
+use sea_orm::prelude::DateTime;
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, QueryFilter, QueryOrder, Statement,
 };
-use sea_orm::prelude::DateTime;
 use serde::{Deserialize, Serialize};
 
 use migration::Condition;
@@ -49,7 +49,10 @@ use super::common::{AppError, AppState, ResJson};
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
         .route("/collect_running_info", post(collect_running_info))
-        .route("/collect_running_info_day_list", post(collect_running_info_day_list));
+        .route(
+            "/collect_running_info_day_list",
+            post(collect_running_info_day_list),
+        );
 
     routes
 }
@@ -160,9 +163,7 @@ pub async fn collect_running_info_day_list(
         let count = i32::from_str(num_str).unwrap_or_default();
         info_day_map
             .entry(date)
-            .and_modify(|number| {
-                *number += count
-            })
+            .and_modify(|number| *number += count)
             .or_insert(count);
     }
 

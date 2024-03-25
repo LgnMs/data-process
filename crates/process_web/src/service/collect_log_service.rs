@@ -68,7 +68,6 @@ impl CollectLogService {
         CollectLogService::save(db, Some(id), data).await
     }
 
-
     pub async fn save(
         db: &DbConn,
         id: Option<i32>,

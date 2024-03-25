@@ -128,7 +128,10 @@ impl Receive<HttpConfig, Result<Http>> for Http {
         match serde_json::from_slice(res.as_bytes()) {
             Ok(x) => self.data = x,
             Err(err) => {
-                let err_str = format!("返回的数据 {res} 无法被序列化 请检查api是否能被正常调用 {}", err);
+                let err_str = format!(
+                    "返回的数据 {res} 无法被序列化 请检查api是否能被正常调用 {}",
+                    err
+                );
                 error!("{}", err_str);
                 return Err(anyhow!(err_str));
             }
@@ -186,9 +189,9 @@ impl Export for Http {
 }
 
 pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<String>> {
-    let mut temp_index_vec:Vec<(usize, char)> = vec![];
+    let mut temp_index_vec: Vec<(usize, char)> = vec![];
 
-    let mut pre_char= '0';
+    let mut pre_char = '0';
     for (i, s) in template_sql.char_indices() {
         if s == '{' && pre_char == '$' {
             temp_index_vec.push((i, s));
