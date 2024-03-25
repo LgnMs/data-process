@@ -157,7 +157,6 @@ pub async fn collect_running_info_day_list(
         let l = index1.unwrap() + s.as_bytes().len();
         let r = index2.unwrap();
         let num_str = &log[l..r];
-        println!("ss {:?}",num_str);
         let count = i32::from_str(num_str).unwrap_or_default();
         info_day_map
             .entry(date)

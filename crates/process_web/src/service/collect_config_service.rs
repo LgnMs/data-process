@@ -325,8 +325,8 @@ impl CollectConfigService {
                 error!("任务日志添加失败 {err}");
             }
         }
+        let status= 1;
         let log_id = collect_log_model.id;
-        let mut status = 1;
         let model = collect_log::Model {
             status,
             running_log: "开始执行采集任务!".to_string(),
@@ -355,8 +355,6 @@ impl CollectConfigService {
             error!("status: {status} 运行完毕；日志更新失败: {err}");
         };
 
-        collect_log_string = String::new();
-        
         // TODO 如果是循环请求修改为分批次插入
         let _ = process_data(&data, state, log_id).await;
 
@@ -461,9 +459,17 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                         }
                         
                         if should_stop {
+                            let mut res_data_str = String::new();
+                            if let Some(str) = data_res.get(0) {
+                                res_data_str.push_str(str);
+                                res_data_str.push_str("......");
+                            } else {
+                                res_data_str.push_str("空，请检查接口返回的数据与配置中的映射关系")
+                            }
+
                             if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
                                 status: 2,
-                                running_log: "采集任务执行成功!\n".to_string(),
+                                running_log: format!("采集任务执行成功!\n 处理后的数据为{res_data_str}"),
                                 ..Default::default()
                             })
                                 .await
@@ -510,18 +516,28 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
                 }
 
                 // 如果数据大于10000条就开始入库
-                if data_res.len() > 10000 {
+                if data_res.len() > 10000 || loop_counts % 50 == 0 {
                     let mut collect_log_string = String::new();
-                    let mut status = 1;
+                    let status;
+                    let mut res_data_str = String::new();
+                    if let Some(str) = data_res.get(0) {
+                        res_data_str.push_str(str);
+                        res_data_str.push_str("......");
+                    } else {
+                        res_data_str.push_str("空，请检查接口返回的数据与配置中的映射关系")
+                    }
+
                     match CollectConfigService::cache_data(&state.cache_conn, &data_res).await {
                         Ok(_) => {
-                            collect_log_string.push_str("已采集10000条数据开始插入!\n");
-                            status = 2;
+                            let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 返回的数据为", data_res.len());
+                            collect_log_string.push_str(log.as_str());
+                            collect_log_string.push_str(res_data_str.as_str());
+                            status = 1;
                         }
                         Err(err) => {
                             let err_str = format!("{}\n", err);
                             collect_log_string.push_str(err_str.as_str());
-                            status = 3;
+                            status = 1;
                             error!("status: {status} 运行失败； {err_str}");
                         }
                     };
@@ -547,6 +563,30 @@ pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> a
 
     let (_, res) = collect_data_with_http(data, body_string.clone()).await?;
 
+    let mut res_data_str = String::new();
+    match res.as_ref() {
+        Ok(list) => {
+            if let Some(str) = list.get(0) {
+                res_data_str.push_str(str);
+                res_data_str.push_str("......");
+            } else {
+                res_data_str.push_str("空，请检查接口返回的数据与配置中的映射关系")
+            }
+        }
+        Err(err) => {
+            res_data_str = err.to_string();
+        }
+    }
+    if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
+        status: 2,
+        running_log: format!("采集任务执行成功!\n 处理后的数据为{res_data_str}"),
+        ..Default::default()
+    })
+        .await
+        .err()
+    {
+        error!("status: 3 运行完毕；日志更新失败: {err}");
+    };
     res
 }
 
