@@ -186,29 +186,29 @@ impl Export for Http {
 }
 
 pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<String>> {
-    let mut temp_index_vec = vec![];
+    let mut temp_index_vec:Vec<(usize, char)> = vec![];
 
-    for i in 0..template_sql.len() {
-        let s = &template_sql[i..i + 1];
-        if s == "{" && i != 0 && &template_sql[i - 1..i] == "$" {
-            temp_index_vec.push(i);
-        } else if s == "}" {
-            if let Some(last) = temp_index_vec.last() {
-                let last_i = last.clone();
-                if &template_sql[last_i..last_i + 1] == "{" {
-                    temp_index_vec.push(i);
+    let mut pre_char= '0';
+    for (i, s) in template_sql.char_indices() {
+        if s == '{' && pre_char == '$' {
+            temp_index_vec.push((i, s));
+        } else if s == '}' {
+            if let Some((_, c)) = temp_index_vec.last() {
+                if *c == '{' {
+                    temp_index_vec.push((i, s));
                 }
             }
         }
+        pre_char = s;
     }
 
     let mut key_vec = vec![];
     let mut i = 0;
     while i < temp_index_vec.len() {
-        let one_index = temp_index_vec[i] - 1; // 取"{"前$的索引，所以减1
-        let two_index = temp_index_vec[i + 1];
+        let one_index = temp_index_vec[i].0 - "$".as_bytes().len(); // 取"{"前$的索引，所以减1
+        let two_index = temp_index_vec[i + 1].0;
 
-        key_vec.push(template_sql[one_index..two_index + 1].to_string());
+        key_vec.push(template_sql[one_index..two_index + "}".as_bytes().len()].to_string());
 
         i += 2;
     }
