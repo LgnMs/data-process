@@ -38,7 +38,7 @@ const nextConfig = {
     return [
       {
         source: "/",
-        destination: "/manage/collection-setting",
+        destination: "/manage/statistics",
         permanent: false,
       },
     ];

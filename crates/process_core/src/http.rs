@@ -106,6 +106,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
                 client
                     .request(parameters.method, url)
                     .body(parameters.body.unwrap_or("".to_string()))
+                    .timeout(Duration::from_secs(120))
                     .send()
                     .await?
                     .text()
@@ -114,6 +115,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
             _ => {
                 client
                     .request(parameters.method, url)
+                    .timeout(Duration::from_secs(120))
                     .send()
                     .await?
                     .text()
@@ -126,7 +128,10 @@ impl Receive<HttpConfig, Result<Http>> for Http {
         match serde_json::from_slice(res.as_bytes()) {
             Ok(x) => self.data = x,
             Err(err) => {
-                let err_str = format!("返回的数据无法被序列化 请检查api是否能被正常调用 {}", err);
+                let err_str = format!(
+                    "返回的数据 {res} 无法被序列化 请检查api是否能被正常调用 {}",
+                    err
+                );
                 error!("{}", err_str);
                 return Err(anyhow!(err_str));
             }
@@ -184,29 +189,29 @@ impl Export for Http {
 }
 
 pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<String>> {
-    let mut temp_index_vec = vec![];
+    let mut temp_index_vec: Vec<(usize, char)> = vec![];
 
-    for i in 0..template_sql.len() {
-        let s = &template_sql[i..i + 1];
-        if s == "{" && i != 0 && &template_sql[i - 1..i] == "$" {
-            temp_index_vec.push(i);
-        } else if s == "}" {
-            if let Some(last) = temp_index_vec.last() {
-                let last_i = last.clone();
-                if &template_sql[last_i..last_i + 1] == "{" {
-                    temp_index_vec.push(i);
+    let mut pre_char = '0';
+    for (i, s) in template_sql.char_indices() {
+        if s == '{' && pre_char == '$' {
+            temp_index_vec.push((i, s));
+        } else if s == '}' {
+            if let Some((_, c)) = temp_index_vec.last() {
+                if *c == '{' {
+                    temp_index_vec.push((i, s));
                 }
             }
         }
+        pre_char = s;
     }
 
     let mut key_vec = vec![];
     let mut i = 0;
     while i < temp_index_vec.len() {
-        let one_index = temp_index_vec[i] - 1; // 取"{"前$的索引，所以减1
-        let two_index = temp_index_vec[i + 1];
+        let one_index = temp_index_vec[i].0 - "$".as_bytes().len(); // 取"{"前$的索引，所以减1
+        let two_index = temp_index_vec[i + 1].0;
 
-        key_vec.push(template_sql[one_index..two_index + 1].to_string());
+        key_vec.push(template_sql[one_index..two_index + "}".as_bytes().len()].to_string());
 
         i += 2;
     }
@@ -216,7 +221,7 @@ pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<Stri
     for key in key_vec {
         let rel_key = &key[2..key.len() - 1];
         let value = find_value(rel_key, data, true)
-            .map_err(|err | anyhow!("{err} 未在rel_key: {rel_key} data:{}中找到数据", data))?;
+            .map_err(|err| anyhow!("{err} 未在rel_key: {rel_key} data:{}中找到数据", data))?;
         if let Some(list) = value.as_array() {
             for i in 0..list.len() {
                 let item: &str;

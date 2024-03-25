@@ -28,6 +28,11 @@ impl CollectLogService {
             if let Some(name) = data.collect_config_name {
                 conditions = conditions.add(collect_config::Column::Name.contains(&name));
             }
+            if let Some([start_date, end_date]) = data.date {
+                conditions = conditions
+                    .add(collect_config::Column::UpdateTime.gte(start_date))
+                    .add(collect_config::Column::UpdateTime.lte(end_date));
+            }
         }
 
         let db_res = collect_log::Entity::find()
@@ -45,7 +50,7 @@ impl CollectLogService {
             a["collect_config"] = json!(b.unwrap_or_default());
             list.push(a);
         }
-        
+
         let num_pages = collect_log::Entity::find().all(db).await?.len() as u64;
 
         return Ok((list, num_pages));

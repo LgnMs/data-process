@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use j4rs::{ClasspathEntry, Jvm, JvmBuilder};
-use std::sync::OnceLock;
 use log::debug;
+use std::sync::OnceLock;
 
 pub trait JDBC {
     type Connection;

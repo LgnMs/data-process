@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use chrono::Local;
 use sea_orm::DbErr;
 use std::collections::HashMap;
+use std::str::FromStr;
 use tokio_cron_scheduler::JobSchedulerError;
 
 /// ```md
@@ -14,7 +15,22 @@ use tokio_cron_scheduler::JobSchedulerError;
 /// 将前端存储的cron格式进行转化
 /// ```
 pub fn format_cron(cron: String) -> String {
-    format!("0 {} *", cron)
+    let cron_list = cron.split(' ').collect::<Vec<&str>>();
+    match u32::from_str(cron_list[4]) {
+        Ok(n) => {
+            format!(
+                "0 {} {} {} {} {} *",
+                cron_list[0],
+                cron_list[1],
+                cron_list[2],
+                cron_list[3],
+                n + 1
+            )
+        }
+        Err(_) => {
+            format!("0 {} *", cron)
+        }
+    }
 }
 
 /// 根据特定字符串获取当地时间日期，支持加减法计算
@@ -85,6 +101,12 @@ pub fn get_datetime_by_string(value_str: &str) -> anyhow::Result<String> {
     }
 
     Err(anyhow!("无法解析字符串"))
+}
+
+#[test]
+fn test_get_datetime_by_string() {
+    let time_string = get_datetime_by_string(&r#"now-2d.%Y%m%d"#.to_string());
+    println!("time_string {time_string:?}");
 }
 
 pub fn get_date(str: &str) -> anyhow::Result<chrono::Duration> {

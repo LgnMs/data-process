@@ -11,11 +11,12 @@ use tracing::Level;
 use tracing_appender::rolling;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
-use crate::api::common::AppState;
 use crate::api::auth::jwt_middleware;
+use crate::api::common::AppState;
 use crate::service::collect_config_service::CollectConfigService;
 use crate::service::sync_config_service::SyncConfigService;
 
+mod auth;
 pub mod collect_config;
 pub mod collect_log;
 pub mod common;
@@ -23,9 +24,9 @@ pub mod data_sharing_config;
 pub mod data_source_list;
 pub mod mock;
 pub mod sharing_request_log;
+pub mod statistics;
 pub mod sync_config;
 pub mod sync_log;
-mod auth;
 
 #[tokio::main]
 pub async fn start() -> Result<()> {
@@ -75,12 +76,10 @@ pub async fn start() -> Result<()> {
         .nest("/data_source_list", data_source_list::set_routes())
         .nest("/data_sharing_config", data_sharing_config::set_routes())
         .nest("/sharing_request_log", sharing_request_log::set_routes())
+        .nest("/statistics", statistics::set_routes())
         .nest("/mock", mock::set_routes())
         .fallback(fallback)
-        .layer(
-            ServiceBuilder::new()
-                .layer(middleware::from_fn(jwt_middleware))
-        )
+        .layer(ServiceBuilder::new().layer(middleware::from_fn(jwt_middleware)))
         .with_state(state);
 
     println!("listener on {server_url}");
