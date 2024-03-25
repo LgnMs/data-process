@@ -1,6 +1,5 @@
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::fmt::Debug;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -475,7 +474,7 @@ pub async fn process_data(
                                 res_data_str.push_str("空，请检查接口返回的数据与配置中的映射关系")
                             }
 
-                            let mut status;
+                            let status;
                             match CollectConfigService::cache_data(&state.cache_conn, &data_res)
                                 .await
                             {
