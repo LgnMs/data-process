@@ -128,7 +128,7 @@ impl Receive<HttpConfig, Result<Http>> for Http {
         match serde_json::from_slice(res.as_bytes()) {
             Ok(x) => self.data = x,
             Err(err) => {
-                let err_str = format!("返回的数据无法被序列化 请检查api是否能被正常调用 {}", err);
+                let err_str = format!("返回的数据 {res} 无法被序列化 请检查api是否能被正常调用 {}", err);
                 error!("{}", err_str);
                 return Err(anyhow!(err_str));
             }

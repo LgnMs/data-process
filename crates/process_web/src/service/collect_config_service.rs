@@ -1,6 +1,7 @@
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Duration;
 
 use crate::api::collect_config::ListParams;
 use anyhow::anyhow;
@@ -357,43 +358,8 @@ impl CollectConfigService {
         collect_log_string = String::new();
         
         // TODO 如果是循环请求修改为分批次插入
-        let res = process_data(&data).await;
-        match res {
-            Ok(list) => {
-                collect_log_string
-                    .push_str(format!("接口调用成功，共返回 {} 条数据", list.len()).as_str());
-                // collect_log_string.push_str(format!("成功生成SQL： {:?}\n", list).as_str());
-                match Self::cache_data(&state.cache_conn, &list).await {
-                    Ok(_) => {
-                        collect_log_string.push_str("采集任务执行成功!\n");
-                        status = 2;
-                    }
-                    Err(err) => {
-                        let err_str = format!("{}\n", err);
-                        collect_log_string.push_str(err_str.as_str());
-                        status = 3;
-                        error!("status: {status} 运行失败； {err_str}");
-                    }
-                };
-            }
-            Err(err) => {
-                let err_str = format!("{}\n", err);
-                collect_log_string.push_str(err_str.as_str());
-                status = 3;
-                error!("status: {status} 运行失败； {err_str}");
-            }
-        }
+        let _ = process_data(&data, state, log_id).await;
 
-        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-            status,
-            running_log: collect_log_string,
-            ..Default::default()
-        })
-            .await
-            .err()
-        {
-            error!("status: {status} 运行完毕；日志更新失败: {err}");
-        };
     }
 
 
@@ -416,7 +382,10 @@ impl CollectConfigService {
     }
 }
 
-pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
+
+pub async fn process_data(data: &Model, state: &Arc<AppState>, log_id: i32) -> anyhow::Result<Vec<String>>
+
+{
     let body_string = format_body_string(data.body.as_ref());
 
     if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
@@ -433,7 +402,7 @@ pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
                     .unwrap();
 
             let mut loop_counts = 0;
-
+            let mut re_request_times = 0;
             let mut data_res = vec![];
 
             debug!("开始进行分页请求，max_number_of_result_data: {max_number_of_result_data}, max_count_of_request: {max_count_of_request}");
@@ -481,6 +450,7 @@ pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
                         should_stop = !has_next_page;
                         data_res = [data_res, new_vec].concat();
                         loop_counts += 1;
+                        
 
                         if data_res.len() >= max_number_of_result_data as usize {
                             should_stop = true;
@@ -489,11 +459,83 @@ pub async fn process_data(data: &Model) -> anyhow::Result<Vec<String>> {
                         if loop_counts >= max_count_of_request as i64 {
                             should_stop = true;
                         }
+                        
+                        if should_stop {
+                            if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
+                                status: 2,
+                                running_log: "采集任务执行成功!\n".to_string(),
+                                ..Default::default()
+                            })
+                                .await
+                                .err()
+                            {
+                                error!("status: 3 运行完毕；日志更新失败: {err}");
+                            };
+                        }
+                        
                     }
                     Err(err) => {
-                        debug!("循环请求因为异常中断, {}", err);
-                        should_stop = true;
+                        let log = anyhow!("循环请求因为异常中断,将在3s后再次尝试发起请求,重新请求次数为{re_request_times}次,上限为3次 {}", err);
+                        debug!("{}", log);
+                        if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
+                            status: 1,
+                            running_log: log.to_string(),
+                            ..Default::default()
+                        })
+                            .await
+                            .err()
+                        {
+                            error!("status: 3 运行完毕；日志更新失败: {err}");
+                        };
+                        if re_request_times < 3 {
+                            re_request_times += 1;
+                            should_stop = false;
+                            tokio::time::sleep(Duration::from_secs(3)).await;
+                        } else {
+                            should_stop = true;
+                            let log = anyhow!("多次请求后依然失败 {} ", err);
+                            debug!("{}", log);
+                            if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
+                                status: 3,
+                                running_log: log.to_string(),
+                                ..Default::default()
+                            })
+                                .await
+                                .err()
+                            {
+                                error!("status: 3 运行完毕；日志更新失败: {err}");
+                            };
+                        }
                     }
+                }
+
+                // 如果数据大于10000条就开始入库
+                if data_res.len() > 10000 {
+                    let mut collect_log_string = String::new();
+                    let mut status = 1;
+                    match CollectConfigService::cache_data(&state.cache_conn, &data_res).await {
+                        Ok(_) => {
+                            collect_log_string.push_str("已采集10000条数据开始插入!\n");
+                            status = 2;
+                        }
+                        Err(err) => {
+                            let err_str = format!("{}\n", err);
+                            collect_log_string.push_str(err_str.as_str());
+                            status = 3;
+                            error!("status: {status} 运行失败； {err_str}");
+                        }
+                    };
+                    if let Some(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
+                        status,
+                        running_log: collect_log_string,
+                        ..Default::default()
+                    })
+                        .await
+                        .err()
+                    {
+                        error!("status: {status} 运行完毕；日志更新失败: {err}");
+                    };
+                    data_res.clear();
                 }
                 
             }
@@ -622,7 +664,7 @@ async fn create_job_scheduler(
             .add(Job::new_async_tz(
                 format_cron(cron.clone()).as_str(),
                 Local::now().timezone(),
-                move |_uuid, mut _l| {
+                move |_uuid, _l| {
                     let st = sched_state.clone();
                     let item_c = data.clone();
                     Box::pin(async move {
