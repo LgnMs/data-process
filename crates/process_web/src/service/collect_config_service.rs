@@ -479,13 +479,13 @@ pub async fn process_data(
                                 .await
                             {
                                 Ok(_) => {
-                                    let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 返回的数据为", data_res.len());
+                                    let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
                                     collect_log_string.push_str(log.as_str());
                                     collect_log_string.push_str(res_data_str.as_str());
                                     status = 2;
                                 }
                                 Err(err) => {
-                                    let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 返回的数据为", data_res.len());
+                                    let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
                                     collect_log_string.push_str(log.as_str());
                                     collect_log_string.push_str(res_data_str.as_str());
                                     collect_log_string.push_str("\n");
@@ -566,12 +566,12 @@ pub async fn process_data(
 
                     match CollectConfigService::cache_data(&state.cache_conn, &data_res).await {
                         Ok(_) => {
-                            let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 返回的数据为", data_res.len());
+                            let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
                             collect_log_string.push_str(log.as_str());
                             collect_log_string.push_str(res_data_str.as_str());
                         }
                         Err(err) => {
-                            let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 返回的数据为", data_res.len());
+                            let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
                             collect_log_string.push_str(log.as_str());
                             collect_log_string.push_str(res_data_str.as_str());
                             collect_log_string.push_str("\n");
@@ -616,13 +616,13 @@ pub async fn process_data(
                     match CollectConfigService::cache_data(&state.cache_conn, list).await {
                         Ok(_) => {
                             let log =
-                                format!("本轮采集{}条数据开始插入!\n 返回的数据为", list.len());
+                                format!("本轮采集{}条数据开始插入!\n 处理后的数据为", list.len());
                             collect_log_string.push_str(log.as_str());
                             collect_log_string.push_str(res_data_str.as_str());
                         }
                         Err(err) => {
                             let log =
-                                format!("本轮采集{}条数据开始插入!\n 返回的数据为", list.len());
+                                format!("本轮采集{}条数据开始插入!\n 处理后的数据为", list.len());
                             collect_log_string.push_str(log.as_str());
                             collect_log_string.push_str(res_data_str.as_str());
                             collect_log_string.push_str("\n");
@@ -640,7 +640,7 @@ pub async fn process_data(
                 log_id,
                 collect_log::Model {
                     status: 2,
-                    running_log: format!("采集任务执行成功!\n 处理后的数据为{res_data_str}"),
+                    running_log: collect_log_string,
                     ..Default::default()
                 },
             )
