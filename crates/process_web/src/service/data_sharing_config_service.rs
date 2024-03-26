@@ -120,7 +120,11 @@ impl DataSharingConfigService {
                 for (key, value) in obj {
                     let p_key = format!("${{{key}}}");
                     if sql.contains(p_key.as_str()) {
-                        sql = sql.replace(p_key.as_str(), value.to_string().as_str());
+                        if value.is_string() {
+                            sql = sql.replace(p_key.as_str(), value.as_str().unwrap_or_default());
+                        } else {
+                            sql = sql.replace(p_key.as_str(), value.to_string().as_str());
+                        }
                     }
                 }
 
