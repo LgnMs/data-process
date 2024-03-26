@@ -5,23 +5,22 @@ use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use axum::extract::State;
 use axum::{routing::post, Json, Router};
+use chrono::NaiveDateTime;
 use sea_orm::prelude::DateTime;
-use sea_orm::{
-    ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, QueryFilter, QueryOrder, Statement,
-};
+use sea_orm::{ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, Statement};
 use serde::{Deserialize, Serialize};
 
 use migration::Condition;
 
 use crate::data_response;
-use crate::entity::collect_log;
+use crate::entity::{collect_log, sharing_request_log};
 
 use super::common::{AppError, AppState, ResJson};
 
 /// 1. 总采集量
 ///     - 通过采集任务采集到的数据总量
-///     - 时间维度下每日采集的数据量（面积图形式展示）
-///     - 当日采集数据量
+///     - 时间维度下每日采集任务执行次数（面积图形式展示）
+///     - 当日执行的采集任务次数
 /// 2. 总访问数
 ///     - 共享接口被调用的次数
 ///     - 时间维度下每日被调用的次数（面积图形式展示）
@@ -48,10 +47,14 @@ use super::common::{AppError, AppState, ResJson};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
-        .route("/collect_running_info", post(collect_running_info))
+        .route("/collect_task_info", post(collect_task_info))
         .route(
-            "/collect_running_info_day_list",
-            post(collect_running_info_day_list),
+            "/collect_task_info_day_list",
+            post(collect_task_info_day_list),
+        )
+        .route(
+            "/sharing_task_info",
+            post(sharing_task_info),
         );
 
     routes
@@ -59,10 +62,8 @@ pub fn set_routes() -> Router<Arc<AppState>> {
 
 /// 采集数据量总览
 #[derive(Serialize, Deserialize)]
-pub struct CollectRunningInfo {
-    pub sum_total: i64,
-    // list: Vec<CollectRunningInfoDay>,
-    // number_of_runs_list: Vec<CollectRunInfo>
+pub struct CollectTaskInfo {
+    pub num_items: i64,
 }
 
 struct CollectRunInfo {
@@ -71,14 +72,9 @@ struct CollectRunInfo {
     number: i32,
 }
 
-#[derive(Serialize, Deserialize)]
-struct CollectRunningInfoReq {
-    date: Option<[DateTime; 2]>,
-}
-
-pub async fn collect_running_info(
+pub async fn collect_task_info(
     state: State<Arc<AppState>>,
-) -> Result<ResJson<CollectRunningInfo>, AppError> {
+) -> Result<ResJson<CollectTaskInfo>, AppError> {
     let cache_db = &state.cache_conn;
     let query_table_name_sql: &str;
 
@@ -102,7 +98,7 @@ pub async fn collect_running_info(
         ))
         .await?;
 
-    let mut sum_total: i64 = 0;
+    let mut num_items: i64 = 0;
     for item in table_list {
         let table_name: String = item.try_get_by_index(0)?;
 
@@ -117,27 +113,28 @@ pub async fn collect_running_info(
             return Err(anyhow!("未找到表 {}", table_name).into());
         }
         let number: i64 = count.unwrap().try_get_by_index(0)?;
-        sum_total += number;
+        num_items += number;
     }
 
-    let res: Result<CollectRunningInfo> = Ok(CollectRunningInfo { sum_total });
+    let res: Result<CollectTaskInfo> = Ok(CollectTaskInfo { num_items });
 
     data_response!(res)
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct CollectRunningInfoDayListReq {
-    pub date: Vec<DateTime>,
+pub struct CollectTaskInfoDayListReq {
+    pub date: [i64; 2],
 }
 
-pub async fn collect_running_info_day_list(
+/// 获取每日采集任务执行的次数
+pub async fn collect_task_info_day_list(
     state: State<Arc<AppState>>,
-    Json(payload): Json<CollectRunningInfoDayListReq>,
+    Json(payload): Json<CollectTaskInfoDayListReq>,
 ) -> Result<ResJson<HashMap<String, i32>>, AppError> {
     let mut conditions = Condition::all();
     conditions = conditions
-        .add(collect_log::Column::UpdateTime.gte(payload.date[0]))
-        .add(collect_log::Column::UpdateTime.lte(payload.date[1]));
+        .add(collect_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])))
+        .add(collect_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])));
 
     let list = collect_log::Entity::find()
         .filter(conditions)
@@ -148,25 +145,82 @@ pub async fn collect_running_info_day_list(
     let mut info_day_map: HashMap<String, i32> = HashMap::new();
 
     for item in list {
-        let log = item.running_log;
         let date = item.update_time.format("%Y-%m-%d").to_string();
-        let s = "接口调用成功，共返回 ";
-        let e = " 条数据采集任务执行成功!";
-        let index1 = log.find(s);
-        let index2 = log.find(e);
-        if index1.is_none() || index2.is_none() {
-            continue;
-        }
-        let l = index1.unwrap() + s.as_bytes().len();
-        let r = index2.unwrap();
-        let num_str = &log[l..r];
-        let count = i32::from_str(num_str).unwrap_or_default();
+
         info_day_map
             .entry(date)
-            .and_modify(|number| *number += count)
-            .or_insert(count);
+            .and_modify(|number| *number += 1)
+            .or_insert(1);
     }
 
     let res: Result<HashMap<String, i32>> = Ok(info_day_map);
+    data_response!(res)
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct SharingTaskInfoReq {
+    pub date: [i64; 2],
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SharingTaskInfoRes {
+    list: HashMap<String, i32>,
+    num_items: i64
+}
+
+/// 获取共享任务调用详情
+pub async fn sharing_task_info(
+    state: State<Arc<AppState>>,
+    Json(payload): Json<SharingTaskInfoReq>,
+) -> Result<ResJson<SharingTaskInfoRes>, AppError> {
+    let mut conditions = Condition::all();
+    conditions = conditions
+        .add(sharing_request_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])))
+        .add(sharing_request_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])));
+
+    let list = sharing_request_log::Entity::find()
+        .filter(conditions)
+        .order_by_desc(sharing_request_log::Column::UpdateTime)
+        .all(&state.conn)
+        .await?;
+
+    let mut info_day_map: HashMap<String, i32> = HashMap::new();
+
+    for item in list {
+        let date = item.update_time.format("%Y-%m-%d").to_string();
+
+        info_day_map
+            .entry(date)
+            .and_modify(|number| *number += 1)
+            .or_insert(1);
+    }
+
+
+    let count_res = state.conn
+        .query_one(Statement::from_string(
+            state.conn.get_database_backend(),
+            "select COUNT(*) as num_items from sharing_request_log ",
+        ))
+        .await?;
+
+    let num_items: i64 = {
+        if let Some(count_res) = count_res {
+            count_res.try_get_by_index(0)?
+        } else {
+            0
+        }
+    };
+
+    // sharing_request_log::Entity::find()
+    //     .group_by(sharing_request_log::Column::DataSharingConfigId)
+    //     .all(&state.conn)
+    //     .await?;
+
+    let res: Result<SharingTaskInfoRes> = Ok(SharingTaskInfoRes {
+        list: info_day_map,
+        num_items
+    });
+
     data_response!(res)
 }
