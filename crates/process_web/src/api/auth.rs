@@ -118,7 +118,7 @@ impl Display for Claims {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "auth_id: {}\nauth_secret: {}",
+            "auth_id: {} auth_secret: {}",
             self.auth_id, self.auth_secret
         )
     }

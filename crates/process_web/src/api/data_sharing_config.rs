@@ -10,6 +10,7 @@ use serde_json::{json, Value};
 use std::str::FromStr;
 use std::sync::Arc;
 use ts_rs::TS;
+use crate::api::auth::Claims;
 
 use crate::entity::data_sharing_config::Model;
 use crate::entity::sharing_request_log;
@@ -110,6 +111,7 @@ async fn del(
 async fn get_data(
     state: State<Arc<AppState>>,
     request_info: RequestInfo,
+    user_info: Claims,
     Path(api_id): Path<String>,
     Json(payload): Json<Option<Value>>,
 ) -> anyhow::Result<ResJson<Vec<Value>>, AppError> {
@@ -119,6 +121,8 @@ async fn get_data(
     if let Some(body) = &payload {
         log_map.insert("body".to_string(), body.clone());
     }
+    // TODO 记录调用的用户
+    println!("{:?}, {}", user_info, user_info);
     let id = i32::from_str(&api_id[..1])?;
     let api_id = api_id[1..].to_string();
     let res = DataSharingConfigService::get_data(&state.conn, api_id, payload).await;
