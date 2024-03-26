@@ -11,7 +11,9 @@ mkdir "$out_dir"
 
 echo "开始构建..."
 cargo build --release
-cp "$target_dir"/release/data_process $out_dir
+cp "$target_dir"/x86_64-unknown-linux-gnu/release/data_process "$out_dir"
+cp -r "$target_dir"/data_process_j4rs_deps/deps "$out_dir"
+cp -r "$target_dir"/data_process_j4rs_deps/jassets "$out_dir"
 cp "$root"/.env "$out_dir"
 cp "$root"/.env.prod "$out_dir"
 cp -r "$root"/static "$out_dir"
@@ -27,3 +29,4 @@ cp -r "$ui_dir"/.next/standalone/ "$out_dir"/web-ui
 cd "$out_dir" && tar -cvzf $project_name.tar.gz .
 echo "已输出到 $out_dir"
 echo "已压缩到 $project_name.tar.gz"
+
