@@ -208,7 +208,7 @@ pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<Stri
     let mut key_vec = vec![];
     let mut i = 0;
     while i < temp_index_vec.len() {
-        let one_index = temp_index_vec[i].0 - "$".as_bytes().len(); // 取"{"前$的索引，所以减1
+        let one_index = temp_index_vec[i].0 - "$".as_bytes().len(); // 取"{"前$的字节索引
         let two_index = temp_index_vec[i + 1].0;
 
         key_vec.push(template_sql[one_index..two_index + "}".as_bytes().len()].to_string());

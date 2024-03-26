@@ -511,7 +511,7 @@ pub async fn process_data(
                         }
                     }
                     Err(err) => {
-                        let log = anyhow!("循环请求因为异常中断,将在3s后再次尝试发起请求,重新请求次数为{re_request_times}次,上限为3次 {}", err);
+                        let log = anyhow!("循环请求因为异常中断,将在3s后再次尝试发起请求,重新请求次数为{re_request_times}次,上限为10次 {}", err);
                         debug!("{}", log);
                         if let Some(err) = CollectLogService::update_by_id(
                             &state.conn,
@@ -527,7 +527,7 @@ pub async fn process_data(
                         {
                             error!("status: 3 运行完毕；日志更新失败: {err}");
                         };
-                        if re_request_times < 3 {
+                        if re_request_times < 10 {
                             re_request_times += 1;
                             should_stop = false;
                             tokio::time::sleep(Duration::from_secs(3)).await;
