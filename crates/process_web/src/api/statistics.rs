@@ -3,17 +3,17 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
+use axum::{Json, Router, routing::post};
 use axum::extract::State;
-use axum::{routing::post, Json, Router};
 use chrono::NaiveDateTime;
-use sea_orm::prelude::DateTime;
-use sea_orm::{ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, Statement};
+use sea_orm::{ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, FromQueryResult, QueryFilter, QueryOrder, QuerySelect, Statement};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use migration::Condition;
 
 use crate::data_response;
-use crate::entity::{collect_log, sharing_request_log};
+use crate::entity::{collect_config, collect_log, sync_log, data_sharing_config, sharing_request_log, sync_config};
 
 use super::common::{AppError, AppState, ResJson};
 
@@ -55,6 +55,10 @@ pub fn set_routes() -> Router<Arc<AppState>> {
         .route(
             "/sharing_task_info",
             post(sharing_task_info),
+        )
+        .route(
+            "/sync_task_info",
+            post(sync_task_info),
         );
 
     routes
@@ -64,12 +68,6 @@ pub fn set_routes() -> Router<Arc<AppState>> {
 #[derive(Serialize, Deserialize)]
 pub struct CollectTaskInfo {
     pub num_items: i64,
-}
-
-struct CollectRunInfo {
-    id: i32,
-    name: String,
-    number: i32,
 }
 
 pub async fn collect_task_info(
@@ -126,18 +124,24 @@ pub struct CollectTaskInfoDayListReq {
     pub date: [i64; 2],
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct CollectTaskInfoRes {
+    list: HashMap<String, i32>,
+    rank_list: Vec<Value>
+}
+
 /// 获取每日采集任务执行的次数
 pub async fn collect_task_info_day_list(
     state: State<Arc<AppState>>,
     Json(payload): Json<CollectTaskInfoDayListReq>,
-) -> Result<ResJson<HashMap<String, i32>>, AppError> {
+) -> Result<ResJson<CollectTaskInfoRes>, AppError> {
     let mut conditions = Condition::all();
     conditions = conditions
         .add(collect_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])))
         .add(collect_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])));
 
     let list = collect_log::Entity::find()
-        .filter(conditions)
+        .filter(conditions.clone())
         .order_by_desc(collect_log::Column::UpdateTime)
         .all(&state.conn)
         .await?;
@@ -153,10 +157,28 @@ pub async fn collect_task_info_day_list(
             .or_insert(1);
     }
 
-    let res: Result<HashMap<String, i32>> = Ok(info_day_map);
+    let rank_list: Vec<Value> = collect_log::Entity::find()
+        .select_only()
+        .column(collect_log::Column::CollectConfigId)
+        .column(collect_config::Column::Name)
+        .column_as(collect_log::Column::Id.count(), "num_items")
+        .inner_join(collect_config::Entity)
+        .filter(conditions)
+        .group_by(collect_log::Column::CollectConfigId)
+        .group_by(collect_config::Column::Name)
+        .order_by_desc(collect_log::Column::Id.count())
+        .limit(15)
+        .into_json()
+        .all(&state.conn)
+        .await?;
+
+    let res: Result<CollectTaskInfoRes> = Ok(CollectTaskInfoRes {
+        list: info_day_map,
+        rank_list
+    });
+
     data_response!(res)
 }
-
 
 #[derive(Serialize, Deserialize)]
 pub struct SharingTaskInfoReq {
@@ -166,6 +188,12 @@ pub struct SharingTaskInfoReq {
 #[derive(Serialize, Deserialize)]
 pub struct SharingTaskInfoRes {
     list: HashMap<String, i32>,
+    num_items: i64,
+    rank_list: Vec<Value>
+}
+
+#[derive(FromQueryResult)]
+struct NumItems {
     num_items: i64
 }
 
@@ -180,7 +208,7 @@ pub async fn sharing_task_info(
         .add(sharing_request_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])));
 
     let list = sharing_request_log::Entity::find()
-        .filter(conditions)
+        .filter(conditions.clone())
         .order_by_desc(sharing_request_log::Column::UpdateTime)
         .all(&state.conn)
         .await?;
@@ -196,30 +224,118 @@ pub async fn sharing_task_info(
             .or_insert(1);
     }
 
-
-    let count_res = state.conn
-        .query_one(Statement::from_string(
-            state.conn.get_database_backend(),
-            "select COUNT(*) as num_items from sharing_request_log ",
-        ))
+    let count_res = sharing_request_log::Entity::find()
+        .select_only()
+        .column_as(sharing_request_log::Column::Id.count(), "num_items")
+        .into_model::<NumItems>()
+        .one(&state.conn)
         .await?;
 
     let num_items: i64 = {
         if let Some(count_res) = count_res {
-            count_res.try_get_by_index(0)?
+            count_res.num_items
         } else {
             0
         }
     };
 
-    // sharing_request_log::Entity::find()
-    //     .group_by(sharing_request_log::Column::DataSharingConfigId)
-    //     .all(&state.conn)
-    //     .await?;
+    let rank_list: Vec<Value> = sharing_request_log::Entity::find()
+        .select_only()
+        .column(sharing_request_log::Column::DataSharingConfigId)
+        .column(data_sharing_config::Column::Name)
+        .column_as(sharing_request_log::Column::Id.count(), "num_items")
+        .inner_join(data_sharing_config::Entity)
+        .filter(conditions)
+        .group_by(sharing_request_log::Column::DataSharingConfigId)
+        .group_by(data_sharing_config::Column::Name)
+        .order_by_desc(sharing_request_log::Column::Id.count())
+        .limit(15)
+        .into_json()
+        .all(&state.conn)
+        .await?;
 
     let res: Result<SharingTaskInfoRes> = Ok(SharingTaskInfoRes {
         list: info_day_map,
-        num_items
+        num_items,
+        rank_list
+    });
+
+    data_response!(res)
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SyncTaskInfoReq {
+    pub date: [i64; 2],
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SyncTaskInfoRes {
+    list: HashMap<String, i32>,
+    num_items: i64,
+    rank_list: Vec<Value>
+}
+
+/// 获取同步任务调用详情
+pub async fn sync_task_info(
+    state: State<Arc<AppState>>,
+    Json(payload): Json<SyncTaskInfoReq>,
+) -> Result<ResJson<SyncTaskInfoRes>, AppError> {
+    let mut conditions = Condition::all();
+    conditions = conditions
+        .add(sync_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])))
+        .add(sync_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])));
+
+    let list = sync_log::Entity::find()
+        .filter(conditions.clone())
+        .order_by_desc(sync_log::Column::UpdateTime)
+        .all(&state.conn)
+        .await?;
+
+    let mut info_day_map: HashMap<String, i32> = HashMap::new();
+
+    for item in list {
+        let date = item.update_time.format("%Y-%m-%d").to_string();
+
+        info_day_map
+            .entry(date)
+            .and_modify(|number| *number += 1)
+            .or_insert(1);
+    }
+
+    let count_res = sync_log::Entity::find()
+        .select_only()
+        .column_as(sync_log::Column::Id.count(), "num_items")
+        .into_model::<NumItems>()
+        .one(&state.conn)
+        .await?;
+
+    let num_items: i64 = {
+        if let Some(count_res) = count_res {
+            count_res.num_items
+        } else {
+            0
+        }
+    };
+
+    let rank_list: Vec<Value> = sync_log::Entity::find()
+        .select_only()
+        .column(sync_log::Column::SyncConfigId)
+        .column(sync_config::Column::Name)
+        .column_as(sync_log::Column::Id.count(), "num_items")
+        .inner_join(sync_config::Entity)
+        .filter(conditions)
+        .group_by(sync_log::Column::SyncConfigId)
+        .group_by(sync_config::Column::Name)
+        .order_by_desc(sync_log::Column::Id.count())
+        .limit(15)
+        .into_json()
+        .all(&state.conn)
+        .await?;
+
+    let res: Result<SyncTaskInfoRes> = Ok(SyncTaskInfoRes {
+        list: info_day_map,
+        num_items,
+        rank_list
     });
 
     data_response!(res)
