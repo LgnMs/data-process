@@ -632,6 +632,7 @@ pub async fn process_data(
                 }
                 Err(err) => {
                     res_data_str = err.to_string();
+                    collect_log_string.push_str(res_data_str.as_str());
                 }
             }
 

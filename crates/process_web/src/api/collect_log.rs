@@ -43,8 +43,7 @@ async fn find_by_id(
 )]
 pub struct ListParams {
     pub collect_config_name: Option<String>,
-    #[ts(type = "any")]
-    pub date: Option<[DateTime; 2]>,
+    pub date: Option<[i64; 2]>,
 }
 
 async fn list(
