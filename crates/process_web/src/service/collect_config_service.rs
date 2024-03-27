@@ -386,7 +386,7 @@ pub async fn process_data(
         .await
         .err()
     {
-        error!("status: {status} 运行完毕；日志更新失败: {err}");
+        error!("status: 1 运行完毕；日志更新失败: {err}");
     };
 
     if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
@@ -469,32 +469,14 @@ pub async fn process_data(
                             } else {
                                 res_data_str.push_str("空，请检查接口返回的数据与配置中的映射关系")
                             }
-
-                            let status;
-                            match CollectConfigService::cache_data(&state.cache_conn, &data_res)
-                                .await
-                            {
-                                Ok(_) => {
-                                    let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
-                                    collect_log_string.push_str(log.as_str());
-                                    collect_log_string.push_str(res_data_str.as_str());
-                                    status = 2;
-                                }
-                                Err(err) => {
-                                    let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
-                                    collect_log_string.push_str(log.as_str());
-                                    collect_log_string.push_str(res_data_str.as_str());
-                                    collect_log_string.push_str("\n");
-                                    collect_log_string.push_str(err.as_str());
-                                    status = 3;
-                                }
-                            };
-
+                            let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
+                            collect_log_string.push_str(log.as_str());
+                            collect_log_string.push_str(res_data_str.as_str());
                             if let Some(err) = CollectLogService::update_by_id(
                                 &state.conn,
                                 log_id,
                                 collect_log::Model {
-                                    status,
+                                    status: 2,
                                     running_log: collect_log_string,
                                     ..Default::default()
                                 },
@@ -502,12 +484,34 @@ pub async fn process_data(
                             .await
                             .err()
                             {
-                                error!("status: 3 运行完毕；日志更新失败: {err}");
+                                error!("status: 2 运行完毕；日志更新失败: {err}");
+                            };
+
+                            match CollectConfigService::cache_data(&state.cache_conn, &data_res)
+                                .await
+                            {
+                                Ok(_) => {}
+                                Err(err) => {
+                                    if let Some(err) = CollectLogService::update_by_id(
+                                        &state.conn,
+                                        log_id,
+                                        collect_log::Model {
+                                            status: 3,
+                                            running_log: format!("\n {}", err),
+                                            ..Default::default()
+                                        },
+                                    )
+                                    .await
+                                    .err()
+                                    {
+                                        error!("status: 2 运行完毕；日志更新失败: {err}");
+                                    };
+                                }
                             };
                         }
                     }
                     Err(err) => {
-                        let log = anyhow!("循环请求因为异常中断,将在3s后再次尝试发起请求,重新请求次数为{re_request_times}次,上限为10次 {}", err);
+                        let log = anyhow!("循环请求因为异常中断,将在3s后再次尝试发起请求,重新请求次数为{re_request_times}次,上限为5次 {}", err);
                         debug!("{}", log);
                         if let Some(err) = CollectLogService::update_by_id(
                             &state.conn,
@@ -523,7 +527,7 @@ pub async fn process_data(
                         {
                             error!("status: 3 运行完毕；日志更新失败: {err}");
                         };
-                        if re_request_times < 10 {
+                        if re_request_times < 5 {
                             re_request_times += 1;
                             should_stop = false;
                             tokio::time::sleep(Duration::from_secs(3)).await;
@@ -561,20 +565,9 @@ pub async fn process_data(
                         res_data_str.push_str("空，请检查接口返回的数据与配置中的映射关系")
                     }
 
-                    match CollectConfigService::cache_data(&state.cache_conn, &data_res).await {
-                        Ok(_) => {
-                            let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
-                            collect_log_string.push_str(log.as_str());
-                            collect_log_string.push_str(res_data_str.as_str());
-                        }
-                        Err(err) => {
-                            let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
-                            collect_log_string.push_str(log.as_str());
-                            collect_log_string.push_str(res_data_str.as_str());
-                            collect_log_string.push_str("\n");
-                            collect_log_string.push_str(err.as_str());
-                        }
-                    };
+                    let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
+                    collect_log_string.push_str(log.as_str());
+                    collect_log_string.push_str(res_data_str.as_str());
                     if let Some(err) = CollectLogService::update_by_id(
                         &state.conn,
                         log_id,
@@ -584,11 +577,33 @@ pub async fn process_data(
                             ..Default::default()
                         },
                     )
-                    .await
-                    .err()
+                        .await
+                        .err()
                     {
                         error!("status: 1 运行完毕；日志更新失败: {err}");
                     };
+
+                    match CollectConfigService::cache_data(&state.cache_conn, &data_res).await {
+                        Ok(_) => {}
+                        Err(err) => {
+
+                            if let Some(err) = CollectLogService::update_by_id(
+                                &state.conn,
+                                log_id,
+                                collect_log::Model {
+                                    status: 1,
+                                    running_log: format!("\n {}", err),
+                                    ..Default::default()
+                                },
+                            )
+                                .await
+                                .err()
+                            {
+                                error!("status: 1 运行完毕；日志更新失败: {err}");
+                            };
+                        }
+                    };
+
                     data_res.clear();
                 }
             }
@@ -610,18 +625,30 @@ pub async fn process_data(
                     } else {
                         res_data_str.push_str("空，请检查接口返回的数据与配置中的映射关系")
                     }
+                    let log = format!("本轮采集{}条数据开始插入!\n 处理后的数据为", list.len());
+                    collect_log_string.push_str(log.as_str());
+                    collect_log_string.push_str(res_data_str.as_str());
+
+                    if let Some(err) = CollectLogService::update_by_id(
+                        &state.conn,
+                        log_id,
+                        collect_log::Model {
+                            status: 1,
+                            running_log: collect_log_string,
+                            ..Default::default()
+                        },
+                    )
+                    .await
+                    .err()
+                    {
+                        error!("status: 1 运行完毕；日志更新失败: {err}");
+                    };
+                    
+                    collect_log_string = String::new();
+
                     match CollectConfigService::cache_data(&state.cache_conn, list).await {
-                        Ok(_) => {
-                            let log =
-                                format!("本轮采集{}条数据开始插入!\n 处理后的数据为", list.len());
-                            collect_log_string.push_str(log.as_str());
-                            collect_log_string.push_str(res_data_str.as_str());
-                        }
+                        Ok(_) => {}
                         Err(err) => {
-                            let log =
-                                format!("本轮采集{}条数据开始插入!\n 处理后的数据为", list.len());
-                            collect_log_string.push_str(log.as_str());
-                            collect_log_string.push_str(res_data_str.as_str());
                             collect_log_string.push_str("\n");
                             collect_log_string.push_str(err.as_str());
                         }
