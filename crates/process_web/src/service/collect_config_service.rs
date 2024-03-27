@@ -549,8 +549,8 @@ pub async fn process_data(
                     }
                 }
 
-                // 如果数据大于10000条就开始入库
-                if data_res.len() > 10000 || (loop_counts != 0 && loop_counts % 50 == 0) {
+                // 如果数据大于1000条就开始入库
+                if data_res.len() > 1000 || (loop_counts != 0 && loop_counts % 50 == 0) {
                     re_request_times = 0;
                     let mut collect_log_string = String::new();
                     let mut res_data_str = String::new();
