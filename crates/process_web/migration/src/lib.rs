@@ -8,6 +8,7 @@ mod m20240226_015923_create_data_source_list;
 mod m20240227_022320_create_data_sharing_config_table;
 mod m20240304_063328_create_sharing_request_log;
 mod m20240319_061549_update_data_sharing_config_table;
+mod m20240327_063820_update_sharing_request_log;
 
 pub struct Migrator;
 
@@ -23,6 +24,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20240227_022320_create_data_sharing_config_table::Migration),
             Box::new(m20240304_063328_create_sharing_request_log::Migration),
             Box::new(m20240319_061549_update_data_sharing_config_table::Migration),
+            Box::new(m20240327_063820_update_sharing_request_log::Migration),
         ]
     }
 }

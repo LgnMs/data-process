@@ -131,11 +131,15 @@ async fn get_data(
         log_map.insert("err".to_string(), err.to_string().parse()?);
     }
 
+    let user_info = json!({
+        "user": user_info.auth_id
+    }).to_string();
     SharingRequestLogService::add(
         &state.conn,
         sharing_request_log::Model {
             data_sharing_config_id: id,
             log: json!(log_map).to_string(),
+            user_info: Some(user_info),
             ..Default::default()
         },
     )

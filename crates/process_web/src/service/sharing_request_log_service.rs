@@ -73,6 +73,7 @@ impl SharingRequestLogService {
         let now = chrono::Local::now().naive_local();
         let mut active_data = sharing_request_log::ActiveModel {
             data_sharing_config_id: Set(data.data_sharing_config_id),
+            user_info: Set(data.user_info),
             ..Default::default()
         };
         if let Some(id) = id {

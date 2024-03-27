@@ -49,7 +49,7 @@ impl Keys {
 // TODO 接入认证信息
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Claims {
-    auth_id: String,
+    pub auth_id: String,
     auth_secret: String,
     exp: usize,
 }

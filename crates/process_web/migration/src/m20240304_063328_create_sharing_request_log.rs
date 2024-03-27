@@ -72,6 +72,7 @@ pub enum SharingRequestLog {
     Table,
     Id,
     Log,
+    UserInfo,
     DataSharingConfigId,
     UpdateTime,
     CreateTime,
