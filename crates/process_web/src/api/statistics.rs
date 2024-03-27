@@ -4,7 +4,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use axum::extract::State;
 use axum::{routing::post, Json, Router};
-use chrono::NaiveDateTime;
+use chrono::{Local, TimeZone};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
     QuerySelect, Statement,
@@ -136,12 +136,12 @@ pub async fn collect_task_info_day_list(
     let mut conditions = Condition::all();
     conditions = conditions
         .add(
-            collect_log::Column::UpdateTime
-                .gte(NaiveDateTime::from_timestamp_millis(payload.date[0])),
+            sharing_request_log::Column::UpdateTime
+                .gte(Local.timestamp_millis_opt(payload.date[0]).unwrap().naive_local()),
         )
         .add(
-            collect_log::Column::UpdateTime
-                .lte(NaiveDateTime::from_timestamp_millis(payload.date[1])),
+            sharing_request_log::Column::UpdateTime
+                .lte(Local.timestamp_millis_opt(payload.date[1]).unwrap().naive_local()),
         );
 
     let list = collect_log::Entity::find()
@@ -194,6 +194,8 @@ pub struct SharingTaskInfoRes {
     list: HashMap<String, i32>,
     num_items: i64,
     rank_list: Vec<Value>,
+    user_number: i32,
+    avg_num_user_calls_api: i32,
 }
 
 #[derive(FromQueryResult)]
@@ -210,11 +212,11 @@ pub async fn sharing_task_info(
     conditions = conditions
         .add(
             sharing_request_log::Column::UpdateTime
-                .gte(NaiveDateTime::from_timestamp_millis(payload.date[0])),
+                .gte(Local.timestamp_millis_opt(payload.date[0]).unwrap().naive_local()),
         )
         .add(
             sharing_request_log::Column::UpdateTime
-                .lte(NaiveDateTime::from_timestamp_millis(payload.date[1])),
+                .lte(Local.timestamp_millis_opt(payload.date[1]).unwrap().naive_local()),
         );
 
     let list = sharing_request_log::Entity::find()
@@ -223,7 +225,9 @@ pub async fn sharing_task_info(
         .all(&state.conn)
         .await?;
 
-    let mut info_day_map: HashMap<String, i32> = HashMap::new();
+        print!("list {list:?} list");
+    let mut info_day_map = HashMap::new();
+    let mut user_calls_times = HashMap::new();
 
     for item in list {
         let date = item.update_time.format("%Y-%m-%d").to_string();
@@ -232,7 +236,30 @@ pub async fn sharing_task_info(
             .entry(date)
             .and_modify(|number| *number += 1)
             .or_insert(1);
+
+        if let Some(user_info) = item.user_info {
+            let info: Value = serde_json::from_str(user_info.as_str())?;
+            if let Some(user) = info.get("user") {
+                let key = user.as_str().unwrap_or_default();
+                user_calls_times
+                    .entry(key.to_string())
+                    .and_modify(|number| *number += 1)
+                    .or_insert(1);
+            }
+
+        }
     }
+
+    let mut sum_calls_times = 0;
+    for item in &user_calls_times {
+        sum_calls_times += item.1;
+    }
+
+    let avg_num_user_calls_api = if     user_calls_times.len() != 0 {
+        sum_calls_times / user_calls_times.len() as i32
+    } else {
+        0
+    };
 
     let count_res = sharing_request_log::Entity::find()
         .select_only()
@@ -268,6 +295,8 @@ pub async fn sharing_task_info(
         list: info_day_map,
         num_items,
         rank_list,
+        avg_num_user_calls_api,
+        user_number: user_calls_times.len() as i32
     });
 
     data_response!(res)
@@ -293,10 +322,12 @@ pub async fn sync_task_info(
     let mut conditions = Condition::all();
     conditions = conditions
         .add(
-            sync_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])),
+            sharing_request_log::Column::UpdateTime
+                .gte(Local.timestamp_millis_opt(payload.date[0]).unwrap().naive_local()),
         )
         .add(
-            sync_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])),
+            sharing_request_log::Column::UpdateTime
+                .lte(Local.timestamp_millis_opt(payload.date[1]).unwrap().naive_local()),
         );
 
     let list = sync_log::Entity::find()

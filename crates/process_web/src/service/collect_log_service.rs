@@ -1,5 +1,5 @@
 use crate::api::collect_log::ListParams;
-use chrono::NaiveDateTime;
+use chrono::{Local, TimeZone};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use serde_json::json;
@@ -33,11 +33,11 @@ impl CollectLogService {
                 conditions = conditions
                     .add(
                         collect_config::Column::UpdateTime
-                            .gte(NaiveDateTime::from_timestamp_millis(start_date)),
+                            .gte(Local.timestamp_millis_opt(start_date).unwrap().naive_local()),
                     )
                     .add(
                         collect_config::Column::UpdateTime
-                            .lte(NaiveDateTime::from_timestamp_millis(end_date)),
+                            .lte(Local.timestamp_millis_opt(end_date).unwrap().naive_local()),
                     );
             }
         }
