@@ -383,8 +383,8 @@ pub async fn process_data(
             ..Default::default()
         },
     )
-        .await
-        .err()
+    .await
+    .err()
     {
         error!("status: 1 运行完毕；日志更新失败: {err}");
     };
@@ -565,7 +565,10 @@ pub async fn process_data(
                         res_data_str.push_str("空，请检查接口返回的数据与配置中的映射关系")
                     }
 
-                    let log = format!("已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为", data_res.len());
+                    let log = format!(
+                        "已累计发起{loop_counts}次请求，本轮采集{}条数据开始插入!\n 处理后的数据为",
+                        data_res.len()
+                    );
                     collect_log_string.push_str(log.as_str());
                     collect_log_string.push_str(res_data_str.as_str());
                     if let Some(err) = CollectLogService::update_by_id(
@@ -577,8 +580,8 @@ pub async fn process_data(
                             ..Default::default()
                         },
                     )
-                        .await
-                        .err()
+                    .await
+                    .err()
                     {
                         error!("status: 1 运行完毕；日志更新失败: {err}");
                     };
@@ -586,7 +589,6 @@ pub async fn process_data(
                     match CollectConfigService::cache_data(&state.cache_conn, &data_res).await {
                         Ok(_) => {}
                         Err(err) => {
-
                             if let Some(err) = CollectLogService::update_by_id(
                                 &state.conn,
                                 log_id,
@@ -596,8 +598,8 @@ pub async fn process_data(
                                     ..Default::default()
                                 },
                             )
-                                .await
-                                .err()
+                            .await
+                            .err()
                             {
                                 error!("status: 1 运行完毕；日志更新失败: {err}");
                             };
@@ -643,7 +645,7 @@ pub async fn process_data(
                     {
                         error!("status: 1 运行完毕；日志更新失败: {err}");
                     };
-                    
+
                     collect_log_string = String::new();
 
                     match CollectConfigService::cache_data(&state.cache_conn, list).await {

@@ -2,17 +2,22 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use axum::{Json, Router, routing::post};
 use axum::extract::State;
+use axum::{routing::post, Json, Router};
 use chrono::NaiveDateTime;
-use sea_orm::{ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, FromQueryResult, QueryFilter, QueryOrder, QuerySelect, Statement};
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
+    QuerySelect, Statement,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use migration::Condition;
 
 use crate::data_response;
-use crate::entity::{collect_config, collect_log, sync_log, data_sharing_config, sharing_request_log, sync_config};
+use crate::entity::{
+    collect_config, collect_log, data_sharing_config, sharing_request_log, sync_config, sync_log,
+};
 
 use super::common::{AppError, AppState, ResJson};
 
@@ -51,14 +56,8 @@ pub fn set_routes() -> Router<Arc<AppState>> {
             "/collect_task_info_day_list",
             post(collect_task_info_day_list),
         )
-        .route(
-            "/sharing_task_info",
-            post(sharing_task_info),
-        )
-        .route(
-            "/sync_task_info",
-            post(sync_task_info),
-        );
+        .route("/sharing_task_info", post(sharing_task_info))
+        .route("/sync_task_info", post(sync_task_info));
 
     routes
 }
@@ -126,7 +125,7 @@ pub struct CollectTaskInfoDayListReq {
 #[derive(Serialize, Deserialize)]
 pub struct CollectTaskInfoRes {
     list: HashMap<String, i32>,
-    rank_list: Vec<Value>
+    rank_list: Vec<Value>,
 }
 
 /// 获取每日采集任务执行的次数
@@ -136,8 +135,14 @@ pub async fn collect_task_info_day_list(
 ) -> Result<ResJson<CollectTaskInfoRes>, AppError> {
     let mut conditions = Condition::all();
     conditions = conditions
-        .add(collect_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])))
-        .add(collect_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])));
+        .add(
+            collect_log::Column::UpdateTime
+                .gte(NaiveDateTime::from_timestamp_millis(payload.date[0])),
+        )
+        .add(
+            collect_log::Column::UpdateTime
+                .lte(NaiveDateTime::from_timestamp_millis(payload.date[1])),
+        );
 
     let list = collect_log::Entity::find()
         .filter(conditions.clone())
@@ -173,7 +178,7 @@ pub async fn collect_task_info_day_list(
 
     let res: Result<CollectTaskInfoRes> = Ok(CollectTaskInfoRes {
         list: info_day_map,
-        rank_list
+        rank_list,
     });
 
     data_response!(res)
@@ -188,12 +193,12 @@ pub struct SharingTaskInfoReq {
 pub struct SharingTaskInfoRes {
     list: HashMap<String, i32>,
     num_items: i64,
-    rank_list: Vec<Value>
+    rank_list: Vec<Value>,
 }
 
 #[derive(FromQueryResult)]
 struct NumItems {
-    num_items: i64
+    num_items: i64,
 }
 
 /// 获取共享任务调用详情
@@ -203,8 +208,14 @@ pub async fn sharing_task_info(
 ) -> Result<ResJson<SharingTaskInfoRes>, AppError> {
     let mut conditions = Condition::all();
     conditions = conditions
-        .add(sharing_request_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])))
-        .add(sharing_request_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])));
+        .add(
+            sharing_request_log::Column::UpdateTime
+                .gte(NaiveDateTime::from_timestamp_millis(payload.date[0])),
+        )
+        .add(
+            sharing_request_log::Column::UpdateTime
+                .lte(NaiveDateTime::from_timestamp_millis(payload.date[1])),
+        );
 
     let list = sharing_request_log::Entity::find()
         .filter(conditions.clone())
@@ -256,7 +267,7 @@ pub async fn sharing_task_info(
     let res: Result<SharingTaskInfoRes> = Ok(SharingTaskInfoRes {
         list: info_day_map,
         num_items,
-        rank_list
+        rank_list,
     });
 
     data_response!(res)
@@ -271,7 +282,7 @@ pub struct SyncTaskInfoReq {
 pub struct SyncTaskInfoRes {
     list: HashMap<String, i32>,
     num_items: i64,
-    rank_list: Vec<Value>
+    rank_list: Vec<Value>,
 }
 
 /// 获取同步任务调用详情
@@ -281,8 +292,12 @@ pub async fn sync_task_info(
 ) -> Result<ResJson<SyncTaskInfoRes>, AppError> {
     let mut conditions = Condition::all();
     conditions = conditions
-        .add(sync_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])))
-        .add(sync_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])));
+        .add(
+            sync_log::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(payload.date[0])),
+        )
+        .add(
+            sync_log::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(payload.date[1])),
+        );
 
     let list = sync_log::Entity::find()
         .filter(conditions.clone())
@@ -334,7 +349,7 @@ pub async fn sync_task_info(
     let res: Result<SyncTaskInfoRes> = Ok(SyncTaskInfoRes {
         list: info_day_map,
         num_items,
-        rank_list
+        rank_list,
     });
 
     data_response!(res)

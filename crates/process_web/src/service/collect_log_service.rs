@@ -1,5 +1,5 @@
-use chrono::NaiveDateTime;
 use crate::api::collect_log::ListParams;
+use chrono::NaiveDateTime;
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use serde_json::json;
@@ -31,8 +31,14 @@ impl CollectLogService {
             }
             if let Some([start_date, end_date]) = data.date {
                 conditions = conditions
-                    .add(collect_config::Column::UpdateTime.gte(NaiveDateTime::from_timestamp_millis(start_date)))
-                    .add(collect_config::Column::UpdateTime.lte(NaiveDateTime::from_timestamp_millis(end_date)));
+                    .add(
+                        collect_config::Column::UpdateTime
+                            .gte(NaiveDateTime::from_timestamp_millis(start_date)),
+                    )
+                    .add(
+                        collect_config::Column::UpdateTime
+                            .lte(NaiveDateTime::from_timestamp_millis(end_date)),
+                    );
             }
         }
 

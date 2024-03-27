@@ -1,3 +1,4 @@
+use crate::api::auth::Claims;
 use crate::api::common::{
     AppError, AppState, PaginationPayload, RequestInfo, ResJson, ResJsonWithPagination,
 };
@@ -10,7 +11,6 @@ use serde_json::{json, Value};
 use std::str::FromStr;
 use std::sync::Arc;
 use ts_rs::TS;
-use crate::api::auth::Claims;
 
 use crate::entity::data_sharing_config::Model;
 use crate::entity::sharing_request_log;
@@ -121,8 +121,6 @@ async fn get_data(
     if let Some(body) = &payload {
         log_map.insert("body".to_string(), body.clone());
     }
-    // TODO 记录调用的用户
-    println!("{:?}, {}", user_info, user_info);
     let id = i32::from_str(&api_id[..1])?;
     let api_id = api_id[1..].to_string();
     let res = DataSharingConfigService::get_data(&state.conn, api_id, payload).await;
@@ -133,7 +131,8 @@ async fn get_data(
 
     let user_info = json!({
         "user": user_info.auth_id
-    }).to_string();
+    })
+    .to_string();
     SharingRequestLogService::add(
         &state.conn,
         sharing_request_log::Model {
