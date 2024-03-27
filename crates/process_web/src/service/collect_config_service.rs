@@ -343,26 +343,7 @@ impl CollectConfigService {
                 error!("任务日志添加失败 {err}");
             }
         }
-        let status = 1;
         let log_id = collect_log_model.id;
-        let mut collect_log_string = String::new();
-
-        collect_log_string.push_str(format!("开始执行采集任务!\n采集配置： {:?}\n", data).as_str());
-
-        if let Some(err) = CollectLogService::update_by_id(
-            &state.conn,
-            log_id,
-            collect_log::Model {
-                status,
-                running_log: collect_log_string,
-                ..Default::default()
-            },
-        )
-        .await
-        .err()
-        {
-            error!("status: {status} 运行完毕；日志更新失败: {err}");
-        };
 
         let _ = process_data(&data, state, log_id).await;
     }
@@ -392,6 +373,21 @@ pub async fn process_data(
     log_id: i32,
 ) -> anyhow::Result<Vec<String>> {
     let body_string = format_body_string(data.body.as_ref());
+
+    if let Some(err) = CollectLogService::update_by_id(
+        &state.conn,
+        log_id,
+        collect_log::Model {
+            status: 1,
+            running_log: format!("开始执行采集任务!\n采集配置： {:?}\n", data),
+            ..Default::default()
+        },
+    )
+        .await
+        .err()
+    {
+        error!("status: {status} 运行完毕；日志更新失败: {err}");
+    };
 
     if let Some(loop_request_by_pagination) = data.loop_request_by_pagination {
         if loop_request_by_pagination {
@@ -555,6 +551,7 @@ pub async fn process_data(
 
                 // 如果数据大于10000条就开始入库
                 if data_res.len() > 10000 || (loop_counts != 0 && loop_counts % 50 == 0) {
+                    re_request_times = 0;
                     let mut collect_log_string = String::new();
                     let mut res_data_str = String::new();
                     if let Some(str) = data_res.get(0) {
