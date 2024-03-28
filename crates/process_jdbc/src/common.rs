@@ -109,7 +109,7 @@ impl JdbcType {
 
 pub static JVM_IS_SETUP: OnceLock<bool> = OnceLock::new();
 
-pub struct JvmInstance(pub(crate) Jvm);
+pub struct JvmInstance;
 
 impl JvmInstance {
     pub fn new() -> Result<Jvm> {
