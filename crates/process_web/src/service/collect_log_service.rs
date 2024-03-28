@@ -32,8 +32,12 @@ impl CollectLogService {
             if let Some([start_date, end_date]) = data.date {
                 conditions = conditions
                     .add(
-                        collect_config::Column::UpdateTime
-                            .gte(Local.timestamp_millis_opt(start_date).unwrap().naive_local()),
+                        collect_config::Column::UpdateTime.gte(
+                            Local
+                                .timestamp_millis_opt(start_date)
+                                .unwrap()
+                                .naive_local(),
+                        ),
                     )
                     .add(
                         collect_config::Column::UpdateTime

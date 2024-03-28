@@ -257,7 +257,9 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
 }
 
 fn is_non_query_statement(sql_statement: &str) -> bool {
-    let non_query_keywords = vec!["INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TRUNCATE"];
+    let non_query_keywords = vec![
+        "INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TRUNCATE",
+    ];
     let sql_uppercase = sql_statement.to_uppercase();
     for keyword in non_query_keywords {
         if sql_uppercase.contains(&format!(" {} ", keyword)) || sql_uppercase.starts_with(keyword) {

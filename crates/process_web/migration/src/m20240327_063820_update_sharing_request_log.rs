@@ -9,18 +9,16 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-        .alter_table(
-            Table::alter()
-                .table(SharingRequestLog::Table)
-                .add_column(
-                    ColumnDef::new(SharingRequestLog::UserInfo)
-                        .string()
-                        .comment("用户信息"),
-                )
-                .to_owned(),
-        )
-        .await
+            .alter_table(
+                Table::alter()
+                    .table(SharingRequestLog::Table)
+                    .add_column(
+                        ColumnDef::new(SharingRequestLog::UserInfo)
+                            .string()
+                            .comment("用户信息"),
+                    )
+                    .to_owned(),
+            )
+            .await
     }
-
 }
-

@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use axum::extract::State;
+use axum::routing::get;
 use axum::{routing::post, Json, Router};
 use chrono::{Local, TimeZone};
 use sea_orm::{
@@ -13,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use migration::Condition;
+use ts_rs::TS;
 
 use crate::data_response;
 use crate::entity::{
@@ -21,37 +23,9 @@ use crate::entity::{
 
 use super::common::{AppError, AppState, ResJson};
 
-/// 1. 总采集量
-///     - 通过采集任务采集到的数据总量
-///     - 时间维度下每日采集任务执行次数（面积图形式展示）
-///     - 当日执行的采集任务次数
-/// 2. 总访问数
-///     - 共享接口被调用的次数
-///     - 时间维度下每日被调用的次数（面积图形式展示）
-///     - 当日被调用的次数
-/// 3. 总同步次数
-///     - 同步任务运行次数
-///     - 时间维度下每日运行次数（面积图形式展示）
-///     - 当日运行次数
-/// 4. 性能监测
-///     - CPU占比
-///     - 内存占用
-/// 5. 任务执行状况概览
-///     - 年、月、日采集量统计
-///     - 年、月、日同步任务运行次数统计
-///     - 前x名运行次数的采集任务
-///     - 前x名运行次数的同步任务
-/// 6. 共享接口调用
-///     - 访问用户数
-///     - 人均调用次数
-///     - 前x名接口调用
-///         - 调用量
-/// 7. 任务占比
-///     - 三种类型任务再系统中的占比详情
-
 pub fn set_routes() -> Router<Arc<AppState>> {
     let routes = Router::new()
-        .route("/collect_task_info", post(collect_task_info))
+        .route("/collect_task_info", get(collect_task_info))
         .route(
             "/collect_task_info_day_list",
             post(collect_task_info_day_list),
@@ -63,7 +37,12 @@ pub fn set_routes() -> Router<Arc<AppState>> {
 }
 
 /// 采集数据量总览
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/CollectTaskInfo.ts",
+    rename = "CollectTaskInfo"
+)]
 pub struct CollectTaskInfo {
     pub num_items: i64,
 }
@@ -117,14 +96,25 @@ pub async fn collect_task_info(
     data_response!(res)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/CollectTaskInfoDayListReq.ts",
+    rename = "CollectTaskInfoDayListReq"
+)]
 pub struct CollectTaskInfoDayListReq {
     pub date: [i64; 2],
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/CollectTaskInfoRes.ts",
+    rename = "CollectTaskInfoRes"
+)]
 pub struct CollectTaskInfoRes {
     list: HashMap<String, i32>,
+    #[ts(type = "any")]
     rank_list: Vec<Value>,
 }
 
@@ -136,12 +126,20 @@ pub async fn collect_task_info_day_list(
     let mut conditions = Condition::all();
     conditions = conditions
         .add(
-            sharing_request_log::Column::UpdateTime
-                .gte(Local.timestamp_millis_opt(payload.date[0]).unwrap().naive_local()),
+            collect_log::Column::UpdateTime.gte(
+                Local
+                    .timestamp_millis_opt(payload.date[0])
+                    .unwrap()
+                    .naive_local(),
+            ),
         )
         .add(
-            sharing_request_log::Column::UpdateTime
-                .lte(Local.timestamp_millis_opt(payload.date[1]).unwrap().naive_local()),
+            collect_log::Column::UpdateTime.lte(
+                Local
+                    .timestamp_millis_opt(payload.date[1])
+                    .unwrap()
+                    .naive_local(),
+            ),
         );
 
     let list = collect_log::Entity::find()
@@ -184,21 +182,37 @@ pub async fn collect_task_info_day_list(
     data_response!(res)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/SharingTaskInfoReq.ts",
+    rename = "SharingTaskInfoReq"
+)]
 pub struct SharingTaskInfoReq {
     pub date: [i64; 2],
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/SharingTaskInfoRes.ts",
+    rename = "SharingTaskInfoRes"
+)]
 pub struct SharingTaskInfoRes {
     list: HashMap<String, i32>,
     num_items: i64,
+    #[ts(type = "any")]
     rank_list: Vec<Value>,
     user_number: i32,
     avg_num_user_calls_api: i32,
 }
 
-#[derive(FromQueryResult)]
+#[derive(FromQueryResult, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/NumItems.ts",
+    rename = "NumItems"
+)]
 struct NumItems {
     num_items: i64,
 }
@@ -211,12 +225,20 @@ pub async fn sharing_task_info(
     let mut conditions = Condition::all();
     conditions = conditions
         .add(
-            sharing_request_log::Column::UpdateTime
-                .gte(Local.timestamp_millis_opt(payload.date[0]).unwrap().naive_local()),
+            sharing_request_log::Column::UpdateTime.gte(
+                Local
+                    .timestamp_millis_opt(payload.date[0])
+                    .unwrap()
+                    .naive_local(),
+            ),
         )
         .add(
-            sharing_request_log::Column::UpdateTime
-                .lte(Local.timestamp_millis_opt(payload.date[1]).unwrap().naive_local()),
+            sharing_request_log::Column::UpdateTime.lte(
+                Local
+                    .timestamp_millis_opt(payload.date[1])
+                    .unwrap()
+                    .naive_local(),
+            ),
         );
 
     let list = sharing_request_log::Entity::find()
@@ -225,7 +247,7 @@ pub async fn sharing_task_info(
         .all(&state.conn)
         .await?;
 
-        print!("list {list:?} list");
+    print!("list {list:?} list");
     let mut info_day_map = HashMap::new();
     let mut user_calls_times = HashMap::new();
 
@@ -246,7 +268,6 @@ pub async fn sharing_task_info(
                     .and_modify(|number| *number += 1)
                     .or_insert(1);
             }
-
         }
     }
 
@@ -255,7 +276,7 @@ pub async fn sharing_task_info(
         sum_calls_times += item.1;
     }
 
-    let avg_num_user_calls_api = if     user_calls_times.len() != 0 {
+    let avg_num_user_calls_api = if user_calls_times.len() != 0 {
         sum_calls_times / user_calls_times.len() as i32
     } else {
         0
@@ -296,21 +317,32 @@ pub async fn sharing_task_info(
         num_items,
         rank_list,
         avg_num_user_calls_api,
-        user_number: user_calls_times.len() as i32
+        user_number: user_calls_times.len() as i32,
     });
 
     data_response!(res)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/SyncTaskInfoReq.ts",
+    rename = "SyncTaskInfoReq"
+)]
 pub struct SyncTaskInfoReq {
     pub date: [i64; 2],
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/SyncTaskInfoRes.ts",
+    rename = "SyncTaskInfoRes"
+)]
 pub struct SyncTaskInfoRes {
     list: HashMap<String, i32>,
     num_items: i64,
+    #[ts(type = "any")]
     rank_list: Vec<Value>,
 }
 
@@ -322,12 +354,20 @@ pub async fn sync_task_info(
     let mut conditions = Condition::all();
     conditions = conditions
         .add(
-            sharing_request_log::Column::UpdateTime
-                .gte(Local.timestamp_millis_opt(payload.date[0]).unwrap().naive_local()),
+            sharing_request_log::Column::UpdateTime.gte(
+                Local
+                    .timestamp_millis_opt(payload.date[0])
+                    .unwrap()
+                    .naive_local(),
+            ),
         )
         .add(
-            sharing_request_log::Column::UpdateTime
-                .lte(Local.timestamp_millis_opt(payload.date[1]).unwrap().naive_local()),
+            sharing_request_log::Column::UpdateTime.lte(
+                Local
+                    .timestamp_millis_opt(payload.date[1])
+                    .unwrap()
+                    .naive_local(),
+            ),
         );
 
     let list = sync_log::Entity::find()
