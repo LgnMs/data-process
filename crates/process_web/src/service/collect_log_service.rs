@@ -27,7 +27,7 @@ impl CollectLogService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.collect_config_name {
-                conditions = conditions.add(collect_config::Column::Name.contains(&name));
+                conditions = conditions.add(collect_config::Column::Name.contains(name));
             }
             if let Some([start_date, end_date]) = data.date {
                 conditions = conditions
@@ -64,7 +64,7 @@ impl CollectLogService {
 
         let num_pages = collect_log::Entity::find().all(db).await?.len() as u64;
 
-        return Ok((list, num_pages));
+        Ok((list, num_pages))
     }
 
     pub async fn add(db: &DbConn, data: collect_log::Model) -> Result<collect_log::Model, DbErr> {

@@ -22,9 +22,7 @@ use crate::api::common::{AppState, ResJson};
 use crate::data_response;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new().route("/authorize", post(authorize));
-
-    routes
+    Router::new().route("/authorize", post(authorize))
 }
 
 static KEYS: Lazy<Keys> = Lazy::new(|| {

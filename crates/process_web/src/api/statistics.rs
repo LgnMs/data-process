@@ -24,16 +24,14 @@ use crate::entity::{
 use super::common::{AppError, AppState, ResJson};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new()
+    Router::new()
         .route("/collect_task_info", get(collect_task_info))
         .route(
             "/collect_task_info_day_list",
             post(collect_task_info_day_list),
         )
         .route("/sharing_task_info", post(sharing_task_info))
-        .route("/sync_task_info", post(sync_task_info));
-
-    routes
+        .route("/sync_task_info", post(sync_task_info))
 }
 
 /// 采集数据量总览
@@ -51,20 +49,17 @@ pub async fn collect_task_info(
     state: State<Arc<AppState>>,
 ) -> Result<ResJson<CollectTaskInfo>, AppError> {
     let cache_db = &state.cache_conn;
-    let query_table_name_sql: &str;
-
-    match cache_db.get_database_backend() {
+    let query_table_name_sql: &str = match cache_db.get_database_backend() {
         DbBackend::MySql => {
-            query_table_name_sql = "show tables;";
+             "show tables;"
         }
         DbBackend::Postgres => {
-            query_table_name_sql =
-                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';";
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
         }
         _ => {
             return Err(anyhow!("不支持的数据库格式").into());
         }
-    }
+    };
 
     let table_list = cache_db
         .query_all(Statement::from_string(
@@ -276,7 +271,7 @@ pub async fn sharing_task_info(
         sum_calls_times += item.1;
     }
 
-    let avg_num_user_calls_api = if user_calls_times.len() != 0 {
+    let avg_num_user_calls_api = if user_calls_times.is_empty() {
         sum_calls_times / user_calls_times.len() as i32
     } else {
         0

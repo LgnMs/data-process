@@ -35,7 +35,7 @@ impl DataSharingConfigService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.name {
-                conditions = conditions.add(data_sharing_config::Column::Name.contains(&name));
+                conditions = conditions.add(data_sharing_config::Column::Name.contains(name));
             }
         }
 

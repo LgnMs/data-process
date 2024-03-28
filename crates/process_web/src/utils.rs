@@ -52,7 +52,7 @@ pub fn format_cron(cron: String) -> String {
 pub fn get_datetime_by_string(value_str: &str) -> anyhow::Result<String> {
     let split_str: Vec<&str> = value_str.split('.').collect();
 
-    if split_str.len() > 0 {
+    if !split_str.is_empty() {
         let date_str = split_str[0];
 
         if !date_str.contains("now") {
@@ -67,7 +67,7 @@ pub fn get_datetime_by_string(value_str: &str) -> anyhow::Result<String> {
         for i in 0..date_str.len() {
             let char = &date_str[i..i + 1];
             if char == "-" || char == "+" {
-                if pre_str == "" {
+                if pre_str.is_empty() {
                     pre_str = &date_str[last_i..i];
                     current_sign = char;
                     last_i = i + 1;
@@ -76,9 +76,9 @@ pub fn get_datetime_by_string(value_str: &str) -> anyhow::Result<String> {
 
                 pre_str = &date_str[last_i..i];
                 if current_sign == "-" {
-                    date = date - get_date(pre_str)?;
+                    date -= get_date(pre_str)?;
                 } else if current_sign == "+" {
-                    date = date + get_date(pre_str)?;
+                    date += get_date(pre_str)?;
                 }
 
                 last_i = i + 1;
@@ -88,9 +88,9 @@ pub fn get_datetime_by_string(value_str: &str) -> anyhow::Result<String> {
 
         pre_str = &date_str[last_i..];
         if current_sign == "-" {
-            date = date - get_date(pre_str)?;
+            date -= get_date(pre_str)?;
         } else if current_sign == "+" {
-            date = date + get_date(pre_str)?;
+            date += get_date(pre_str)?;
         }
 
         if split_str.len() > 1 {
@@ -111,16 +111,16 @@ fn test_get_datetime_by_string() {
 
 pub fn get_date(str: &str) -> anyhow::Result<chrono::Duration> {
     let number = str[..str.len() - 1].parse::<i64>()?;
-    if str.contains("d") {
+    if str.contains('d') {
         return Ok(chrono::Duration::days(number));
     }
-    if str.contains("h") {
+    if str.contains('h') {
         return Ok(chrono::Duration::hours(number));
     }
-    if str.contains("m") {
+    if str.contains('m') {
         return Ok(chrono::Duration::minutes(number));
     }
-    if str.contains("s") {
+    if str.contains('s') {
         return Ok(chrono::Duration::seconds(number));
     }
     Err(anyhow!("未发现匹配的字符"))
@@ -129,9 +129,7 @@ pub fn get_date(str: &str) -> anyhow::Result<chrono::Duration> {
 /// 查找body字符串中`${xxx}`格式值进行转换
 /// 目前只支持日期字符串
 pub fn format_body_string(body: Option<&String>) -> Option<String> {
-    if body.is_none() {
-        return None;
-    }
+    body?;
 
     let mut body_str = body.unwrap().as_str();
 
@@ -140,7 +138,7 @@ pub fn format_body_string(body: Option<&String>) -> Option<String> {
     while let Some(i) = body_str.find("${") {
         body_str = &body_str[i..];
 
-        if let Some(j) = body_str.find("}") {
+        if let Some(j) = body_str.find('}') {
             let params_str = &body_str[2..j];
             let current_str = &body_str[0..j + 1];
             if params_str.contains("_now") {

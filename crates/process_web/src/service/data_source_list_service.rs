@@ -26,7 +26,7 @@ impl DataSourceListService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.database_name {
-                conditions = conditions.add(data_source_list::Column::DatabaseName.contains(&name));
+                conditions = conditions.add(data_source_list::Column::DatabaseName.contains(name));
             }
         }
 

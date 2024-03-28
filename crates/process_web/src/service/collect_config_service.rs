@@ -42,7 +42,7 @@ impl CollectConfigService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.name {
-                conditions = conditions.add(collect_config::Column::Name.contains(&name));
+                conditions = conditions.add(collect_config::Column::Name.contains(name));
             }
         }
 
@@ -186,10 +186,9 @@ impl CollectConfigService {
         active_data.update(&state.conn).await
     }
 
-    pub async fn cache_data(cache_db: &DbConn, list: &Vec<String>) -> Result<(), String> {
+    pub async fn cache_data(cache_db: &DbConn, list: &[String]) -> Result<(), String> {
         let mut err_msg = String::new();
-        for i in 0..list.len() {
-            let item = &list[i];
+        for (i, item) in list.iter().enumerate() {
             match cache_db
                 .execute(Statement::from_string(
                     cache_db.get_database_backend(),
@@ -202,9 +201,9 @@ impl CollectConfigService {
                 }
                 Err(err) => {
                     err_msg.push_str(
-                        format!("第{}条SQL执行失败，{}", i + 1, err.to_string()).as_str(),
+                        format!("第{}条SQL执行失败，{}", i + 1, err).as_str(),
                     );
-                    err_msg.push_str("\n");
+                    err_msg.push('\n');
                 }
             }
         }
@@ -306,19 +305,16 @@ impl CollectConfigService {
     ) -> Result<bool, DbErr> {
         let now = Local::now().naive_utc().timestamp();
         let alert_sql = format!("ALTER TABLE {table_name} rename to __{table_name}_{now}");
-        match cache_db
-            .execute(Statement::from_string(
-                cache_db.get_database_backend(),
-                alert_sql,
-            ))
-            .await
-        {
-            Err(err) => {
-                // TODO 识别为表不存在的错误
-                error!("DbErr {:?}", err);
-            }
-            _ => {}
-        };
+ 
+        if let Err(err) = cache_db
+        .execute(Statement::from_string(
+            cache_db.get_database_backend(),
+            alert_sql,
+        ))
+        .await {
+            // TODO 识别为表不存在的错误
+            error!("DbErr {:?}", err);
+        }
 
         if let Some(x) = db_columns_config {
             let res = Self::create_table(cache_db, x, table_name).await?;
@@ -345,7 +341,7 @@ impl CollectConfigService {
         }
         let log_id = collect_log_model.id;
 
-        let _ = process_data(&data, state, log_id).await;
+        let _ = process_data(data, state, log_id).await;
     }
 
     /// 初始化所有的采集系统调度任务
@@ -415,7 +411,7 @@ pub async fn process_data(
                 while let Some(l_i) = new_string.find("${") {
                     new_string = &new_string[l_i..];
 
-                    if let Some(r_i) = new_string.find("}") {
+                    if let Some(r_i) = new_string.find('}') {
                         let current_str = &new_string[..r_i + 1];
                         let mut parameter_str = new_string[2..r_i].to_string();
 
@@ -444,7 +440,7 @@ pub async fn process_data(
                     body_string = body_string.replace(value2.as_str(), &value);
                 }
 
-                match collect_data_with_http(&data, Some(body_string.to_string())).await {
+                match collect_data_with_http(data, Some(body_string.to_string())).await {
                     Ok((has_next_page, res)) => {
                         let new_vec = res?;
 
@@ -463,7 +459,7 @@ pub async fn process_data(
                         if should_stop {
                             let mut res_data_str = String::new();
                             let mut collect_log_string = String::new();
-                            if let Some(str) = data_res.get(0) {
+                            if let Some(str) = data_res.first() {
                                 res_data_str.push_str(str);
                                 res_data_str.push_str("......");
                             } else {
@@ -558,7 +554,7 @@ pub async fn process_data(
                     re_request_times = 0;
                     let mut collect_log_string = String::new();
                     let mut res_data_str = String::new();
-                    if let Some(str) = data_res.get(0) {
+                    if let Some(str) = data_res.first() {
                         res_data_str.push_str(str);
                         res_data_str.push_str("......");
                     } else {
@@ -621,7 +617,7 @@ pub async fn process_data(
             let mut res_data_str = String::new();
             match res.as_ref() {
                 Ok(list) => {
-                    if let Some(str) = list.get(0) {
+                    if let Some(str) = list.first() {
                         res_data_str.push_str(str);
                         res_data_str.push_str("......");
                     } else {
@@ -651,7 +647,7 @@ pub async fn process_data(
                     match CollectConfigService::cache_data(&state.cache_conn, list).await {
                         Ok(_) => {}
                         Err(err) => {
-                            collect_log_string.push_str("\n");
+                            collect_log_string.push('\n');
                             collect_log_string.push_str(err.as_str());
                         }
                     };

@@ -18,15 +18,13 @@ use crate::service::data_sharing_config_service::DataSharingConfigService;
 use crate::service::sharing_request_log_service::SharingRequestLogService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new()
+    Router::new()
         .route("/find_by_id/:id", get(find_by_id))
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))
         .route("/get_data/:id", post(get_data))
-        .route("/del/:id", get(del));
-
-    routes
+        .route("/del/:id", get(del))
 }
 
 #[derive(Deserialize, TS)]

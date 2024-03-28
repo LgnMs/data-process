@@ -8,7 +8,7 @@ pub fn find_value(key: &str, value: &Value, should_flat: bool) -> anyhow::Result
     let current_index: &str;
     let mut current_value = Some(value.clone());
 
-    if let Some(index) = current_key.find(".") {
+    if let Some(index) = current_key.find('.') {
         current_index = &current_key[..index];
         current_value = Some(
             current_value
@@ -24,7 +24,7 @@ pub fn find_value(key: &str, value: &Value, should_flat: bool) -> anyhow::Result
             &current_value.ok_or(anyhow!("查找数据失败"))?,
             should_flat,
         );
-    } else if let Some(index) = current_key.find("#") {
+    } else if let Some(index) = current_key.find('#') {
         current_index = &current_key[..index];
 
         current_value = match current_value
@@ -168,8 +168,7 @@ fn get_target_rule_data(o_key: &str, t_key: &str, origin_data: &Value, value: &m
         current_key = t_key;
         let target_value = find_value(o_key, origin_data, true).unwrap_or(json!(null));
         if let Some(res_list) = target_value.as_array() {
-            let mut i = 0;
-            for item in res_list {
+            for (i, item) in res_list.iter().enumerate() {
                 if let Some(v_map) = value.as_object_mut() {
                     v_map.insert(current_key.to_string(), item.clone());
                 } else if let Some(v_array) = value.as_array_mut() {
@@ -192,7 +191,6 @@ fn get_target_rule_data(o_key: &str, t_key: &str, origin_data: &Value, value: &m
                             .insert(current_key.to_string(), item.clone());
                     }
                 }
-                i += 1;
             }
         }
     }
@@ -217,7 +215,7 @@ pub fn flat_nested_object(
         let mut new_value = value.clone();
         let mut current_key = root_key;
         let mut current_item = &mut new_value;
-        while let Some(index) = current_key.find(".") {
+        while let Some(index) = current_key.find('.') {
             current_item = current_item.get_mut(&current_key[..index]).unwrap();
             current_key = &current_key[index + 1..];
         }
@@ -257,7 +255,7 @@ fn flat_nested_callback(
     if let Ok(mut child) = children {
         if let Some(list) = child.as_array_mut() {
             for item in list {
-                flat_nested_callback(item, Some(&value), data_list, children_key, id_key);
+                flat_nested_callback(item, Some(value), data_list, children_key, id_key);
             }
         }
     }

@@ -15,15 +15,13 @@ use crate::service::collect_config_service::CollectConfigService;
 use crate::{bool_response, data_response, pagination_response, res_template_ok};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new()
+    Router::new()
         .route("/find_by_id/:id", get(find_by_id))
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))
         .route("/del/:id", get(del))
-        .route("/execute/:id", get(execute));
-
-    routes
+        .route("/execute/:id", get(execute))
 }
 
 async fn find_by_id(
