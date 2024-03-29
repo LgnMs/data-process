@@ -6,7 +6,8 @@ import {
   NodeCollapseOutlined,
   FileTextOutlined,
   DatabaseOutlined,
-  ShareAltOutlined, PieChartOutlined
+  ShareAltOutlined,
+  PieChartOutlined,
 } from "@ant-design/icons";
 
 const { Sider } = Layout;

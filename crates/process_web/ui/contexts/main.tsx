@@ -244,19 +244,20 @@ export function MainContextProvider(props: { children: ReactNode }) {
             auth_secret: authInfo?.auth_secret,
           }),
         }
-      ).then((res) => {
-        if (res.data) {
-          sessionStorage.setItem(
-            "Authorization",
-            `${res.data.token_type} ${res.data.access_token}`
-          );
-        }
+      )
+        .then((res) => {
+          if (res.data) {
+            sessionStorage.setItem(
+              "Authorization",
+              `${res.data.token_type} ${res.data.access_token}`
+            );
+          }
 
-        setLoading(false);
-      }).catch(err => {
-        setLoading(false);
-      })
-
+          setLoading(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+        });
     });
   }, []);
 

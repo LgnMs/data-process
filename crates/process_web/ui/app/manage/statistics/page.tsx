@@ -1,4 +1,3 @@
-
 /// 1. 总采集量
 ///     - 通过采集任务采集到的数据总量
 ///     - 时间维度下每日采集任务执行次数（面积图形式展示）
@@ -27,6 +26,8 @@
 /// 7. 任务占比
 ///     - 三种类型任务再系统中的占比详情
 import CollectTaskCard from "./components/collect-task-card";
+import SharingTaskCard from "./components/sharing-task-card";
+import SyncTaskCard from "./components/sync-task-card";
 import styles from "./page.module.scss";
 import { Col, Row } from "antd";
 
@@ -37,10 +38,10 @@ export default function pages() {
         <CollectTaskCard />
       </Col>
       <Col span={6}>
-        <CollectTaskCard />
+        <SharingTaskCard />
       </Col>
       <Col span={6}>
-        <CollectTaskCard />
+        <SyncTaskCard />
       </Col>
       <Col span={6}>
         <CollectTaskCard />

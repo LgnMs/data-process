@@ -259,7 +259,10 @@ export default function EditForm(props: IEditFormProps) {
                           { value: "integer", label: "数字" },
                           { value: "timestamp", label: "日期" },
                           { value: "boolean", label: "布尔 boolean" },
-                          { value: "double precision", label: "双精度 double precision" },
+                          {
+                            value: "double precision",
+                            label: "双精度 double precision",
+                          },
                           { value: "text", label: "文本 text" },
                           { value: "bigint", label: "bigint" },
                         ]}

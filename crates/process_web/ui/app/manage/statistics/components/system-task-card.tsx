@@ -7,24 +7,10 @@ import useSWR from "swr";
 import * as Statistics from "@/api/statistics";
 import dayjs from "dayjs";
 
-export default function CollectTaskCard() {
+export default function SystemTaskCard() {
   const chartRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<any>(null);
   const chartIn = useRef<InstanceType<typeof Chart>>();
-  // let chart: InstanceType<typeof Chart> | undefined;
-
-  const { data: collenct_task_info, isLoading: isLoading1 } = useSWR(
-    [Statistics.COLLECT_TASK_INFO],
-    ([]) => Statistics.collect_task_info()
-  );
-
-  const { data: collect_task_info_day_list, isLoading: isLoading2 } = useSWR(
-    [Statistics.COLLECT_TASK_INFO_DAY_LIST],
-    ([]) =>
-      Statistics.collect_task_info_day_list({
-        date: [dayjs().subtract(1, "year").valueOf(), dayjs().valueOf()],
-      })
-  );
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -37,12 +23,10 @@ export default function CollectTaskCard() {
       });
 
       chartIn.current
-        .area()
+        .line()
         .encode("x", "date")
-        .encode("y", "num_items")
-        .encode("series", "type")
-        .encode("shape", "area") // 'area', 'smooth', 'hvh', 'vh', 'hv'
-        .style("fill", "linear-gradient(-90deg, white 0%, #c3a3f0 100%)")
+        .encode("y", "运行次数")
+        .style("stroke", "#e8c75a")
         .axis("y", {
           line: false,
           tick: false,
@@ -59,25 +43,27 @@ export default function CollectTaskCard() {
         });
 
       chartIn.current.data(
-        collect_task_info_day_list?.data?.list.map((item) => {
-          item.type = "采集任务次数";
+        resData?.map((item) => {
+          item.type = "运行次数";
           return item;
         })
       );
 
       chartIn.current.render();
     }
-    chartIn.current.data(collect_task_info_day_list?.data?.list);
+    chartIn.current.data(resData);
 
     chartIn.current.render();
-  }, [collenct_task_info, collect_task_info_day_list]);
+  }, [data]);
 
 
   let tody_num = 0;
-  const len = collect_task_info_day_list?.data?.list.length;
+  const len = resData.length;
 
-  if (len) {
-    tody_num = collect_task_info_day_list.data?.list[len - 1].num_items as number
+  if (len > 0) {
+    if (resData[len - 1].date === dayjs().format("YYYY-MM-DD")) {
+      tody_num = resData[len - 1]['运行次数']
+    }
   }
 
   return (
@@ -86,9 +72,9 @@ export default function CollectTaskCard() {
       style={{ width: "100%" }}
       styles={{ body: { padding: "20px 24px 8px" } }}
       ref={cardRef}
-      loading={isLoading1 && isLoading2}
+      loading={isLoading}
     >
-      <Statistic title="总采集量" value={collenct_task_info?.data?.num_items} />
+      <Statistic title="同步任务运行次数" value={data?.data?.num_items} />
       <div ref={chartRef} style={{ height: 50 }}></div>
       <div
         style={{
@@ -97,7 +83,7 @@ export default function CollectTaskCard() {
           borderTop: "1px solid rgba(5, 5, 5, 0.06)",
         }}
       >
-        日采集任务次数 <span style={{ paddingLeft: 12 }}>{tody_num}</span>
+        日运行数 <span style={{ paddingLeft: 12 }}>{tody_num}</span>
       </div>
     </Card>
   );

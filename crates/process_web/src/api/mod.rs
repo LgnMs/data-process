@@ -42,6 +42,7 @@ pub async fn start() -> Result<()> {
 
     setup_log();
 
+    println!("db_url {db_url}");
     let conn = Database::connect(db_url)
         .await
         .expect("Database connection failed");

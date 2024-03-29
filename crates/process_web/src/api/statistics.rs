@@ -8,7 +8,7 @@ use axum::{routing::post, Json, Router};
 use chrono::{Local, TimeZone};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
-    QuerySelect, Statement,
+    QuerySelect, Statement, JsonValue
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -108,7 +108,8 @@ pub struct CollectTaskInfoDayListReq {
     rename = "CollectTaskInfoRes"
 )]
 pub struct CollectTaskInfoRes {
-    list: HashMap<String, i32>,
+    #[ts(type = "any")]
+    list: Vec<Value>,
     #[ts(type = "any")]
     rank_list: Vec<Value>,
 }
@@ -137,22 +138,24 @@ pub async fn collect_task_info_day_list(
             ),
         );
 
-    let list = collect_log::Entity::find()
-        .filter(conditions.clone())
-        .order_by_desc(collect_log::Column::UpdateTime)
+
+    let query: &str = match state.conn.get_database_backend() {
+        DbBackend::MySql => {
+            "SELECT DATE_FORMAT(update_time, '%Y-%m-%d') AS date, COUNT(id) AS num_items FROM collect_log GROUP BY date ORDER BY date;"
+        }
+        DbBackend::Postgres => {
+            "SELECT TO_CHAR(update_time, 'YYYY-MM-DD') AS date, COUNT(id) AS num_items FROM collect_log GROUP BY date ORDER BY date;"
+        }
+        _ => {
+            return Err(anyhow!("不支持的数据库格式").into());
+        }
+    };
+
+    let list = JsonValue::find_by_statement(
+        Statement::from_sql_and_values(state.conn.get_database_backend(), query, []),
+    )
         .all(&state.conn)
         .await?;
-
-    let mut info_day_map: HashMap<String, i32> = HashMap::new();
-
-    for item in list {
-        let date = item.update_time.format("%Y-%m-%d").to_string();
-
-        info_day_map
-            .entry(date)
-            .and_modify(|number| *number += 1)
-            .or_insert(1);
-    }
 
     let rank_list: Vec<Value> = collect_log::Entity::find()
         .select_only()
@@ -170,7 +173,7 @@ pub async fn collect_task_info_day_list(
         .await?;
 
     let res: Result<CollectTaskInfoRes> = Ok(CollectTaskInfoRes {
-        list: info_day_map,
+        list,
         rank_list,
     });
 
@@ -242,7 +245,6 @@ pub async fn sharing_task_info(
         .all(&state.conn)
         .await?;
 
-    print!("list {list:?} list");
     let mut info_day_map = HashMap::new();
     let mut user_calls_times = HashMap::new();
 
@@ -349,7 +351,7 @@ pub async fn sync_task_info(
     let mut conditions = Condition::all();
     conditions = conditions
         .add(
-            sharing_request_log::Column::UpdateTime.gte(
+            sync_log::Column::UpdateTime.gte(
                 Local
                     .timestamp_millis_opt(payload.date[0])
                     .unwrap()
@@ -357,7 +359,7 @@ pub async fn sync_task_info(
             ),
         )
         .add(
-            sharing_request_log::Column::UpdateTime.lte(
+            sync_log::Column::UpdateTime.lte(
                 Local
                     .timestamp_millis_opt(payload.date[1])
                     .unwrap()
