@@ -11,8 +11,11 @@ use sea_orm::{
     QuerySelect, Statement, JsonValue
 };
 use serde::{Deserialize, Serialize};
+use serde::ser::SerializeStruct;
 use serde_json::Value;
-
+use sysinfo::{
+    DiskUsage, System
+};
 use migration::Condition;
 use ts_rs::TS;
 
@@ -32,6 +35,7 @@ pub fn set_routes() -> Router<Arc<AppState>> {
         )
         .route("/sharing_task_info", post(sharing_task_info))
         .route("/sync_task_info", post(sync_task_info))
+        .route("/get_sys_info", get(get_sys_info))
 }
 
 /// 采集数据量总览
@@ -167,7 +171,7 @@ pub async fn collect_task_info_day_list(
         .group_by(collect_log::Column::CollectConfigId)
         .group_by(collect_config::Column::Name)
         .order_by_desc(collect_log::Column::Id.count())
-        .limit(15)
+        .limit(10)
         .into_json()
         .all(&state.conn)
         .await?;
@@ -304,7 +308,7 @@ pub async fn sharing_task_info(
         .group_by(sharing_request_log::Column::DataSharingConfigId)
         .group_by(data_sharing_config::Column::Name)
         .order_by_desc(sharing_request_log::Column::Id.count())
-        .limit(15)
+        .limit(10)
         .into_json()
         .all(&state.conn)
         .await?;
@@ -409,7 +413,7 @@ pub async fn sync_task_info(
         .group_by(sync_log::Column::SyncConfigId)
         .group_by(sync_config::Column::Name)
         .order_by_desc(sync_log::Column::Id.count())
-        .limit(15)
+        .limit(10)
         .into_json()
         .all(&state.conn)
         .await?;
@@ -418,6 +422,77 @@ pub async fn sync_task_info(
         list: info_day_map,
         num_items,
         rank_list,
+    });
+
+    data_response!(res)
+}
+
+struct MyDiskUsage(DiskUsage);
+
+impl Serialize for MyDiskUsage {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer 
+    {
+        let mut disk_usage = serializer.serialize_struct("disk_usage", 4)?;
+        disk_usage.serialize_field("total_written_bytes", &format!("{:?}", self.0.total_written_bytes))?;
+        disk_usage.serialize_field("written_bytes", &format!("{}", self.0.written_bytes))?;
+        disk_usage.serialize_field("total_read_bytes", &format!("{}", self.0.total_read_bytes))?;
+        disk_usage.serialize_field("read_bytes", &format!("{:?}", self.0.read_bytes))?;
+        disk_usage.end()
+    }
+}
+
+#[derive(Serialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/SystemInfo.ts",
+    rename = "SystemInfo"
+)]
+struct SystemInfo {
+    total_memory: u64,
+    used_memory: u64,
+    total_swap: u64,
+    used_swap: u64,
+    cpu_uses: Vec<f32>,
+    processes_cpu_usage: Option<f32>,
+    #[ts(type = "any")]
+    processes_disk_usage: Option<MyDiskUsage>,
+    processes_memory_usage: Option<u64>,
+}
+
+async fn get_sys_info() -> Result<ResJson<SystemInfo>, AppError> {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    let (processes_disk_usage, processes_cpu_usage, processes_memory_usage) = {
+        let mut value = None;
+        for (_, process) in sys.processes() {
+            if process.name().contains("data_process") {
+                value = Some((process.disk_usage(), process.cpu_usage(), process.memory()));
+            }
+        }
+        if let Some(x) = value {
+            (Some(x.0), Some(x.1), Some(x.2))
+        } else {
+            (None, None, None)
+        }
+    };
+
+    let my_processes_disk_usage = match processes_disk_usage {
+        Some(x) => Some(MyDiskUsage(x)),
+        None => None,
+    };
+    
+    let res: Result<SystemInfo> = Ok(SystemInfo {
+        total_memory: sys.total_memory(),
+        used_memory: sys.used_memory(),
+        total_swap: sys.total_swap(),
+        used_swap: sys.used_swap(),
+        cpu_uses: sys.cpus().iter().map(|cpu| cpu.cpu_usage()).collect(),
+        processes_disk_usage: my_processes_disk_usage,
+        processes_cpu_usage,
+        processes_memory_usage
     });
 
     data_response!(res)

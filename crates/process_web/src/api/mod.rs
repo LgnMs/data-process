@@ -40,6 +40,7 @@ pub async fn start() -> Result<()> {
     let port: String = env::var("PORT").expect("PORT is not set in .env file");
     let server_url = format!("{host}:{port}");
 
+    // TODO 修改日志存储级别
     setup_log();
 
     println!("db_url {db_url}");
@@ -63,6 +64,7 @@ pub async fn start() -> Result<()> {
     });
 
     // 初始化调度任务
+    // TODO 当启动时扫描处于运行状态的任务，并修改为因重启中断状态
     CollectConfigService::setup_collect_config_cron(&state).await?;
     SyncConfigService::setup_collect_config_cron(&state).await?;
     state.sched.start().await?;

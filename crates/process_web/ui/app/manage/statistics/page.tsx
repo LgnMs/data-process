@@ -28,12 +28,14 @@
 import CollectTaskCard from "./components/collect-task-card";
 import SharingTaskCard from "./components/sharing-task-card";
 import SyncTaskCard from "./components/sync-task-card";
+import SystemInfoCard from "./components/system-info-card";
+import OverviewCard from "./components/overview-card";
 import styles from "./page.module.scss";
 import { Col, Row } from "antd";
 
 export default function pages() {
   return (
-    <Row gutter={12} className={styles[`statistics-main`]}>
+    <Row gutter={[24, 24]} className={styles[`statistics-main`]}>
       <Col span={6}>
         <CollectTaskCard />
       </Col>
@@ -44,7 +46,10 @@ export default function pages() {
         <SyncTaskCard />
       </Col>
       <Col span={6}>
-        <CollectTaskCard />
+        <SystemInfoCard />
+      </Col>
+      <Col span={24}>
+        <OverviewCard />
       </Col>
     </Row>
   );

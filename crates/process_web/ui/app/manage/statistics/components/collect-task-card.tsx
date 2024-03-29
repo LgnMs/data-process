@@ -66,18 +66,19 @@ export default function CollectTaskCard() {
       );
 
       chartIn.current.render();
+    } else {
+      chartIn.current.data(collect_task_info_day_list?.data?.list);
+
+      chartIn.current.render();
     }
-    chartIn.current.data(collect_task_info_day_list?.data?.list);
-
-    chartIn.current.render();
   }, [collenct_task_info, collect_task_info_day_list]);
-
 
   let tody_num = 0;
   const len = collect_task_info_day_list?.data?.list.length;
 
   if (len) {
-    tody_num = collect_task_info_day_list.data?.list[len - 1].num_items as number
+    tody_num = collect_task_info_day_list.data?.list[len - 1]
+      .num_items as number;
   }
 
   return (

@@ -12,20 +12,23 @@ export default function SharingTaskCard() {
   const cardRef = useRef<any>(null);
   const chartIn = useRef<InstanceType<typeof Chart>>();
 
-  const { data, isLoading } = useSWR(
-    [Statistics.SHARING_TASK_INFO],
-    ([]) => Statistics.sharing_task_info({
-      date: [dayjs().subtract(1, "year").valueOf(), dayjs().valueOf()]
+  const { data, isLoading } = useSWR([Statistics.SHARING_TASK_INFO], ([]) =>
+    Statistics.sharing_task_info({
+      date: [dayjs().subtract(1, "year").valueOf(), dayjs().valueOf()],
     })
   );
 
   let resData: Array<Record<string, any>> = [];
 
   if (data?.data?.list) {
-    Object.keys(data.data.list).forEach(key => {
-      resData.push({ date: key,  '访问量': data.data?.list[key], type: '每日访问量'})
-    })
-    resData.sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
+    Object.keys(data.data.list).forEach((key) => {
+      resData.push({
+        date: key,
+        访问量: data.data?.list[key],
+        type: "每日访问量",
+      });
+    });
+    resData.sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf());
   }
 
   useEffect(() => {
@@ -66,18 +69,19 @@ export default function SharingTaskCard() {
 
       chartIn.current.render();
     }
-    chartIn.current.data(resData);
+    {
+      chartIn.current.data(resData);
 
-    chartIn.current.render();
+      chartIn.current.render();
+    }
   }, [data]);
-
 
   let tody_num = 0;
   const len = resData.length;
 
   if (len > 0) {
     if (resData[len - 1].date === dayjs().format("YYYY-MM-DD")) {
-      tody_num = resData[len - 1]['访问量']
+      tody_num = resData[len - 1]["访问量"];
     }
   }
 
