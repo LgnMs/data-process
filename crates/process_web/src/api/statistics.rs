@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use axum::extract::State;
 use axum::routing::get;
 use axum::{routing::post, Json, Router};
-use chrono::{Local, TimeZone};
+use chrono::{Local, NaiveDateTime, TimeZone};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
     QuerySelect, Statement, JsonValue
@@ -25,6 +25,13 @@ use crate::entity::{
 };
 
 use super::common::{AppError, AppState, ResJson};
+
+fn get_native_date_by_timestamp(timestamp: i64) -> NaiveDateTime {
+    Local
+        .timestamp_millis_opt(timestamp)
+        .unwrap()
+        .naive_local()
+}
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     Router::new()
@@ -124,32 +131,43 @@ pub async fn collect_task_info_day_list(
     state: State<Arc<AppState>>,
     Json(payload): Json<CollectTaskInfoDayListReq>,
 ) -> Result<ResJson<CollectTaskInfoRes>, AppError> {
+    let (start_date, end_date) = (get_native_date_by_timestamp(payload.date[0]), get_native_date_by_timestamp(payload.date[1]));
     let mut conditions = Condition::all();
     conditions = conditions
-        .add(
-            collect_log::Column::UpdateTime.gte(
-                Local
-                    .timestamp_millis_opt(payload.date[0])
-                    .unwrap()
-                    .naive_local(),
-            ),
-        )
-        .add(
-            collect_log::Column::UpdateTime.lte(
-                Local
-                    .timestamp_millis_opt(payload.date[1])
-                    .unwrap()
-                    .naive_local(),
-            ),
-        );
+        .add(collect_log::Column::UpdateTime.gte(start_date))
+        .add(collect_log::Column::UpdateTime.lte(end_date));
 
 
     let query: &str = match state.conn.get_database_backend() {
         DbBackend::MySql => {
-            "SELECT DATE_FORMAT(update_time, '%Y-%m-%d') AS date, COUNT(id) AS num_items FROM collect_log GROUP BY date ORDER BY date;"
+            "SELECT
+                DATE_FORMAT(update_time,
+                '%Y-%m-%d') AS date,
+                COUNT(id) AS num_items
+            FROM
+                collect_log
+            WHERE
+                update_time > ?
+                AND update_time < ?;
+            GROUP BY
+                date
+            ORDER BY
+                date"
         }
         DbBackend::Postgres => {
-            "SELECT TO_CHAR(update_time, 'YYYY-MM-DD') AS date, COUNT(id) AS num_items FROM collect_log GROUP BY date ORDER BY date;"
+            "SELECT
+                TO_CHAR(update_time,
+                'YYYY-MM-DD') AS date,
+                COUNT(id) AS num_items
+            FROM
+                collect_log
+            WHERE
+                update_time > $1
+                AND update_time < $2
+            GROUP BY
+                date
+            ORDER BY
+                date"
         }
         _ => {
             return Err(anyhow!("不支持的数据库格式").into());
@@ -157,7 +175,7 @@ pub async fn collect_task_info_day_list(
     };
 
     let list = JsonValue::find_by_statement(
-        Statement::from_sql_and_values(state.conn.get_database_backend(), query, []),
+        Statement::from_sql_and_values(state.conn.get_database_backend(), query, [start_date.into(), end_date.into()]),
     )
         .all(&state.conn)
         .await?;
@@ -228,20 +246,10 @@ pub async fn sharing_task_info(
     let mut conditions = Condition::all();
     conditions = conditions
         .add(
-            sharing_request_log::Column::UpdateTime.gte(
-                Local
-                    .timestamp_millis_opt(payload.date[0])
-                    .unwrap()
-                    .naive_local(),
-            ),
+            sharing_request_log::Column::UpdateTime.gte(get_native_date_by_timestamp(payload.date[0])),
         )
         .add(
-            sharing_request_log::Column::UpdateTime.lte(
-                Local
-                    .timestamp_millis_opt(payload.date[1])
-                    .unwrap()
-                    .naive_local(),
-            ),
+            sharing_request_log::Column::UpdateTime.lte(get_native_date_by_timestamp(payload.date[1])),
         );
 
     let list = sharing_request_log::Entity::find()

@@ -4,6 +4,7 @@ import useSWR from "swr";
 import * as Statistics from "@/api/statistics";
 import { Card, Flex, Space, Statistic, Table } from "antd";
 import dayjs from "dayjs";
+import { ColumnsType } from "antd/es/table";
 
 export default function SharingInfoCard() {
   const { data, isLoading } = useSWR(
@@ -13,7 +14,12 @@ export default function SharingInfoCard() {
         date: [dayjs().subtract(1, "year").valueOf(), dayjs().valueOf()],
       })
   );
-  const columns: any = [
+  const columns: ColumnsType<any> = [
+    {
+      title: '排名',
+      dataIndex: 'index',
+      render: (_text, _record, index) => index + 1,
+    },
     {
       title: "名称",
       dataIndex: "name",

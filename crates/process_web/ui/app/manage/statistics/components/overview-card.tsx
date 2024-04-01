@@ -1,42 +1,55 @@
 "use client";
 import { Chart } from "@antv/g2";
-import { Card, Col, Row, Tabs, TabsProps } from "antd";
-import { useEffect, useRef } from "react";
+import { Card, Col, DatePicker, Row, Tabs, TabsProps } from "antd";
+import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import * as Statistics from "@/api/statistics";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 
 import styles from "./overview.module.scss";
+
+const { RangePicker } = DatePicker;
+
+type PickerDate = [Dayjs | null, Dayjs| null]
 
 export default function OverviewCard() {
   const cardRef = useRef<any>(null);
   let isLoading = false;
-
-  const onChange = (key: string) => {
-    console.log(key);
-  };
+  const [date, setDate] = useState<PickerDate>([dayjs().subtract(1, "year"), dayjs()]);
 
   const items: TabsProps["items"] = [
     {
       key: "1",
       label: "采集任务",
-      children: <CollectTask />,
+      children: <CollectTask date={date} />,
     },
     {
       key: "2",
       label: "同步任务",
-      children: <SyncTask />,
+      children: <SyncTask date={date}/>,
     }
   ];
   return (
     <Card
       bordered={false}
       style={{ width: "100%" }}
-      styles={{ body: { padding: "20px 24px 8px" } }}
+      styles={{ body: { padding: "4px 24px 8px" } }}
       ref={cardRef}
       loading={isLoading}
     >
-      <Tabs defaultActiveKey="1" items={items} onChange={onChange} />
+      <Tabs defaultActiveKey="1" items={items} tabBarExtraContent={
+        {
+          right: <RangePicker 
+            onChange={(value) => {
+              if (value) {
+                setDate(value)
+              } else {
+                setDate([dayjs().subtract(1, "year"), dayjs()])
+              }
+            }}
+          />
+        }
+      }/>
     </Card>
   );
 }
@@ -65,15 +78,18 @@ function RankList(props: {
   );
 }
 
-function CollectTask() {
+function CollectTask(props: {date: PickerDate}) {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartIn = useRef<InstanceType<typeof Chart>>();
   const { data, isLoading } = useSWR(
-    [Statistics.COLLECT_TASK_INFO_DAY_LIST],
-    ([]) =>
-      Statistics.collect_task_info_day_list({
-        date: [dayjs().subtract(1, "year").valueOf(), dayjs().valueOf()],
-      })
+    [Statistics.COLLECT_TASK_INFO_DAY_LIST, props.date],
+    ([_, date]) => {
+      if (date[0] && date[1]) {
+        return Statistics.collect_task_info_day_list({
+          date: [date[0].valueOf(), date[1].valueOf()],
+        })
+      }
+    }
   );
 
   useEffect(() => {
@@ -124,15 +140,19 @@ function CollectTask() {
   );
 }
 
-function SyncTask() {
+function SyncTask(props: {date: PickerDate}) {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartIn = useRef<InstanceType<typeof Chart>>();
   const { data, isLoading } = useSWR(
-    [Statistics.SYNC_TASK_INFO],
-    ([]) =>
-      Statistics.sync_task_info({
-        date: [dayjs().subtract(1, "year").valueOf(), dayjs().valueOf()],
-      })
+    [Statistics.SYNC_TASK_INFO, props.date],
+    ([_, date]) => {
+      if (date[0] && date[1]) {
+        return Statistics.sync_task_info({
+          date: [date[0].valueOf(), date[1].valueOf()],
+        })
+      }
+
+    }
   );
 
   useEffect(() => {
