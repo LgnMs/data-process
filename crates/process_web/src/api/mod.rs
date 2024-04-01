@@ -94,6 +94,16 @@ pub async fn start() -> Result<()> {
 
 fn setup_log() {
     let builder = tracing_subscriber::fmt();
+    let log_level = match env::var("LOG_LEVEL").expect("LOG_LEVEL is not set in .env file").as_str() {
+        "TRACE" => Level::TRACE,
+        "INFO" => Level::INFO,
+        "DEBUG" => Level::DEBUG,
+        "WARN" => Level::WARN,
+        "ERROR" => Level::ERROR,
+        _ => Level::ERROR
+    };
+
+    println!("LOG_LEVEL is {}", log_level);
 
     match env::var("APP_ENV") {
         Ok(v) if v == "prod" => {
@@ -103,7 +113,7 @@ fn setup_log() {
             let all_files = debug_file.and(warn_file);
             builder
                 .with_writer(all_files)
-                .with_max_level(Level::DEBUG)
+                .with_max_level(log_level)
                 .with_line_number(true)
                 .with_file(true)
                 .init();
@@ -112,7 +122,7 @@ fn setup_log() {
         }
         _ => {
             builder
-                .with_max_level(Level::DEBUG)
+                .with_max_level(log_level)
                 .with_line_number(true)
                 .with_file(true)
                 .init();
