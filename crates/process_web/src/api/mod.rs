@@ -40,7 +40,6 @@ pub async fn start() -> Result<()> {
     let port: String = env::var("PORT").expect("PORT is not set in .env file");
     let server_url = format!("{host}:{port}");
 
-    // TODO 修改日志存储级别
     setup_log();
 
     println!("db_url {db_url}");

@@ -32,6 +32,8 @@ import SystemInfoCard from "./components/system-info-card";
 import OverviewCard from "./components/overview-card";
 import styles from "./page.module.scss";
 import { Col, Row } from "antd";
+import TaskInfoCard from "./components/task-info-card";
+import SharingInfoCard from "./components/sharing-info-card";
 
 export default function pages() {
   return (
@@ -50,6 +52,12 @@ export default function pages() {
       </Col>
       <Col span={24}>
         <OverviewCard />
+      </Col>
+      <Col span={12}>
+        <SharingInfoCard />
+      </Col>
+      <Col span={12}>
+        <TaskInfoCard />
       </Col>
     </Row>
   );

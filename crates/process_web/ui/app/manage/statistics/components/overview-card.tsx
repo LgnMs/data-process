@@ -26,12 +26,7 @@ export default function OverviewCard() {
       key: "2",
       label: "同步任务",
       children: <SyncTask />,
-    },
-    {
-      key: "3",
-      label: "共享接口",
-      children: <SharingTask />,
-    },
+    }
   ];
   return (
     <Card
@@ -71,7 +66,6 @@ function RankList(props: {
 }
 
 function CollectTask() {
-  console.log(styles)
   const chartRef = useRef<HTMLDivElement>(null);
   const chartIn = useRef<InstanceType<typeof Chart>>();
   const { data, isLoading } = useSWR(
@@ -133,27 +127,60 @@ function CollectTask() {
 function SyncTask() {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartIn = useRef<InstanceType<typeof Chart>>();
+  const { data, isLoading } = useSWR(
+    [Statistics.SYNC_TASK_INFO],
+    ([]) =>
+      Statistics.sync_task_info({
+        date: [dayjs().subtract(1, "year").valueOf(), dayjs().valueOf()],
+      })
+  );
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    let list: Array<Record<string, any>> = [];
+    if (data?.data) {
+      list = Object.keys(data.data.list).map((key) => {
+        const obj: any = {}
+        obj["运行次数"] = data.data?.list[key];
+        obj["日期"] = key;
+        return obj;
+      });
+    }
+
+    if (!chartIn.current) {
+      chartIn.current = new Chart({
+        container: chartRef.current,
+        autoFit: true,
+      });
+
+      chartIn.current
+        .interval()
+        .data(list)
+        .encode("x", "日期")
+        .encode("y", "运行次数")
+        .axis("x", {
+          title: false,
+        })
+        .axis("y", {
+          title: false,
+        });
+
+      chartIn.current.render();
+    } else {
+      chartIn.current.changeData(list);
+    }
+  }, [data]);
 
   return (
     <Row>
       <Col span={18}>
         <div ref={chartRef} style={{ height: 300 }}></div>
       </Col>
-      <Col span={6}></Col>
-    </Row>
-  );
-}
-
-function SharingTask() {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const chartIn = useRef<InstanceType<typeof Chart>>();
-
-  return (
-    <Row>
-      <Col span={18}>
-        <div ref={chartRef}></div>
+      <Col span={6}>
+        <RankList title="同步任务运行次数" list={data?.data?.rank_list} />
       </Col>
-      <Col span={6}></Col>
     </Row>
   );
 }
+

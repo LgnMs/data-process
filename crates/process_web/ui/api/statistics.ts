@@ -7,6 +7,7 @@ import { SharingTaskInfoRes } from "./models/SharingTaskInfoRes";
 import { SyncTaskInfoReq } from "./models/SyncTaskInfoReq";
 import { SyncTaskInfoRes } from "./models/SyncTaskInfoRes";
 import { SystemInfo } from "./models/SystemInfo";
+import { TaskInfo } from "./models/TaskInfo";
 
 export const PREFIX = "/api/statistics";
 
@@ -45,4 +46,9 @@ export async function sync_task_info(
   return http_post(`${SYNC_TASK_INFO}`, {
     body: JSON.stringify(payload),
   });
+}
+
+export const GET_TASK_INFO = `${PREFIX}/get_task_info`;
+export async function get_task_info(): Promise<ResJson<TaskInfo>> {
+  return http_get(GET_TASK_INFO);
 }

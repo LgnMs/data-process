@@ -121,16 +121,16 @@ async fn get_data(
     }
     let id = i32::from_str(&api_id[..1])?;
     let api_id = api_id[1..].to_string();
+    let user_info = json!({
+        "user": user_info.auth_id
+    }).to_string();
+
     let res = DataSharingConfigService::get_data(&state.conn, api_id, payload).await;
 
     if let Err(err) = &res {
-        log_map.insert("err".to_string(), err.to_string().parse()?);
+        log_map.insert("err".to_string(), Value::String(err.to_string()));
     }
 
-    let user_info = json!({
-        "user": user_info.auth_id
-    })
-    .to_string();
     SharingRequestLogService::add(
         &state.conn,
         sharing_request_log::Model {
@@ -143,4 +143,5 @@ async fn get_data(
     .await?;
 
     data_response!(res)
+
 }

@@ -36,6 +36,7 @@ pub fn set_routes() -> Router<Arc<AppState>> {
         .route("/sharing_task_info", post(sharing_task_info))
         .route("/sync_task_info", post(sync_task_info))
         .route("/get_sys_info", get(get_sys_info))
+        .route("/get_task_info", get(get_task_info))
 }
 
 /// 采集数据量总览
@@ -209,7 +210,7 @@ pub struct SharingTaskInfoRes {
     avg_num_user_calls_api: i32,
 }
 
-#[derive(FromQueryResult, TS)]
+#[derive(FromQueryResult, Default, TS)]
 #[ts(
     export,
     export_to = "ui/api/models/auto-generates/NumItems.ts",
@@ -277,7 +278,7 @@ pub async fn sharing_task_info(
         sum_calls_times += item.1;
     }
 
-    let avg_num_user_calls_api = if user_calls_times.is_empty() {
+    let avg_num_user_calls_api = if !user_calls_times.is_empty() {
         sum_calls_times / user_calls_times.len() as i32
     } else {
         0
@@ -493,6 +494,50 @@ async fn get_sys_info() -> Result<ResJson<SystemInfo>, AppError> {
         processes_disk_usage: my_processes_disk_usage,
         processes_cpu_usage,
         processes_memory_usage
+    });
+
+    data_response!(res)
+}
+
+#[derive(Serialize, TS)]
+#[ts(
+    export,
+    export_to = "ui/api/models/auto-generates/TaskInfo.ts",
+    rename = "TaskInfo"
+)]
+struct TaskInfo {
+    collect_num: i64,
+    sync_num: i64,
+    sharing_num: i64
+}
+
+async fn get_task_info(state: State<Arc<AppState>>) -> Result<ResJson<TaskInfo>, AppError> {
+    let collect_num = collect_config::Entity::find()
+        .select_only()
+        .column_as(collect_config::Column::Id.count(), "num_items")
+        .into_model::<NumItems>()
+        .one(&state.conn)
+        .await?
+        .unwrap_or_default();
+    let sync_num = sync_config::Entity::find()
+        .select_only()
+        .column_as(sync_config::Column::Id.count(), "num_items")
+        .into_model::<NumItems>()
+        .one(&state.conn)
+        .await?
+        .unwrap_or_default();
+    let sharing_num = data_sharing_config::Entity::find()
+        .select_only()
+        .column_as(data_sharing_config::Column::Id.count(), "num_items")
+        .into_model::<NumItems>()
+        .one(&state.conn)
+        .await?
+        .unwrap_or_default();
+
+    let res: Result<TaskInfo> = Ok(TaskInfo {
+        collect_num: collect_num.num_items,
+        sync_num: sync_num.num_items,
+        sharing_num: sharing_num.num_items
     });
 
     data_response!(res)
