@@ -190,21 +190,27 @@ impl CollectConfigService {
     pub async fn cache_data(cache_db: &DbConn, list: &[String]) -> Result<(), String> {
         let mut err_msg = String::new();
         for (i, item) in list.iter().enumerate() {
-            match cache_db
-                .execute(Statement::from_string(
-                    cache_db.get_database_backend(),
-                    item,
-                ))
-                .await
-            {
-                Ok(msg) => {
-                    println!("{:?}", msg);
+            let sql_list = item.split(';').collect::<Vec<&str>>();
+            for sql in sql_list {
+                if sql.is_empty() {
+                    continue;
                 }
-                Err(err) => {
-                    err_msg.push_str(
-                        format!("第{}条SQL执行失败，{}", i + 1, err).as_str(),
-                    );
-                    err_msg.push('\n');
+                match cache_db
+                    .execute(Statement::from_string(
+                        cache_db.get_database_backend(),
+                        sql,
+                    ))
+                    .await
+                {
+                    Ok(msg) => {
+                        debug!("{:?}", msg);
+                    }
+                    Err(err) => {
+                        err_msg.push_str(
+                            format!("第{}条SQL执行失败，{}", i + 1, err).as_str(),
+                        );
+                        err_msg.push('\n');
+                    }
                 }
             }
         }
@@ -222,7 +228,6 @@ impl CollectConfigService {
         table_name: &String,
     ) -> Result<bool, DbErr> {
         if let Some(db_columns_config) = db_columns_config.as_array() {
-            // TODO 适配MYSQL
             let mut template_str = format!("CREATE TABLE IF NOT EXISTS {table_name}");
             let mut column_str = Vec::with_capacity(db_columns_config.len() + 1);
             let mut have_id_key = false;
@@ -473,7 +478,7 @@ pub async fn process_data(
                                 &state.conn,
                                 log_id,
                                 collect_log::Model {
-                                    status: 2,
+                                    status: 1,
                                     running_log: collect_log_string,
                                     ..Default::default()
                                 },
@@ -487,7 +492,21 @@ pub async fn process_data(
                             match CollectConfigService::cache_data(&state.cache_conn, &data_res)
                                 .await
                             {
-                                Ok(_) => {}
+                                Ok(_) => {
+                                    if let Some(err) = CollectLogService::update_by_id(
+                                        &state.conn,
+                                        log_id,
+                                        collect_log::Model {
+                                            status: 2,
+                                            ..Default::default()
+                                        },
+                                    )
+                                    .await
+                                    .err()
+                                    {
+                                        error!("status: 2 运行完毕；日志更新失败: {err}");
+                                    };
+                                }
                                 Err(err) => {
                                     if let Some(err) = CollectLogService::update_by_id(
                                         &state.conn,
