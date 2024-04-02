@@ -29,6 +29,14 @@ export default function CollectTaskCard() {
   useEffect(() => {
     if (!chartRef.current) return;
 
+    let list: Array<Record<string, any>> = [];
+    if (collect_task_info_day_list?.data) {
+      list = collect_task_info_day_list?.data?.list.map((item) => {
+        item['采集任务次数'] = item.num_items;
+        return item;
+      })
+    }
+
     if (!chartIn.current) {
       chartIn.current = new Chart({
         container: chartRef.current,
@@ -39,8 +47,7 @@ export default function CollectTaskCard() {
       chartIn.current
         .area()
         .encode("x", "date")
-        .encode("y", "num_items")
-        .encode("series", "type")
+        .encode("y", "采集任务次数")
         .encode("shape", "area") // 'area', 'smooth', 'hvh', 'vh', 'hv'
         .style("fill", "linear-gradient(-90deg, white 0%, #c3a3f0 100%)")
         .axis("y", {
@@ -58,16 +65,11 @@ export default function CollectTaskCard() {
           grid: false,
         });
 
-      chartIn.current.data(
-        collect_task_info_day_list?.data?.list.map((item) => {
-          item.type = "采集任务次数";
-          return item;
-        })
-      );
+      chartIn.current.data(list);
 
       chartIn.current.render();
     } else {
-      chartIn.current.data(collect_task_info_day_list?.data?.list);
+      chartIn.current.data(list);
 
       chartIn.current.render();
     }
