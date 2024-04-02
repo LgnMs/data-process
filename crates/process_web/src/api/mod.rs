@@ -64,7 +64,6 @@ pub async fn start() -> Result<()> {
     });
 
     // 初始化调度任务
-    // TODO 当启动时扫描处于运行状态的任务，并修改为因重启中断状态
     LogService::reset_log_status(&state.conn, 1, 5, "任务因系统重启中断").await?;
     CollectConfigService::setup_collect_config_cron(&state).await?;
     SyncConfigService::setup_collect_config_cron(&state).await?;
