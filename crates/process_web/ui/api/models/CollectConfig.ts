@@ -17,5 +17,6 @@ export interface CollectConfig {
   max_count_of_request: number | null;
   cache_table_name: string | null;
   db_columns_config: any;
+  db_columns_config2: any;
   cron: string | null;
 }

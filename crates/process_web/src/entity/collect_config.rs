@@ -34,6 +34,8 @@ pub struct Model {
     pub nested_config: Option<Json>,
     #[ts(type = "any")]
     pub db_columns_config: Option<Json>,
+    #[ts(type = "any")]
+    pub db_columns_config2: Option<Json>,
     pub cron: Option<String>,
     pub job_id: Option<Uuid>,
     #[serde(skip_deserializing)]

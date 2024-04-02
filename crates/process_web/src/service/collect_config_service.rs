@@ -104,6 +104,7 @@ impl CollectConfigService {
             cron: Set(data_clone.cron),
             // TODO 新建一个字段来一起存储列配置，以期解决列配置太长存储不了的问题
             db_columns_config: Set(data_clone.db_columns_config),
+            db_columns_config2: Set(data_clone.db_columns_config2),
             ..Default::default()
         };
 
@@ -346,7 +347,7 @@ impl CollectConfigService {
             }
         }
         let log_id = collect_log_model.id;
-
+        // TODO 若缓存表不存在，就进行创建
         let _ = process_data(data, state, log_id).await;
     }
 
