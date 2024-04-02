@@ -148,7 +148,7 @@ pub async fn collect_task_info_day_list(
                 collect_log
             WHERE
                 update_time > ?
-                AND update_time < ?;
+                AND update_time < ?
             GROUP BY
                 date
             ORDER BY
