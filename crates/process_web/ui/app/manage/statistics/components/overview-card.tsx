@@ -117,11 +117,11 @@ function CollectTask(props: {date: PickerDate}) {
         .encode("x", "日期")
         .encode("y", "运行次数")
         .axis("x", {
+          title: false,
           labelFormatter: (d: any) => dayjs(d).format("DD"),
         })
         .axis("y", {
           title: false,
-          
         });
 
       chartIn.current.render();
