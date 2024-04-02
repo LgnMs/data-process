@@ -53,14 +53,14 @@ export default function SystemInfoCard() {
       loading={isLoading}
       className={styles.sysinfo}
     >
-      <div className={styles.title}>性能监测</div>
+      <div className={styles.title}>系统资源监测</div>
       <div className={styles.cpu}>
         <span>{getCPU(data?.data?.cpu_uses)}%</span>
         <span className={styles['cpu-sub']}> cpu</span>
       </div>
       <div style={{height: 50}}>
         内存 <span className={styles['cpu-sub']}>{bytesToGB(data?.data?.used_memory).toFixed(2)}/{bytesToGB(data?.data?.total_memory).toFixed(2)} GB</span>
-        <Progress percent={getMemory(data?.data?.used_memory, data?.data?.total_memory) as number} status="active" strokeColor={{ from: '#108ee9', to: '#87d068' }} />
+        <Progress style={{width: '90%'}} percent={getMemory(data?.data?.used_memory, data?.data?.total_memory) as number} status="active" strokeColor={{ from: '#108ee9', to: '#87d068' }} />
       </div>
       {/* <div>物理内存: {bytesToGB(data?.data?.total_memory).toFixed(2)} GB</div>
       <div>已使用内存: {bytesToGB(data?.data?.used_memory).toFixed(2)} GB</div>
@@ -76,7 +76,7 @@ export default function SystemInfoCard() {
           borderTop: "1px solid rgba(5, 5, 5, 0.06)",
         }}
       >
-        应用占比{" "}
+        应用消耗资源
         <span style={{ paddingLeft: 12 }}>
           CPU: {data?.data?.processes_cpu_usage} % 内存:{" "}
           {bytesToMB(data?.data?.processes_memory_usage).toFixed(2)} MB 

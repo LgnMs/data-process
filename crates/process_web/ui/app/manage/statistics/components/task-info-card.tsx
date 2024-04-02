@@ -69,7 +69,7 @@ export default function TaskInfoCard() {
     <Card
       bordered={false}
       style={{ width: "100%" }}
-      styles={{ body: { padding: "20px 24px 8px" } }}
+      styles={{ body: { padding: "20px 24px 8px", minHeight: 428 } }}
       ref={cardRef}
       loading={isLoading}
       title="任务占比"

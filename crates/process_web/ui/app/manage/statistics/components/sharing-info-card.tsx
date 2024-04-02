@@ -1,17 +1,22 @@
 'use client'
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import * as Statistics from "@/api/statistics";
-import { Card, Flex, Space, Statistic, Table } from "antd";
-import dayjs from "dayjs";
+import { Card, DatePicker, Flex, Space, Statistic, Table } from "antd";
+import dayjs, { Dayjs } from "dayjs";
 import { ColumnsType } from "antd/es/table";
 
+const { RangePicker } = DatePicker;
+
+type PickerDate = [Dayjs | null, Dayjs| null]
+
 export default function SharingInfoCard() {
+  const [date, setDate] = useState<PickerDate>([dayjs().subtract(1, "year"), dayjs()]);
   const { data, isLoading } = useSWR(
-    [Statistics.SHARING_TASK_INFO],
-    ([]) =>
+    [Statistics.SHARING_TASK_INFO, date],
+    ([_, date]) =>
       Statistics.sharing_task_info({
-        date: [dayjs().subtract(1, "year").valueOf(), dayjs().valueOf()],
+        date: [date[0]!.valueOf(), date[1]!.valueOf()],
       })
   );
   const columns: ColumnsType<any> = [
@@ -39,9 +44,21 @@ export default function SharingInfoCard() {
   return <Card
       bordered={false}
       style={{ width: "100%" }}
-      styles={{ body: { padding: "20px 24px 8px" } }}
+      styles={{ body: { padding: "20px 24px 8px", minHeight: 428 } }}
       loading={isLoading}
       title="共享接口调用情况"
+      extra={
+        <RangePicker 
+            value={date}
+            onChange={(value) => {
+              if (value) {
+                setDate(value)
+              } else {
+                setDate([dayjs().subtract(1, "year"), dayjs()])
+              }
+            }}
+          />
+      }
     >
       <Space direction="vertical" style={{width: '100%', height: 400}}>
         <Flex justify="space-between" style={{width: '60%', paddingLeft: 12}}>

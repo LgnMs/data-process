@@ -40,6 +40,7 @@ export default function OverviewCard() {
       <Tabs defaultActiveKey="1" items={items} tabBarExtraContent={
         {
           right: <RangePicker 
+            value={date}
             onChange={(value) => {
               if (value) {
                 setDate(value)
