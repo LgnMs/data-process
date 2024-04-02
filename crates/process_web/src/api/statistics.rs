@@ -477,8 +477,11 @@ async fn get_sys_info() -> Result<ResJson<SystemInfo>, AppError> {
     let (processes_disk_usage, processes_cpu_usage, processes_memory_usage) = {
         let mut value = None;
         for (_, process) in sys.processes() {
-            if process.name().contains("data_process") {
-                value = Some((process.disk_usage(), process.cpu_usage(), process.memory()));
+            let index = process.name().rfind("data_process");
+            if let Some(index) = index {
+                if process.name().get(index..) == Some("data_process") {
+                    value = Some((process.disk_usage(), process.cpu_usage(), process.memory()));
+                }
             }
         }
         if let Some(x) = value {
