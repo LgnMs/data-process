@@ -102,7 +102,6 @@ impl CollectConfigService {
             filed_of_result_data: Set(data_clone.filed_of_result_data),
             max_count_of_request: Set(data_clone.max_count_of_request),
             cron: Set(data_clone.cron),
-            // TODO 新建一个字段来一起存储列配置，以期解决列配置太长存储不了的问题
             db_columns_config: Set(data_clone.db_columns_config),
             db_columns_config2: Set(data_clone.db_columns_config2),
             ..Default::default()

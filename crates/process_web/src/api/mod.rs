@@ -14,6 +14,7 @@ use tracing_subscriber::fmt::writer::MakeWriterExt;
 use crate::api::auth::jwt_middleware;
 use crate::api::common::AppState;
 use crate::service::collect_config_service::CollectConfigService;
+use crate::service::log_service::LogService;
 use crate::service::sync_config_service::SyncConfigService;
 
 mod auth;
@@ -64,6 +65,7 @@ pub async fn start() -> Result<()> {
 
     // 初始化调度任务
     // TODO 当启动时扫描处于运行状态的任务，并修改为因重启中断状态
+    LogService::reset_log_status(&state.conn, 1, 5, "任务因系统重启中断").await?;
     CollectConfigService::setup_collect_config_cron(&state).await?;
     SyncConfigService::setup_collect_config_cron(&state).await?;
     state.sched.start().await?;

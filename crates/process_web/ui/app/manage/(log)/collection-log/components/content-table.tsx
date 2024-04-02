@@ -70,6 +70,12 @@ export default function ContentTable() {
                 失败
               </Tag>
             );
+          case 5:
+            return (
+              <Tag icon={<CloseCircleOutlined />} color="warning">
+                中断
+              </Tag>
+            );
         }
       },
     },
