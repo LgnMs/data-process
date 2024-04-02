@@ -17,6 +17,7 @@ pub struct Model {
     pub id: i32,
     #[sea_orm(column_type = "Text")]
     pub log: String,
+    pub user_info: Option<String>,
     pub data_sharing_config_id: i32,
     #[serde(skip_deserializing)]
     pub update_time: DateTime,

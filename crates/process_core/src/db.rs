@@ -18,7 +18,7 @@ use crate::process::Serde;
 
 /// 从数据库中获取数据并处理
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Db {
     pub data: Option<Value>,
     pub db_source_config: Option<DataSource>,
@@ -162,13 +162,10 @@ pub async fn execute_sql(db_source: &DataSource, query_sql_list: Vec<String>) ->
 
 pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<Vec<Value>> {
     debug!("db_source {:?}", db_source);
-    if let Some(index) = query_sql.to_lowercase().find("select") {
-        if index != 0 {
-            return Err(anyhow!("这条语句不是查询语句！"));
-        }
-    } else {
+    if is_non_query_statement(query_sql.as_str()) {
         return Err(anyhow!("这条语句不是查询语句！"));
     }
+
     let password = decode_db_password(&db_source.password);
     match db_source.database_type {
         Database::POSTGRES => {
@@ -259,23 +256,32 @@ pub async fn find_all_sql(db_source: &DataSource, query_sql: String) -> Result<V
     }
 }
 
-fn decode_db_password(password: &String) -> String {
-    let password = {
-        // 加密过程查看crates/process_web/ui/lib/encrypt.ts
-        let a = BASE64_STANDARD.decode(password).unwrap_or_default();
-        let b = String::from_utf8(a).unwrap_or_default();
-
-        match b.contains("DpSALt") {
-            true => {
-                let c = &b[6..];
-                let d = BASE64_STANDARD.decode(c).unwrap_or_default();
-                String::from_utf8(d).unwrap_or_default()
-            }
-            false => password.clone(),
+fn is_non_query_statement(sql_statement: &str) -> bool {
+    let non_query_keywords = vec![
+        "INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TRUNCATE",
+    ];
+    let sql_uppercase = sql_statement.to_uppercase();
+    for keyword in non_query_keywords {
+        if sql_uppercase.contains(&format!(" {} ", keyword)) || sql_uppercase.starts_with(keyword) {
+            return true;
         }
-    };
+    }
+    false
+}
 
-    password
+fn decode_db_password(password: &String) -> String {
+    // 加密过程查看crates/process_web/ui/lib/encrypt.ts
+    let a = BASE64_STANDARD.decode(password).unwrap_or_default();
+    let b = String::from_utf8(a).unwrap_or_default();
+
+    match b.contains("DpSALt") {
+        true => {
+            let c = &b[6..];
+            let d = BASE64_STANDARD.decode(c).unwrap_or_default();
+            String::from_utf8(d).unwrap_or_default()
+        }
+        false => password.clone(),
+    }
 }
 
 #[async_trait]
@@ -320,17 +326,14 @@ impl Export for Db {
             .as_ref()
             .ok_or(anyhow!("未设置template_string"))?;
 
-        if let Some(index) = template_sql.to_lowercase().find("insert into") {
-            if index != 0 {
-                return Err(anyhow!("这条语句不是插入语句！"));
-            }
-        } else {
+        if !template_sql.to_lowercase().contains("insert into ") {
             return Err(anyhow!("这条语句不是插入语句！"));
         }
+
         let sql_list = generate_sql_list(template_sql, data)?;
 
         if let Some(db_source) = &self.target_db_source_config {
-            execute_sql(&db_source, sql_list.clone()).await?;
+            execute_sql(db_source, sql_list.clone()).await?;
         }
         Ok(sql_list)
     }

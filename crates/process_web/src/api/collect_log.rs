@@ -5,7 +5,6 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use sea_orm::prelude::DateTime;
 use serde::Deserialize;
 use std::sync::Arc;
 use ts_rs::TS;
@@ -16,14 +15,12 @@ use crate::service::collect_log_service::CollectLogService;
 use crate::{bool_response, data_response, pagination_response};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new()
+     Router::new()
         .route("/find_by_id/:id", post(find_by_id))
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))
-        .route("/delete/:id", get(del));
-
-    routes
+        .route("/delete/:id", get(del))
 }
 
 async fn find_by_id(
@@ -43,8 +40,7 @@ async fn find_by_id(
 )]
 pub struct ListParams {
     pub collect_config_name: Option<String>,
-    #[ts(type = "any")]
-    pub date: Option<[DateTime; 2]>,
+    pub date: Option<[i64; 2]>,
 }
 
 async fn list(

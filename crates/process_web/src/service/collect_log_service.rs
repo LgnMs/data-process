@@ -1,4 +1,5 @@
 use crate::api::collect_log::ListParams;
+use chrono::{Local, TimeZone};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 use serde_json::json;
@@ -26,12 +27,22 @@ impl CollectLogService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.collect_config_name {
-                conditions = conditions.add(collect_config::Column::Name.contains(&name));
+                conditions = conditions.add(collect_config::Column::Name.contains(name));
             }
             if let Some([start_date, end_date]) = data.date {
                 conditions = conditions
-                    .add(collect_config::Column::UpdateTime.gte(start_date))
-                    .add(collect_config::Column::UpdateTime.lte(end_date));
+                    .add(
+                        collect_config::Column::UpdateTime.gte(
+                            Local
+                                .timestamp_millis_opt(start_date)
+                                .unwrap()
+                                .naive_local(),
+                        ),
+                    )
+                    .add(
+                        collect_config::Column::UpdateTime
+                            .lte(Local.timestamp_millis_opt(end_date).unwrap().naive_local()),
+                    );
             }
         }
 
@@ -53,7 +64,7 @@ impl CollectLogService {
 
         let num_pages = collect_log::Entity::find().all(db).await?.len() as u64;
 
-        return Ok((list, num_pages));
+        Ok((list, num_pages))
     }
 
     pub async fn add(db: &DbConn, data: collect_log::Model) -> Result<collect_log::Model, DbErr> {

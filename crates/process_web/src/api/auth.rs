@@ -22,9 +22,7 @@ use crate::api::common::{AppState, ResJson};
 use crate::data_response;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new().route("/authorize", post(authorize));
-
-    routes
+    Router::new().route("/authorize", post(authorize))
 }
 
 static KEYS: Lazy<Keys> = Lazy::new(|| {
@@ -49,7 +47,7 @@ impl Keys {
 // TODO 接入认证信息
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Claims {
-    auth_id: String,
+    pub auth_id: String,
     auth_secret: String,
     exp: usize,
 }
@@ -118,7 +116,7 @@ impl Display for Claims {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "auth_id: {}\nauth_secret: {}",
+            "auth_id: {} auth_secret: {}",
             self.auth_id, self.auth_secret
         )
     }

@@ -9,13 +9,11 @@ use tokio::time::{sleep, Duration};
 use tracing::debug;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new()
+    Router::new()
         .route("/test_data_1", get(test_data_1))
         .route("/test_data_2", post(test_data_2))
         .route("/test_data_3", get(test_data_3))
-        .route("/test_data_4", get(test_data_4));
-
-    routes
+        .route("/test_data_4", get(test_data_4))
 }
 
 pub async fn test_data_1() -> anyhow::Result<Json<Value>, AppError> {
@@ -48,7 +46,7 @@ pub async fn test_data_2(
     }
     let null = serde_json::json!({"code":"SUCCESS","data":{},"message":"","traceId":""});
 
-    return Ok(Json(null));
+    Ok(Json(null))
 }
 
 pub async fn test_data_3() -> anyhow::Result<Json<Value>, AppError> {

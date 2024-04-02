@@ -24,7 +24,7 @@ impl SyncLogService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.sync_config_name {
-                conditions = conditions.add(sync_config::Column::Name.contains(&name));
+                conditions = conditions.add(sync_config::Column::Name.contains(name));
             }
         }
 
@@ -46,7 +46,7 @@ impl SyncLogService {
 
         let num_pages = sync_log::Entity::find().all(db).await?.len() as u64;
 
-        return Ok((list, num_pages));
+        Ok((list, num_pages))
     }
 
     pub async fn add(db: &DbConn, data: sync_log::Model) -> Result<sync_log::Model, DbErr> {

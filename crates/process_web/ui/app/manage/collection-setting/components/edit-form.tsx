@@ -19,7 +19,7 @@ import LabelTips from "@/app/manage/components/label-tips";
 import * as CollectConfig from "@/api/collect_config";
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
-import { clone } from "lodash";
+import { chunk, clone } from "lodash";
 import CronEdit from "@/app/manage/components/cron-edit";
 
 interface IEditFormProps extends ICommonCollectionSettingProps {
@@ -71,6 +71,7 @@ export default function EditForm(props: IEditFormProps) {
       item.key,
       item.value,
     ]);
+    const [db_columns_config, db_columns_config2] = chunk(values.db_columns_config, Math.round(values.db_columns_config.length / 2))
 
     const body: Record<string, string | number | boolean> = {};
     values.body?.forEach((item: any) => {
@@ -89,6 +90,8 @@ export default function EditForm(props: IEditFormProps) {
 
     const data = {
       ...values,
+      db_columns_config,
+      db_columns_config2,
       headers,
       map_rules,
       nested_config,
@@ -151,6 +154,15 @@ export default function EditForm(props: IEditFormProps) {
             return { key: item[0], value: item[1] };
           });
         }
+
+        let arr: any[] = [];
+        if (data.db_columns_config) {
+          arr = arr.concat(data.db_columns_config)
+        }
+        if (data.db_columns_config2) {
+          arr = arr.concat(data.db_columns_config2)
+        }
+        data.db_columns_config = arr;
 
         if (data.cron) {
           setAutoExec(1);
@@ -259,7 +271,10 @@ export default function EditForm(props: IEditFormProps) {
                           { value: "integer", label: "数字" },
                           { value: "timestamp", label: "日期" },
                           { value: "boolean", label: "布尔 boolean" },
-                          { value: "double precision", label: "双精度 double precision" },
+                          {
+                            value: "double precision",
+                            label: "双精度 double precision",
+                          },
                           { value: "text", label: "文本 text" },
                           { value: "bigint", label: "bigint" },
                         ]}

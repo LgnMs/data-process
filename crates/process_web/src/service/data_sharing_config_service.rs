@@ -35,7 +35,7 @@ impl DataSharingConfigService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.name {
-                conditions = conditions.add(data_sharing_config::Column::Name.contains(&name));
+                conditions = conditions.add(data_sharing_config::Column::Name.contains(name));
             }
         }
 
@@ -120,7 +120,11 @@ impl DataSharingConfigService {
                 for (key, value) in obj {
                     let p_key = format!("${{{key}}}");
                     if sql.contains(p_key.as_str()) {
-                        sql = sql.replace(p_key.as_str(), value.to_string().as_str());
+                        if value.is_string() {
+                            sql = sql.replace(p_key.as_str(), value.as_str().unwrap_or_default());
+                        } else {
+                            sql = sql.replace(p_key.as_str(), value.to_string().as_str());
+                        }
                     }
                 }
 

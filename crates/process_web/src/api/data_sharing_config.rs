@@ -1,3 +1,4 @@
+use crate::api::auth::Claims;
 use crate::api::common::{
     AppError, AppState, PaginationPayload, RequestInfo, ResJson, ResJsonWithPagination,
 };
@@ -17,15 +18,13 @@ use crate::service::data_sharing_config_service::DataSharingConfigService;
 use crate::service::sharing_request_log_service::SharingRequestLogService;
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-    let routes = Router::new()
+    Router::new()
         .route("/find_by_id/:id", get(find_by_id))
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))
         .route("/get_data/:id", post(get_data))
-        .route("/del/:id", get(del));
-
-    routes
+        .route("/del/:id", get(del))
 }
 
 #[derive(Deserialize, TS)]
@@ -110,6 +109,7 @@ async fn del(
 async fn get_data(
     state: State<Arc<AppState>>,
     request_info: RequestInfo,
+    user_info: Claims,
     Path(api_id): Path<String>,
     Json(payload): Json<Option<Value>>,
 ) -> anyhow::Result<ResJson<Vec<Value>>, AppError> {
@@ -121,10 +121,14 @@ async fn get_data(
     }
     let id = i32::from_str(&api_id[..1])?;
     let api_id = api_id[1..].to_string();
+    let user_info = json!({
+        "user": user_info.auth_id
+    }).to_string();
+
     let res = DataSharingConfigService::get_data(&state.conn, api_id, payload).await;
 
     if let Err(err) = &res {
-        log_map.insert("err".to_string(), err.to_string().parse()?);
+        log_map.insert("err".to_string(), Value::String(err.to_string()));
     }
 
     SharingRequestLogService::add(
@@ -132,10 +136,12 @@ async fn get_data(
         sharing_request_log::Model {
             data_sharing_config_id: id,
             log: json!(log_map).to_string(),
+            user_info: Some(user_info),
             ..Default::default()
         },
     )
     .await?;
 
     data_response!(res)
+
 }

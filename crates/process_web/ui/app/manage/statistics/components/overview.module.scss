@@ -1,0 +1,19 @@
+.rankList {
+  .title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 12px 4px 0;
+  }
+
+  .index {
+    font-size: 16px;
+    color: #2789ff;
+    vertical-align: -1px;
+    width: 10%;
+  }
+}

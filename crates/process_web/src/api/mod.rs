@@ -14,6 +14,7 @@ use tracing_subscriber::fmt::writer::MakeWriterExt;
 use crate::api::auth::jwt_middleware;
 use crate::api::common::AppState;
 use crate::service::collect_config_service::CollectConfigService;
+use crate::service::log_service::LogService;
 use crate::service::sync_config_service::SyncConfigService;
 
 mod auth;
@@ -42,6 +43,7 @@ pub async fn start() -> Result<()> {
 
     setup_log();
 
+    println!("db_url {db_url}");
     let conn = Database::connect(db_url)
         .await
         .expect("Database connection failed");
@@ -62,6 +64,7 @@ pub async fn start() -> Result<()> {
     });
 
     // 初始化调度任务
+    LogService::reset_log_status(&state.conn, 1, 5, "任务因系统重启中断").await?;
     CollectConfigService::setup_collect_config_cron(&state).await?;
     SyncConfigService::setup_collect_config_cron(&state).await?;
     state.sched.start().await?;
@@ -91,6 +94,16 @@ pub async fn start() -> Result<()> {
 
 fn setup_log() {
     let builder = tracing_subscriber::fmt();
+    let log_level = match env::var("LOG_LEVEL").expect("LOG_LEVEL is not set in .env file").as_str() {
+        "TRACE" => Level::TRACE,
+        "INFO" => Level::INFO,
+        "DEBUG" => Level::DEBUG,
+        "WARN" => Level::WARN,
+        "ERROR" => Level::ERROR,
+        _ => Level::ERROR
+    };
+
+    println!("LOG_LEVEL is {}", log_level);
 
     match env::var("APP_ENV") {
         Ok(v) if v == "prod" => {
@@ -100,7 +113,7 @@ fn setup_log() {
             let all_files = debug_file.and(warn_file);
             builder
                 .with_writer(all_files)
-                .with_max_level(Level::DEBUG)
+                .with_max_level(log_level)
                 .with_line_number(true)
                 .with_file(true)
                 .init();
@@ -109,7 +122,7 @@ fn setup_log() {
         }
         _ => {
             builder
-                .with_max_level(Level::DEBUG)
+                .with_max_level(log_level)
                 .with_line_number(true)
                 .with_file(true)
                 .init();

@@ -109,10 +109,10 @@ impl JdbcType {
 
 pub static JVM_IS_SETUP: OnceLock<bool> = OnceLock::new();
 
-pub struct JvmInstance(pub(crate) Jvm);
+pub struct JvmInstance;
 
 impl JvmInstance {
-    pub fn new() -> Result<Jvm> {
+    pub fn init() -> Result<Jvm> {
         let current_dir = std::env::current_dir()?;
         debug!("jar dir is {:?}", current_dir);
 
@@ -139,6 +139,6 @@ pub fn get_jvm() -> Result<Jvm> {
     if jvm_is_setup() {
         Jvm::attach_thread().map_err(|err| anyhow!("{}", err))
     } else {
-        JvmInstance::new()
+        JvmInstance::init()
     }
 }

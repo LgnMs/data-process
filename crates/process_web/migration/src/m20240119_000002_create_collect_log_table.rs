@@ -33,7 +33,7 @@ impl MigrationTrait for Migration {
                             .integer()
                             .not_null()
                             .default(0)
-                            .comment("0 未开始 1 运行中 2 成功 3 失败 4 等待线程分配"),
+                            .comment("0 未开始 1 运行中 2 成功 3 失败 4 等待线程分配 5 因重启中断"),
                     )
                     .col(
                         ColumnDef::new(CollectLog::CollectConfigId)

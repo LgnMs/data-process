@@ -37,7 +37,7 @@ impl SyncConfigService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.name {
-                conditions = conditions.add(sync_config::Column::Name.contains(&name));
+                conditions = conditions.add(sync_config::Column::Name.contains(name));
             }
         }
 
@@ -185,7 +185,7 @@ impl SyncConfigService {
         let mut collect_log_string = String::new();
 
         collect_log_string.push_str(format!("同步配置： {:?}\n", data).as_str());
-        let res = process_data(&state.conn, &data).await;
+        let res = process_data(&state.conn, data).await;
         match res {
             Ok(_) => {
                 // collect_log_string.push_str(format!("SQL执行成功： {:?}\n", list).as_str());

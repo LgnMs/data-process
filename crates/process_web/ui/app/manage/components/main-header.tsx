@@ -23,7 +23,6 @@ export function MainHeader() {
         zIndex: 999,
       }}
     >
-
       <div className={styles[`${namespace}-logo`]}>
         {/* <Image
         src="/images/logo.png"

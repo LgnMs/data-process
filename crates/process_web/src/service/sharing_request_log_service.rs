@@ -24,7 +24,7 @@ impl SharingRequestLogService {
         let mut conditions = Condition::all();
         if let Some(data) = data {
             if let Some(name) = data.data_sharing_config_name {
-                conditions = conditions.add(data_sharing_config::Column::Name.contains(&name));
+                conditions = conditions.add(data_sharing_config::Column::Name.contains(name));
             }
         }
 
@@ -46,7 +46,7 @@ impl SharingRequestLogService {
 
         let num_pages = sharing_request_log::Entity::find().all(db).await?.len() as u64;
 
-        return Ok((list, num_pages));
+        Ok((list, num_pages))
     }
 
     pub async fn add(
@@ -73,6 +73,7 @@ impl SharingRequestLogService {
         let now = chrono::Local::now().naive_local();
         let mut active_data = sharing_request_log::ActiveModel {
             data_sharing_config_id: Set(data.data_sharing_config_id),
+            user_info: Set(data.user_info),
             ..Default::default()
         };
         if let Some(id) = id {

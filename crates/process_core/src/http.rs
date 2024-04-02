@@ -84,8 +84,8 @@ impl Receive<HttpConfig, Result<Http>> for Http {
         for x in headers_vec {
             let name = HeaderName::from_bytes(x.0.as_bytes());
             let value = HeaderValue::from_bytes(x.1.as_bytes());
-            if name.is_ok() && value.is_ok() {
-                headers.insert(name.unwrap(), value.unwrap());
+            if let (Ok(name), Ok(value)) = (name, value) {
+                headers.insert(name, value);
             } else {
                 error!("{:?} 添加到header中失败", x);
             }
@@ -188,7 +188,7 @@ impl Export for Http {
     }
 }
 
-pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<String>> {
+pub fn generate_sql_list(template_sql: &str, data: &Value) -> Result<Vec<String>> {
     let mut temp_index_vec: Vec<(usize, char)> = vec![];
 
     let mut pre_char = '0';
@@ -208,7 +208,7 @@ pub fn generate_sql_list(template_sql: &String, data: &Value) -> Result<Vec<Stri
     let mut key_vec = vec![];
     let mut i = 0;
     while i < temp_index_vec.len() {
-        let one_index = temp_index_vec[i].0 - "$".as_bytes().len(); // 取"{"前$的索引，所以减1
+        let one_index = temp_index_vec[i].0 - "$".as_bytes().len(); // 取"{"前$的字节索引
         let two_index = temp_index_vec[i + 1].0;
 
         key_vec.push(template_sql[one_index..two_index + "}".as_bytes().len()].to_string());

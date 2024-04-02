@@ -38,8 +38,8 @@ pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
-impl Into<DataSource> for Model {
-    fn into(self) -> DataSource {
+impl From<Model> for DataSource {
+    fn from(val: Model) -> Self {
         // let password = {
         //     // 加密过程查看crates/process_web/ui/lib/encrypt.ts
         //     let a = BASE64_STANDARD.decode(&self.password).unwrap_or_default();
@@ -57,13 +57,13 @@ impl Into<DataSource> for Model {
         //     }
         // };
         DataSource {
-            host: self.host,
-            port: self.port,
-            user: self.user,
-            password: self.password,
-            database_name: self.database_name,
-            table_schema: self.table_schema,
-            database_type: serde_json::from_value(json!(self.database_type)).unwrap(),
+            host: val.host,
+            port: val.port,
+            user: val.user,
+            password: val.password,
+            database_name: val.database_name,
+            table_schema: val.table_schema,
+            database_type: serde_json::from_value(json!(val.database_type)).unwrap(),
         }
     }
 }
