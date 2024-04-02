@@ -76,9 +76,9 @@ export default function SystemInfoCard() {
           borderTop: "1px solid rgba(5, 5, 5, 0.06)",
         }}
       >
-        应用消耗资源
+        应用
         <span style={{ paddingLeft: 12 }}>
-          CPU: {data?.data?.processes_cpu_usage} % 内存:{" "}
+          CPU: {data?.data?.processes_cpu_usage?.toFixed(2)} % 内存:
           {bytesToMB(data?.data?.processes_memory_usage).toFixed(2)} MB 
           {/* 磁盘: 读{" "}
           {bytesToMB(data?.data?.processes_disk_usage.read_bytes)} MB 写{" "}

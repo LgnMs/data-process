@@ -1,6 +1,6 @@
 "use client";
 import { Chart } from "@antv/g2";
-import { Card, Col, DatePicker, Row, Tabs, TabsProps } from "antd";
+import { Card, Col, DatePicker, Row, Tabs, TabsProps, Typography } from "antd";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import * as Statistics from "@/api/statistics";
@@ -66,11 +66,11 @@ function RankList(props: {
         {props.list?.map((value, index) => {
           return (
             <div className={styles.item} key={index}>
-              <span>
-                <span className={styles.index}>{index + 1} </span>
-                <span>{value.name}</span>
-              </span>
-              <span>{value.num_items}</span>
+              <div style={{width: '90%'}}>
+                <Typography.Text  className={styles.index}>{index + 1} </Typography.Text >
+                <Typography.Text style={{width: '90%', verticalAlign: '-6px'}} ellipsis>{value.name}</Typography.Text>
+              </div>
+              <div style={{width: '10%', textAlign: 'right'}}>{value.num_items}</div>
             </div>
           );
         })}
@@ -117,10 +117,11 @@ function CollectTask(props: {date: PickerDate}) {
         .encode("x", "日期")
         .encode("y", "运行次数")
         .axis("x", {
-          title: false,
+          labelFormatter: (d: any) => dayjs(d).format("DD"),
         })
         .axis("y", {
           title: false,
+          
         });
 
       chartIn.current.render();
@@ -182,6 +183,7 @@ function SyncTask(props: {date: PickerDate}) {
         .encode("y", "运行次数")
         .axis("x", {
           title: false,
+          labelFormatter: (d: any) => dayjs(d).format("DD"),
         })
         .axis("y", {
           title: false,
