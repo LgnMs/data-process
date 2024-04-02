@@ -164,6 +164,7 @@ pub enum CollectConfig {
     FiledOfResultData,
     MaxCountOfRequest,
     DbColumnsConfig,
+    DbColumnsConfig2,
     Cron,
     DelFlag,
     JobId,
