@@ -105,7 +105,7 @@ export default function EditForm(props: IEditFormProps) {
       res = await CollectConfig.update_by_id(data.id, data);
     }
 
-    if (res.data) {
+    if (res?.data) {
       await mutate([CollectConfig.LIST, state.collectConfig.pagination]);
 
       message.success("操作成功");
