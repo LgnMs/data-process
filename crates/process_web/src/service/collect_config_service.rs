@@ -12,6 +12,7 @@ use process_core::process::{Export, Receive, Serde};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 
+use serde_json::json;
 use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
 use uuid::Uuid;
@@ -117,23 +118,36 @@ impl CollectConfigService {
             active_data.id = Unchanged(db_data.id);
             active_data.update_time = Set(now);
 
-            if let Some(db_columns_config) = data.db_columns_config.as_ref() {
-                if db_data.db_columns_config != data.db_columns_config {
-                    Self::update_table_struct(
-                        &state.cache_conn,
-                        Some(db_columns_config),
-                        data.cache_table_name.as_ref().unwrap(),
-                    )
-                    .await?;
-                }
-            }
             if db_data.cache_table_name != data.cache_table_name {
-                Self::update_table_struct(
-                    &state.cache_conn,
-                    None,
-                    data.cache_table_name.as_ref().unwrap(),
-                )
-                .await?;
+                if let (Some(from_name), Some(to_name)) = (db_data.cache_table_name.clone(), data.cache_table_name.clone()) {
+                    let alert_sql = format!("ALTER TABLE {from_name} rename to {to_name}");
+                    if let Err(err) = state.cache_conn
+                    .execute(Statement::from_string(
+                        state.cache_conn.get_database_backend(),
+                        alert_sql,
+                    ))
+                    .await {
+                        error!("DbErr {:?}", err);
+                    }
+                }
+                    
+            }
+
+            if let Some(db_columns_config) = data.db_columns_config.as_ref() {
+                let mut arr  = db_columns_config.as_array().unwrap_or(&vec![]).clone(); 
+                if let Some(db_columns_config2) = data.db_columns_config2.as_ref() {
+                    let arr2  = db_columns_config2.as_array().unwrap_or(&vec![]).clone(); 
+                    arr.extend(arr2.clone());                
+                    if db_data.db_columns_config != data.db_columns_config || db_data.db_columns_config2 != data.db_columns_config2 {
+                        
+                        Self::update_table_struct(
+                            &state.cache_conn,
+                            Some(&json!(arr)),
+                            data.cache_table_name.as_ref().unwrap(),
+                        )
+                        .await?;
+                    }
+                }
             }
 
             let mut data = data.clone();
@@ -149,10 +163,17 @@ impl CollectConfigService {
         } else {
             active_data.create_time = Set(now);
             active_data.update_time = Set(now);
+            // TODO 建表时读取db_columns_config2
             if let Some(db_columns_config) = data.db_columns_config.as_ref() {
+                let mut arr  = db_columns_config.as_array().unwrap_or(&vec![]).clone(); 
+                if let Some(db_columns_config2) = data.db_columns_config2.as_ref() {
+                    let arr2  = db_columns_config2.as_array().unwrap_or(&vec![]).clone(); 
+                    arr.extend(arr2.clone());                
+                }
+
                 Self::create_table(
                     &state.cache_conn,
-                    db_columns_config,
+                    &json!(arr),
                     data.cache_table_name.as_ref().unwrap(),
                 )
                 .await?;
@@ -188,6 +209,7 @@ impl CollectConfigService {
     }
 
     pub async fn cache_data(cache_db: &DbConn, list: &[String]) -> Result<(), String> {
+        // TODO 处理转义符号
         let mut err_msg = String::new();
         for (i, item) in list.iter().enumerate() {
             let sql_list = item.split(';').collect::<Vec<&str>>();
