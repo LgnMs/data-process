@@ -32,7 +32,7 @@ impl SharingRequestLogService {
             .find_also_related(data_sharing_config::Entity)
             .offset((page - 1) * page_size)
             .limit(page_size)
-            .filter(conditions)
+            .filter(conditions.clone())
             .order_by_desc(sharing_request_log::Column::UpdateTime)
             .all(db)
             .await?;
@@ -44,7 +44,12 @@ impl SharingRequestLogService {
             list.push(a);
         }
 
-        let num_pages = sharing_request_log::Entity::find().all(db).await?.len() as u64;
+        let num_pages = sharing_request_log::Entity::find()
+            .find_also_related(data_sharing_config::Entity)
+            .filter(conditions)
+            .all(db)
+            .await?
+            .len() as u64;
 
         Ok((list, num_pages))
     }

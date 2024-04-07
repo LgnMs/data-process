@@ -15,6 +15,7 @@ export default function HeaderForm() {
       type: "syncConfig.setPagination",
       pagination: {
         ...state.syncConfig.pagination,
+        current: 1,
         data,
       },
     });
@@ -24,7 +25,7 @@ export default function HeaderForm() {
   return (
     <Form form={form} name="basic" layout="inline">
       <Form.Item name="name">
-        <Input placeholder="请输入名称" />
+        <Input placeholder="请输入名称" defaultValue={state.syncConfig.pagination.data?.name!}/>
       </Form.Item>
 
       <Form.Item>

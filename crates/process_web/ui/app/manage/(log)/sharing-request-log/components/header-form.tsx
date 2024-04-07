@@ -15,6 +15,7 @@ export default function HeaderForm() {
       type: "sharingRequestLog.setPagination",
       pagination: {
         ...state.sharingRequestLog.pagination,
+        current: 1,
         data,
       },
     });
@@ -24,7 +25,7 @@ export default function HeaderForm() {
   return (
     <Form form={form} name="basic" layout="inline">
       <Form.Item name="data_sharing_config_name">
-        <Input placeholder="请输入共享配置名称" />
+        <Input placeholder="请输入共享配置名称" defaultValue={state.sharingRequestLog.pagination.data?.data_sharing_config_name!}/>
       </Form.Item>
 
       <Form.Item>

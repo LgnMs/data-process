@@ -50,7 +50,7 @@ impl CollectLogService {
             .find_also_related(collect_config::Entity)
             .offset((page - 1) * page_size)
             .limit(page_size)
-            .filter(conditions)
+            .filter(conditions.clone())
             .order_by_desc(collect_log::Column::UpdateTime)
             .all(db)
             .await?;
@@ -62,7 +62,12 @@ impl CollectLogService {
             list.push(a);
         }
 
-        let num_pages = collect_log::Entity::find().all(db).await?.len() as u64;
+        let num_pages = collect_log::Entity::find()
+            .find_also_related(collect_config::Entity)
+            .filter(conditions)
+            .all(db)
+            .await?
+            .len() as u64;
 
         Ok((list, num_pages))
     }

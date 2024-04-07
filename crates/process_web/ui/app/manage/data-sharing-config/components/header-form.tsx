@@ -15,6 +15,7 @@ export default function HeaderForm() {
       type: "dataSharingConfig.setPagination",
       pagination: {
         ...state.dataSharingConfig.pagination,
+        current: 1,
         data,
       },
     });
@@ -24,7 +25,7 @@ export default function HeaderForm() {
   return (
     <Form form={form} name="basic" layout="inline">
       <Form.Item name="name">
-        <Input placeholder="请输入名称" />
+        <Input placeholder="请输入名称" defaultValue={state.dataSharingConfig.pagination.data?.name!}/>
       </Form.Item>
 
       <Form.Item>
