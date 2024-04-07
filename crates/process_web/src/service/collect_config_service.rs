@@ -211,7 +211,8 @@ impl CollectConfigService {
 
     pub async fn cache_data(state: &Arc<AppState>, list: &[String]) -> Result<(), String> {
         // TODO 处理SQL中值符号的转义
-        let mut handlers = Vec::new();
+        // let mut handlers = Vec::new();
+        let mut err_msg = String::new();
 
         for (i, item) in list.iter().enumerate() {
             let sql_list = item.split(';').map(|x| x.to_string()).collect::<Vec<String>>();
@@ -219,10 +220,7 @@ impl CollectConfigService {
                 if sql.is_empty() {
                     continue;
                 }
-                
-                let state = state.clone();
-                let handler = tokio::spawn(async move {
-                    match state.cache_conn
+                match state.cache_conn
                         .execute(Statement::from_string(
                             state.cache_conn.get_database_backend(),
                             sql.clone(),
@@ -231,31 +229,50 @@ impl CollectConfigService {
                     {
                         Ok(msg) => {
                             debug!("{:?}", msg);
-                            return Ok::<(), String>(());
+                            // return Ok::<(), String>(());
                         }
                         Err(err) => {
-                            error!("sql {}", sql);
-                            return Err::<(), String>(format!("第{}条SQL执行失败，{} \n", i + 1, err));
+                            error!("sql {} {}", sql, err);
+                            err_msg.push_str(&format!("第{}条SQL执行失败，{} \n", i + 1, err));
+                            // return Err::<(), String>(format!("第{}条SQL执行失败，{} \n", i + 1, err));
                         }
                     }
-                });
-                handlers.push(handler);
+
+                // let state = state.clone();
+                // let handler = tokio::spawn(async move {
+                //     match state.cache_conn
+                //         .execute(Statement::from_string(
+                //             state.cache_conn.get_database_backend(),
+                //             sql.clone(),
+                //         ))
+                //         .await
+                //     {
+                //         Ok(msg) => {
+                //             debug!("{:?}", msg);
+                //             return Ok::<(), String>(());
+                //         }
+                //         Err(err) => {
+                //             error!("sql {}", sql);
+                //             return Err::<(), String>(format!("第{}条SQL执行失败，{} \n", i + 1, err));
+                //         }
+                //     }
+                // });
+                // handlers.push(handler);
             }
         }
 
-        let mut err_msg = String::new();
-        for handler in handlers {
-           match handler.await {
-                Ok(res) => {
-                    if let Err(err) = res {
-                        err_msg.push_str(err.as_str());
-                    }
-                },
-                Err(err) => {
-                    debug!("{}", err);
-                }
-           }
-        }
+        // for handler in handlers {
+        //    match handler.await {
+        //         Ok(res) => {
+        //             if let Err(err) = res {
+        //                 err_msg.push_str(err.as_str());
+        //             }
+        //         },
+        //         Err(err) => {
+        //             debug!("{}", err);
+        //         }
+        //    }
+        // }
         if err_msg.is_empty() {
             Ok(())
         } else {
