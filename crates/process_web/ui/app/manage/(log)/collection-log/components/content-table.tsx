@@ -116,7 +116,7 @@ export default function ContentTable() {
             >
               查看日志
             </Typography.Link>
-            { record.status === 1 && <Typography.Link
+            { record.status <= 1 && <Typography.Link
                 onClick={async () => {
                   if (record.task_id && !(record as any).stop_task_loading) {
                     (record as any).stop_task_loading = true;

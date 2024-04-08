@@ -13,6 +13,8 @@ use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 
 use serde_json::json;
+use tokio::runtime::Handle;
+use tokio::time::interval;
 use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
 use uuid::fmt::Simple;
@@ -211,8 +213,6 @@ impl CollectConfigService {
     }
 
     pub async fn cache_data(state: &Arc<AppState>, list: &[String]) -> Result<(), String> {
-        // TODO 处理SQL中值符号的转义
-        // let mut handlers = Vec::new();
         let mut err_msg = String::new();
 
         for (i, item) in list.iter().enumerate() {
@@ -229,6 +229,7 @@ impl CollectConfigService {
                         .await
                     {
                         Ok(msg) => {
+                            println!("sql {sql}");
                             debug!("{:?}", msg);
                             // return Ok::<(), String>(());
                         }
@@ -408,13 +409,29 @@ impl CollectConfigService {
                 error!("任务日志添加失败 {err}");
             }
         }
+
         let log_id = collect_log_model.id;
         let mut task = state.log_task.write().await;
         if let Some(h) = task.get_mut(&task_id) {
             h.set_log_id(log_id);
         };
-        println!("logtask {task:?}");
         drop(task);
+
+        let mut interval = interval(Duration::from_secs(5));
+        loop {
+            interval.tick().await;
+
+            let metrics = Handle::current().metrics();
+            let task = state.log_task.read().await;
+            println!("task {:?} task_count {}", task.len(), metrics.active_tasks_count());
+            let len = task.len();
+            drop(task);
+            if len <= 5 {
+                drop(interval);
+                break;
+            }
+        }
+
 
         if let Some(table_name) = data.cache_table_name.as_ref() {
             let mut log = String::new();
@@ -465,6 +482,7 @@ impl CollectConfigService {
         }
 
         let _ = process_data(&data, &state, log_id).await;
+        state.log_task.write().await.remove(&task_id);
     }
 
     /// 初始化所有的采集系统调度任务

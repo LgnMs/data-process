@@ -96,6 +96,10 @@ pub async fn execute(
     let t_id = task_id.clone();
     let log_task = LogTask::new();
     let cloned_token = log_task.token.clone();
+    let mut task = state.log_task.write().await;
+    task.insert(task_id, log_task);
+    drop(task);
+
     tokio::task::spawn(async move {
         tokio::select! {
             _ = cloned_token.cancelled() => {
@@ -105,10 +109,6 @@ pub async fn execute(
             _ = CollectConfigService::execute_task(&st, &data, t_id) => {}
         }
     });
-    // https://docs.rs/tokio/1.35.1/tokio/task/index.html#yield_now
-    // tokio::task::yield_now().await;
-    let mut task = state.log_task.write().await;
-    task.insert(task_id, log_task);
     let res: anyhow::Result<bool> = Ok(true);
     bool_response!(res)
 }
