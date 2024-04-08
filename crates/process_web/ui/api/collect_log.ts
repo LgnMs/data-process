@@ -47,3 +47,8 @@ export const DEL = `${PREFIX}/del/`;
 export async function del(id: string): Promise<ResJson<boolean>> {
   return http_get(`${PREFIX}/del/${id}`);
 }
+
+export const STOP_TASK = `${PREFIX}/stop_task`;
+export async function stop_task(id: string): Promise<ResJson<boolean>> {
+  return http_get(`${STOP_TASK}/${id}`);
+}

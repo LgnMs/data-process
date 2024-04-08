@@ -2387,6 +2387,7 @@ dependencies = [
  "sysinfo",
  "tokio",
  "tokio-cron-scheduler",
+ "tokio-util",
  "tower",
  "tracing",
  "tracing-appender",

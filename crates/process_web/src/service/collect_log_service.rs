@@ -94,6 +94,10 @@ impl CollectLogService {
         let mut active_data = collect_log::ActiveModel {
             ..Default::default()
         };
+        if data.task_id.is_some() {
+            active_data.task_id = Set(data.task_id);
+        }
+
         if let Some(id) = id {
             let db_data = collect_log::Entity::find_by_id(id)
                 .one(db)
@@ -105,6 +109,8 @@ impl CollectLogService {
             let log = format!("{}\n{}", db_data.running_log, data.running_log);
             active_data.running_log = Set(log);
             active_data.update_time = Set(now);
+
+
             active_data.update(db).await
         } else {
             active_data.collect_config_id = Set(data.collect_config_id);

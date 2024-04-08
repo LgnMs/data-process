@@ -10,4 +10,5 @@ export interface CollectLog {
   update_time: any;
   create_time: any;
   collect_config: CollectConfig;
+  task_id: string | null;
 }

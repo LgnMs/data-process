@@ -77,6 +77,7 @@ pub enum CollectLog {
     Id,
     RunningLog,
     CollectConfigId,
+    TaskId,
     Status,
     UpdateTime,
     CreateTime,

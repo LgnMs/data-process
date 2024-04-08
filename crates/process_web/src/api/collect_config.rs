@@ -7,12 +7,14 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
+use tracing::debug;
 use ts_rs::TS;
+use uuid::Uuid;
 
-use crate::api::common::{AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination};
+use crate::api::common::{AppError, AppState, LogTask, PaginationPayload, ResJson, ResJsonWithPagination};
 use crate::entity::collect_config::Model;
 use crate::service::collect_config_service::CollectConfigService;
-use crate::{bool_response, data_response, pagination_response, res_template_ok};
+use crate::{bool_response, data_response, pagination_response};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     Router::new()
@@ -89,11 +91,24 @@ pub async fn execute(
 ) -> Result<ResJson<bool>, AppError> {
     let data = CollectConfigService::find_by_id(&state.conn, id).await?;
 
+    let task_id = Uuid::new_v4().simple();
+    let st = state.clone();
+    let t_id = task_id.clone();
+    let log_task = LogTask::new();
+    let cloned_token = log_task.token.clone();
     tokio::task::spawn(async move {
-        CollectConfigService::execute_task(&state, &data).await;
+        tokio::select! {
+            _ = cloned_token.cancelled() => {
+                // The token was cancelled, task can shut down
+                debug!("cloned_token {cloned_token:?}");
+            }
+            _ = CollectConfigService::execute_task(&st, &data, t_id) => {}
+        }
     });
     // https://docs.rs/tokio/1.35.1/tokio/task/index.html#yield_now
     // tokio::task::yield_now().await;
-
-    Ok(Json(res_template_ok!(Some(true))))
+    let mut task = state.log_task.write().await;
+    task.insert(task_id, log_task);
+    let res: anyhow::Result<bool> = Ok(true);
+    bool_response!(res)
 }

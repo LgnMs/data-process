@@ -16,6 +16,7 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub collect_config_id: Option<i32>,
+    pub task_id: Option<String>,
     #[sea_orm(column_type = "Text")]
     pub running_log: String,
     pub status: i32,

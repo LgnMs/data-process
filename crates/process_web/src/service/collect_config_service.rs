@@ -15,9 +15,10 @@ use sea_orm::*;
 use serde_json::json;
 use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
+use uuid::fmt::Simple;
 use uuid::Uuid;
 
-use crate::api::common::{pg_to_mysql_type, AppState};
+use crate::api::common::{pg_to_mysql_type, AppState, LogTask};
 use crate::entity::collect_config::Model;
 use crate::entity::{collect_config, collect_log};
 use crate::service::collect_log_service::CollectLogService;
@@ -362,6 +363,7 @@ impl CollectConfigService {
 
         Ok(true)
     }
+
     pub async fn update_table_struct(
         cache_db: &DbConn,
         db_columns_config: Option<&serde_json::Value>,
@@ -387,16 +389,19 @@ impl CollectConfigService {
         Ok(true)
     }
 
-    pub async fn execute_task(state: &Arc<AppState>, data: &Model) {
+    pub async fn execute_task(state: &Arc<AppState>, data: &Model, task_id: Simple) {
         let mut collect_log_model = collect_log::Model {
             collect_config_id: Some(data.id),
             status: 0,
+            task_id: Some(task_id.to_string()),
             running_log: String::new(),
             ..Default::default()
         };
 
         match CollectLogService::add(&state.conn, collect_log_model.clone()).await {
             Ok(db_log_data) => {
+                println!("collect_log_model {collect_log_model:?}");
+                println!("db_log_data {db_log_data:?}");
                 collect_log_model = db_log_data;
             }
             Err(err) => {
@@ -404,6 +409,13 @@ impl CollectConfigService {
             }
         }
         let log_id = collect_log_model.id;
+        let mut task = state.log_task.write().await;
+        if let Some(h) = task.get_mut(&task_id) {
+            h.set_log_id(log_id);
+        };
+        println!("logtask {task:?}");
+        drop(task);
+
         if let Some(table_name) = data.cache_table_name.as_ref() {
             let mut log = String::new();
             match TableService::table_exists(&state.cache_conn, "data_process_cache", table_name.borrow()).await {
@@ -452,7 +464,7 @@ impl CollectConfigService {
             }
         }
 
-        let _ = process_data(data, state, log_id).await;
+        let _ = process_data(&data, &state, log_id).await;
     }
 
     /// 初始化所有的采集系统调度任务
@@ -562,7 +574,7 @@ pub async fn process_data(
                             should_stop = true;
                         }
 
-                        if loop_counts >= max_count_of_request as i64 {
+                        if loop_counts >= max_count_of_request {
                             should_stop = true;
                         }
 
@@ -939,7 +951,15 @@ async fn create_job_scheduler(
                     let st = sched_state.clone();
                     let item_c = data.clone();
                     Box::pin(async move {
-                        CollectConfigService::execute_task(&st, &item_c).await;
+                        let task_id = Uuid::new_v4().simple();
+                        let t_id = task_id.clone();
+                        let stc = st.clone();
+                        tokio::spawn(async move {
+                            CollectConfigService::execute_task(&stc, &item_c, t_id).await;
+                        });
+                        let mut task = st.log_task.write().await;
+                        task.insert(task_id, LogTask::new());
+                        // CollectConfigService::execute_task(&st, &item_c, t_id).await
                     })
                 },
             )?)

@@ -1,6 +1,6 @@
 "use client";
-import { Space, Table, Tag, Typography } from "antd";
-import useSWR from "swr";
+import { Space, Table, Tag, Typography, message } from "antd";
+import useSWR, { useSWRConfig } from "swr";
 
 import * as CollectLog from "@/api/collect_log";
 import { CollectLog as ICollectLog } from "@/api/models/CollectLog";
@@ -13,16 +13,19 @@ import {
 } from "@ant-design/icons";
 import React from "react";
 import dayjs from "dayjs";
+import { cloneDeep } from "lodash";
 
 export default function ContentTable() {
   const { state, dispatch } = useMainContext()!;
   const pagination = state.collectLog.pagination;
 
+  const { mutate } = useSWRConfig()
   const { data, isLoading } = useSWR(
     [CollectLog.LIST, pagination],
     ([_, pagination]) => CollectLog.list(pagination)
   );
 
+  console.log(data)
   const columns: any = [
     {
       title: "id",
@@ -113,6 +116,29 @@ export default function ContentTable() {
             >
               查看日志
             </Typography.Link>
+            { record.status === 1 && <Typography.Link
+                onClick={async () => {
+                  if (record.task_id && !(record as any).stop_task_loading) {
+                    (record as any).stop_task_loading = true;
+                    console.log(data);
+                    await CollectLog.stop_task(record.task_id)
+                    message.success("操作成功");
+                    const options = {
+                      optimisticData: cloneDeep(data),
+                      rollbackOnError(error: any) {
+                        // 如果超时中止请求的错误，不执行回滚
+                        return error.name !== 'AbortError'
+                      },
+                    }
+                    mutate([CollectLog.LIST, pagination], CollectLog.list(pagination), options);
+                  } else {
+                    message.error("任务没有task_id");
+                  }
+                }}
+              >
+                {(record as any).stop_task_loading ? "停止中" : "停止"}
+              </Typography.Link>
+            }
           </Space>
         );
       },

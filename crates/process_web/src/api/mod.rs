@@ -3,6 +3,8 @@ use axum::http::{StatusCode, Uri};
 use axum::{middleware, Router};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::*;
+use tokio::sync::RwLock;
+use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
 use tokio_cron_scheduler::JobScheduler;
@@ -55,12 +57,16 @@ pub async fn start() -> Result<()> {
     // 执行数据库未迁移过任务 在crates/process_web/migration中查看
     Migrator::up(&conn, None).await?;
 
+    // cron调度任务
     let sched = JobScheduler::new().await?;
+    // 需要远程关闭的tokio任务
+    let log_task = Arc::new(RwLock::new(HashMap::new()));
 
     let state = Arc::new(AppState {
         conn,
         cache_conn,
         sched,
+        log_task
     });
 
     // 初始化调度任务
