@@ -229,7 +229,6 @@ impl CollectConfigService {
                         .await
                     {
                         Ok(msg) => {
-                            println!("sql {sql}");
                             debug!("{:?}", msg);
                             // return Ok::<(), String>(());
                         }
@@ -418,6 +417,7 @@ impl CollectConfigService {
         drop(task);
 
         let mut interval = interval(Duration::from_secs(5));
+        // TODO 排查执行任务过多时有任务不执行
         loop {
             interval.tick().await;
 
@@ -481,7 +481,7 @@ impl CollectConfigService {
             }
         }
 
-        let _ = process_data(&data, &state, log_id).await;
+        let _ = process_data(data, state, log_id).await;
         state.log_task.write().await.remove(&task_id);
     }
 
@@ -970,10 +970,9 @@ async fn create_job_scheduler(
                     let item_c = data.clone();
                     Box::pin(async move {
                         let task_id = Uuid::new_v4().simple();
-                        let t_id = task_id.clone();
                         let stc = st.clone();
                         tokio::spawn(async move {
-                            CollectConfigService::execute_task(&stc, &item_c, t_id).await;
+                            CollectConfigService::execute_task(&stc, &item_c, task_id).await;
                         });
                         let mut task = st.log_task.write().await;
                         task.insert(task_id, LogTask::new());

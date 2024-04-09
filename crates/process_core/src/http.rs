@@ -231,14 +231,14 @@ pub fn generate_sql_list(template_sql: &str, data: &Value) -> Result<Vec<String>
     }
     let mut template_sql = template_sql.to_string();
 
-    for (_, item) in key_vec.iter().enumerate() {
+    for item in &key_vec {
         // template_sql = template_sql.replace(item, format!("${}", index + 1).as_str());
         template_sql = template_sql.replace(item, "?");
     }
 
     let mut result_vec: Vec<String> = vec![];
     let mut result_values: Vec<Vec<String>> = vec![];
-    for (_, key) in rel_key_vec.iter().enumerate() {
+    for key in &rel_key_vec {
         // let rel_key = &key[2..key.len() - 1];
         let value = find_value(key, data, true)
             .map_err(|err| anyhow!("{err} 未在rel_key: {key} data:{}中找到数据", data))?;
@@ -252,7 +252,7 @@ pub fn generate_sql_list(template_sql: &str, data: &Value) -> Result<Vec<String>
                     item = temp_string;
                 }
                 // TIPS 做这个转换是为了防止值影响以;来切割SQL语句的方法 查看：crates/process_web/src/service/collect_config_service.rs 219行
-                item = item.replace(";", r#"\:"#);
+                item = item.replace(';', r#"\:"#);
                 if result_values.get(i).is_none() {
                     result_values.push(vec![item.to_string()]);
                 } else {

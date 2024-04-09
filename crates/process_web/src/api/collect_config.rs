@@ -93,7 +93,6 @@ pub async fn execute(
 
     let task_id = Uuid::new_v4().simple();
     let st = state.clone();
-    let t_id = task_id.clone();
     let log_task = LogTask::new();
     let cloned_token = log_task.token.clone();
     let mut task = state.log_task.write().await;
@@ -106,7 +105,7 @@ pub async fn execute(
                 // The token was cancelled, task can shut down
                 debug!("cloned_token {cloned_token:?}");
             }
-            _ = CollectConfigService::execute_task(&st, &data, t_id) => {}
+            _ = CollectConfigService::execute_task(&st, &data, task_id) => {}
         }
     });
     let res: anyhow::Result<bool> = Ok(true);

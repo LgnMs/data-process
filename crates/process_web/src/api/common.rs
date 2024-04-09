@@ -34,7 +34,7 @@ pub struct Pagination<T> {
     pub page_size: u64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct LogTask {
     pub token: CancellationToken,
     pub log_id: i32,
@@ -51,14 +51,6 @@ impl LogTask {
     pub fn set_log_id(&mut self, log_id: i32) -> &Self {
         self.log_id = log_id;
         self
-    }
-
-    pub fn stop_task<F>(&mut self, callback: F)
-    where
-        F: FnOnce(&Self) -> (),
-    {
-        self.token.cancel();
-        callback(self);
     }
 }
 
