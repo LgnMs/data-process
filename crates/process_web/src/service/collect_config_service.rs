@@ -416,21 +416,21 @@ impl CollectConfigService {
         };
         drop(task);
 
-        let mut interval = interval(Duration::from_secs(5));
+        // let mut interval = interval(Duration::from_secs(5));
         // TODO 排查执行任务过多时有任务不执行
-        loop {
-            interval.tick().await;
+        // loop {
+        //     interval.tick().await;
 
-            let metrics = Handle::current().metrics();
-            let task = state.log_task.read().await;
-            println!("task {:?} task_count {}", task.len(), metrics.active_tasks_count());
-            let len = task.len();
-            drop(task);
-            if len <= 5 {
-                drop(interval);
-                break;
-            }
-        }
+        //     let metrics = Handle::current().metrics();
+        //     let task = state.log_task.read().await;
+        //     println!("task {:?} task_count {}", task.len(), metrics.active_tasks_count());
+        //     let len = task.len();
+        //     drop(task);
+        //     if len <= 5 {
+        //         drop(interval);
+        //         break;
+        //     }
+        // }
 
 
         if let Some(table_name) = data.cache_table_name.as_ref() {

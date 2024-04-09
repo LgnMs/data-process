@@ -25,7 +25,6 @@ export default function ContentTable() {
     ([_, pagination]) => CollectLog.list(pagination)
   );
 
-  console.log(data)
   const columns: any = [
     {
       title: "id",

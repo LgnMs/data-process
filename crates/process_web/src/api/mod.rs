@@ -53,7 +53,14 @@ pub async fn start() -> Result<()> {
         .await
         .expect("Database connection failed");
 
-    let cache_conn = Database::connect(cache_db_url)
+    let mut opt = ConnectOptions::new(cache_db_url);
+    opt.max_connections(100)
+        .min_connections(5)
+        .connect_timeout(Duration::from_secs(10))
+        .acquire_timeout(Duration::from_secs(10))
+        .idle_timeout(Duration::from_secs(10))
+        .max_lifetime(Duration::from_secs(10));
+    let cache_conn = Database::connect(opt)
         .await
         .expect("Cache Database connection failed");
 
@@ -79,7 +86,7 @@ pub async fn start() -> Result<()> {
     SyncConfigService::setup_collect_config_cron(&state).await?;
     state.sched.start().await?;
     
-    // show_tokio_info();
+    show_tokio_info();
 
     // build our application with a route
     let app = Router::new()

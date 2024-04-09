@@ -57,9 +57,16 @@ impl CollectLogService {
 
         let mut list = vec![];
         for (a, b) in db_res {
-            let mut a = json!(a);
-            a["collect_config"] = json!(b.unwrap_or_default());
-            list.push(a);
+            let item = json!({
+                "id": a.id,
+                "collect_config_id": a.collect_config_id,
+                "task_id": a.task_id,
+                "status": a.status,
+                "update_time": a.update_time,
+                "create_time": a.create_time,
+                "collect_config": json!(b.unwrap_or_default()),
+            });
+            list.push(item);
         }
 
         let num_pages = collect_log::Entity::find()
