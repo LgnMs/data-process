@@ -3,9 +3,9 @@ use axum::http::{StatusCode, Uri};
 use axum::{middleware, Router};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::*;
-use tokio::runtime::Handle;
+// use tokio::runtime::Handle;
+// use tokio::time::interval;
 use tokio::sync::RwLock;
-use tokio::time::interval;
 use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
@@ -86,7 +86,7 @@ pub async fn start() -> Result<()> {
     SyncConfigService::setup_collect_config_cron(&state).await?;
     state.sched.start().await?;
     
-    show_tokio_info();
+    // show_tokio_info();
 
     // build our application with a route
     let app = Router::new()
@@ -153,14 +153,14 @@ async fn fallback(uri: Uri) -> (StatusCode, String) {
     (StatusCode::NOT_FOUND, format!("No route for {uri}"))
 }
 
-fn show_tokio_info() {
-    tokio::spawn(async {
-        println!("debug show_tokio_info");
-        let mut interval = interval(Duration::from_secs(1));
-        loop {
-            interval.tick().await;
-            let metrics = Handle::current().metrics();
-            println!("task_count {}", metrics.active_tasks_count());
-        }
-    });
-}
+// fn show_tokio_info() {
+//     tokio::spawn(async {
+//         println!("debug show_tokio_info");
+//         let mut interval = interval(Duration::from_secs(1));
+//         loop {
+//             interval.tick().await;
+//             let metrics = Handle::current().metrics();
+//             println!("task_count {}", metrics.active_tasks_count());
+//         }
+//     });
+// }

@@ -13,8 +13,6 @@ use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
 
 use serde_json::json;
-use tokio::runtime::Handle;
-use tokio::time::interval;
 use tokio_cron_scheduler::{Job, JobSchedulerError};
 use tracing::{debug, error, warn};
 use uuid::fmt::Simple;
