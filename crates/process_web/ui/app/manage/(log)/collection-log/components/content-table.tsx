@@ -38,7 +38,7 @@ export default function ContentTable() {
       title: "采集配置名称",
       dataIndex: "collect_config.name",
       render: (_: string, record: ICollectLog) => {
-        return record.collect_config.name;
+        return record.name;
       },
     },
     {

@@ -9,6 +9,6 @@ export interface CollectLog {
   status: number;
   update_time: any;
   create_time: any;
-  collect_config: CollectConfig;
+  name: string;
   task_id: string | null;
 }
