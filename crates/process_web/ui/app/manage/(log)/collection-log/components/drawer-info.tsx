@@ -1,7 +1,9 @@
-import { Button, Drawer, Space } from "antd";
+import { Button, Drawer, Space, Spin } from "antd";
 import React from "react";
 import { ICommonCollectionSettingProps } from "@/app/manage/collection-setting/page";
 import { useMainContext } from "@/contexts/main";
+import useSWR from "swr";
+import { FIND_BY_ID, find_by_id } from "@/api/collect_log";
 
 interface IEditFormProps extends ICommonCollectionSettingProps {
   open: boolean;
@@ -9,6 +11,9 @@ interface IEditFormProps extends ICommonCollectionSettingProps {
 }
 export default function DrawerInfo(props: IEditFormProps) {
   const { state, dispatch } = useMainContext()!;
+
+  if (!state.collectLog.drawerData || !state.collectLog.drawerData.id) return
+  const { data, isLoading } = useSWR([FIND_BY_ID, state.collectLog.drawerData.id], ([_, id]) => find_by_id(id))
 
   function close() {
     props.close();
@@ -30,8 +35,9 @@ export default function DrawerInfo(props: IEditFormProps) {
       }
       onClose={close}
     >
+      { isLoading && <Spin />}
       <code style={{ whiteSpace: "pre-wrap" }}>
-        {state.collectLog.drawerData?.running_log}
+        {data?.data?.running_log}
       </code>
     </Drawer>
   );

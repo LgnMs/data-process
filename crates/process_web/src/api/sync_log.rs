@@ -16,7 +16,7 @@ use crate::{bool_response, data_response, pagination_response};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
     Router::new()
-        .route("/find_by_id/:id", post(find_by_id))
+        .route("/find_by_id/:id", get(find_by_id))
         .route("/list", post(list))
         .route("/add", post(add))
         .route("/update_by_id/:id", post(update_by_id))

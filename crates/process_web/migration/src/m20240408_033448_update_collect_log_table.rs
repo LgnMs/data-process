@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use crate::m20240119_000001_create_collect_config_table::CollectConfig;
+use crate::m20240119_000002_create_collect_log_table::CollectLog;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -11,11 +11,11 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table(CollectConfig::Table)
+                    .table(CollectLog::Table)
                     .add_column(
-                        ColumnDef::new(CollectConfig::DbColumnsConfig2)
-                            .json()
-                            .comment(r#"数据库列配置2"#),
+                        ColumnDef::new(CollectLog::TaskId)
+                            .string()
+                            .comment(r#"正在执行的任务的id"#),
                     )
                     .to_owned(),
             )

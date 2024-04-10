@@ -15,6 +15,7 @@ export default function HeaderForm() {
       type: "syncLog.setPagination",
       pagination: {
         ...state.syncLog.pagination,
+        current: 1,
         data,
       },
     });
@@ -23,8 +24,8 @@ export default function HeaderForm() {
 
   return (
     <Form form={form} name="basic" layout="inline">
-      <Form.Item name="name">
-        <Input placeholder="请输入同步任务名称" />
+      <Form.Item name="sync_config_name">
+        <Input placeholder="请输入同步任务名称" defaultValue={state.syncLog.pagination.data?.sync_config_name!}/>
       </Form.Item>
 
       <Form.Item>

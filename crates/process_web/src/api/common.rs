@@ -7,8 +7,13 @@ use axum::Json;
 use sea_orm::DatabaseConnection;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
+use std::collections::HashMap;
 use std::fmt::Debug;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use tokio_cron_scheduler::JobScheduler;
+use tokio_util::sync::CancellationToken;
+use uuid::fmt::Simple;
 
 pub type ResJson<T> = Json<ResTemplate<T>>;
 
@@ -29,11 +34,47 @@ pub struct Pagination<T> {
     pub page_size: u64,
 }
 
+#[derive(Debug, Default)]
+pub struct LogTask {
+    pub token: CancellationToken,
+    pub log_id: i32,
+}
+
+impl LogTask {
+    pub fn new() -> Self {
+        Self {
+            token: CancellationToken::new(),
+            log_id: -1,
+        }
+    }
+
+    pub fn set_log_id(&mut self, log_id: i32) -> &Self {
+        self.log_id = log_id;
+        self
+    }
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub(crate) conn: DatabaseConnection,
     pub(crate) cache_conn: DatabaseConnection,
     pub(crate) sched: JobScheduler,
+    pub(crate) log_task: Arc<RwLock<HashMap<Simple, LogTask>>>,
+}
+
+impl AppState {
+    pub async fn stop_log_task(&self, log_task_id: Simple) -> Option<i32> {
+        let task = self.log_task.read().await;
+        let mut log_id = None;
+        if let Some(h) = task.get(&log_task_id) {
+            h.token.cancel();
+            log_id = Some(h.log_id);
+            drop(task);
+            self.log_task.write().await.remove(&log_task_id);
+        };
+
+        log_id
+    }
 }
 
 // Make our own error that wraps `anyhow::Error`.

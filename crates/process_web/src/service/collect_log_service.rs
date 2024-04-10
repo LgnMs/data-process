@@ -2,7 +2,6 @@ use crate::api::collect_log::ListParams;
 use chrono::{Local, TimeZone};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
-use serde_json::json;
 use tracing::debug;
 
 use crate::entity::collect_config;
@@ -45,26 +44,31 @@ impl CollectLogService {
                     );
             }
         }
-
-        let db_res = collect_log::Entity::find()
-            .find_also_related(collect_config::Entity)
+        let select = collect_log::Entity::find()
+            .select_only()
+            .column(collect_config::Column::Name)
+            .columns(collect_log::Column::iter().filter(|col| match col {
+                collect_log::Column::RunningLog => false,
+                _ => true,
+            }))
+            .inner_join(collect_config::Entity)
             .offset((page - 1) * page_size)
             .limit(page_size)
-            .filter(conditions)
+            .filter(conditions.clone())
             .order_by_desc(collect_log::Column::UpdateTime)
-            .all(db)
-            .await?;
+            .into_json();
 
-        let mut list = vec![];
-        for (a, b) in db_res {
-            let mut a = json!(a);
-            a["collect_config"] = json!(b.unwrap_or_default());
-            list.push(a);
+        let db_res = select.paginate(db, page_size);
+
+        let num_pages = db_res.num_items().await?;
+
+        match db_res.fetch_page(page - 1).await {
+            Ok(p) => Ok((p, num_pages)),
+            Err(err) => {
+                println!("err {err}");
+                Err(err)
+            }
         }
-
-        let num_pages = collect_log::Entity::find().all(db).await?.len() as u64;
-
-        Ok((list, num_pages))
     }
 
     pub async fn add(db: &DbConn, data: collect_log::Model) -> Result<collect_log::Model, DbErr> {
@@ -89,6 +93,10 @@ impl CollectLogService {
         let mut active_data = collect_log::ActiveModel {
             ..Default::default()
         };
+        if data.task_id.is_some() {
+            active_data.task_id = Set(data.task_id);
+        }
+
         if let Some(id) = id {
             let db_data = collect_log::Entity::find_by_id(id)
                 .one(db)
@@ -100,6 +108,7 @@ impl CollectLogService {
             let log = format!("{}\n{}", db_data.running_log, data.running_log);
             active_data.running_log = Set(log);
             active_data.update_time = Set(now);
+
             active_data.update(db).await
         } else {
             active_data.collect_config_id = Set(data.collect_config_id);

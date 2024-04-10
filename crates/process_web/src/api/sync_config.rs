@@ -91,8 +91,6 @@ pub async fn execute(
     tokio::task::spawn(async move {
         SyncConfigService::execute_task(&state, &data).await;
     });
-    // https://docs.rs/tokio/1.35.1/tokio/task/index.html#yield_now
-    // tokio::task::yield_now().await;
 
     Ok(Json(res_template_ok!(Some(true))))
 }

@@ -7,6 +7,7 @@ use reqwest::{
     header::{self, HeaderName, HeaderValue},
     Method,
 };
+use sea_orm::{DbBackend, Statement};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{debug, error};
@@ -156,8 +157,6 @@ impl Serde for Http {
                 ) {
                     Err(_) => {}
                     Ok(x) => {
-                        let a = x.to_string();
-                        println!("a {a}");
                         self.data = x;
                     }
                 }
@@ -206,39 +205,71 @@ pub fn generate_sql_list(template_sql: &str, data: &Value) -> Result<Vec<String>
     }
 
     let mut key_vec = vec![];
+    let mut rel_key_vec = vec![];
     let mut i = 0;
-    while i < temp_index_vec.len() {
-        let one_index = temp_index_vec[i].0 - "$".as_bytes().len(); // 取"{"前$的字节索引
-        let two_index = temp_index_vec[i + 1].0;
+    let char_size1 = "$".as_bytes().len();
+    let char_size2 = "'".as_bytes().len();
+    let char_size3 = "}".as_bytes().len();
 
-        key_vec.push(template_sql[one_index..two_index + "}".as_bytes().len()].to_string());
+    while i < temp_index_vec.len() {
+        rel_key_vec
+            .push(template_sql[temp_index_vec[i].0 + 1..temp_index_vec[i + 1].0].to_string());
+
+        let mut one_index = temp_index_vec[i].0 - char_size1; // 取"{"前$的字节索引
+        let mut two_index = temp_index_vec[i + 1].0;
+
+        let pre_one = &template_sql[(one_index - char_size2)..one_index];
+        let post_two =
+            &template_sql[(two_index + char_size3)..(two_index + char_size3 + char_size2)];
+
+        if pre_one == "'" && post_two == "'" {
+            one_index -= char_size1;
+            two_index += char_size2;
+        }
+
+        key_vec.push(template_sql[one_index..two_index + char_size3].to_string());
 
         i += 2;
     }
+    let mut template_sql = template_sql.to_string();
+
+    for item in &key_vec {
+        // template_sql = template_sql.replace(item, format!("${}", index + 1).as_str());
+        template_sql = template_sql.replace(item, "?");
+    }
 
     let mut result_vec: Vec<String> = vec![];
-
-    for key in key_vec {
-        let rel_key = &key[2..key.len() - 1];
-        let value = find_value(rel_key, data, true)
-            .map_err(|err| anyhow!("{err} 未在rel_key: {rel_key} data:{}中找到数据", data))?;
+    let mut result_values: Vec<Vec<String>> = vec![];
+    for key in &rel_key_vec {
+        // let rel_key = &key[2..key.len() - 1];
+        let value = find_value(key, data, true)
+            .map_err(|err| anyhow!("{err} 未在rel_key: {key} data:{}中找到数据", data))?;
         if let Some(list) = value.as_array() {
             for i in 0..list.len() {
-                let item: &str;
+                let mut item;
                 let temp_string = list[i].to_string();
                 if let Some(x) = list[i].as_str() {
-                    item = x;
+                    item = x.to_string();
                 } else {
-                    item = temp_string.as_str();
+                    item = temp_string;
                 }
-
-                if result_vec.get(i).is_none() {
-                    result_vec.push(template_sql.replace(key.as_str(), item));
+                // TIPS 做这个转换是为了防止值影响以;来切割SQL语句的方法 查看：crates/process_web/src/service/collect_config_service.rs 219行
+                item = item.replace(';', r#"\:"#);
+                if result_values.get(i).is_none() {
+                    result_values.push(vec![item.to_string()]);
                 } else {
-                    result_vec[i] = result_vec[i].replace(key.as_str(), item);
+                    result_values[i].push(item.to_string());
                 }
             }
         }
+    }
+    for values in result_values {
+        let sql = Statement::from_sql_and_values(
+            DbBackend::MySql,
+            template_sql.clone(),
+            values.iter().map(|x| x.into()),
+        );
+        result_vec.push(sql.to_string());
     }
 
     Ok(result_vec)

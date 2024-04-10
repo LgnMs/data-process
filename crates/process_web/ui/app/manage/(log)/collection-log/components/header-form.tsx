@@ -15,6 +15,7 @@ export default function HeaderForm() {
       type: "collectLog.setPagination",
       pagination: {
         ...state.collectLog.pagination,
+        current: 1,
         data,
       },
     });
@@ -24,7 +25,7 @@ export default function HeaderForm() {
   return (
     <Form form={form} name="basic" layout="inline">
       <Form.Item name="collect_config_name">
-        <Input placeholder="请输入采集任务名称" />
+        <Input placeholder="请输入采集任务名称" defaultValue={state.collectLog.pagination.data?.collect_config_name!} />
       </Form.Item>
 
       <Form.Item>

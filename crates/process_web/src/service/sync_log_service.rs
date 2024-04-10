@@ -32,7 +32,7 @@ impl SyncLogService {
             .find_also_related(sync_config::Entity)
             .offset((page - 1) * page_size)
             .limit(page_size)
-            .filter(conditions)
+            .filter(conditions.clone())
             .order_by_desc(sync_log::Column::UpdateTime)
             .all(db)
             .await?;
@@ -44,7 +44,12 @@ impl SyncLogService {
             list.push(a);
         }
 
-        let num_pages = sync_log::Entity::find().all(db).await?.len() as u64;
+        let num_pages = sync_log::Entity::find()
+            .find_also_related(sync_config::Entity)
+            .filter(conditions)
+            .all(db)
+            .await?
+            .len() as u64;
 
         Ok((list, num_pages))
     }

@@ -24,7 +24,7 @@ export default function SyncTaskCard() {
     Object.keys(data.data.list).forEach((key) => {
       resData.push({
         date: key,
-        运行次数: data.data?.list[key],
+        "运行次数": data.data?.list[key],
         type: "运行次数",
       });
     });

@@ -166,8 +166,10 @@ function SyncTask(props: {date: PickerDate}) {
         const obj: any = {}
         obj["运行次数"] = data.data?.list[key];
         obj["日期"] = key;
+        obj["date"] = key;
         return obj;
       });
+      list.sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf());
     }
 
     if (!chartIn.current) {

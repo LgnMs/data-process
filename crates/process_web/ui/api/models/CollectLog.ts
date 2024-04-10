@@ -3,11 +3,12 @@
 import { CollectConfig } from "@/api/models/CollectConfig";
 
 export interface CollectLog {
-  id: string;
+  id: number;
   collect_config_id: number | null;
   running_log: string | null;
   status: number;
   update_time: any;
   create_time: any;
-  collect_config: CollectConfig;
+  name: string;
+  task_id: string | null;
 }

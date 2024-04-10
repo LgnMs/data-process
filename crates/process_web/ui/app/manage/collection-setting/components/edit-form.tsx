@@ -105,7 +105,7 @@ export default function EditForm(props: IEditFormProps) {
       res = await CollectConfig.update_by_id(data.id, data);
     }
 
-    if (res.data) {
+    if (res?.data) {
       await mutate([CollectConfig.LIST, state.collectConfig.pagination]);
 
       message.success("操作成功");
@@ -413,9 +413,9 @@ export default function EditForm(props: IEditFormProps) {
                       }
                       name="max_number_of_result_data"
                       rules={[{ required: true }]}
-                      initialValue={100}
+                      initialValue={1000}
                     >
-                      <InputNumber placeholder="请输入" />
+                      <InputNumber placeholder="请输入" min={0} />
                     </Form.Item>
                   </Col>
                   <Col span={8}>
@@ -443,7 +443,7 @@ export default function EditForm(props: IEditFormProps) {
                       name="max_count_of_request"
                       rules={[{ required: true }]}
                     >
-                      <InputNumber placeholder="请输入" />
+                      <InputNumber placeholder="请输入" min={0}/>
                     </Form.Item>
                   </Col>
                 </>
