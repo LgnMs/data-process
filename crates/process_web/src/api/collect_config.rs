@@ -11,7 +11,9 @@ use tracing::debug;
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::api::common::{AppError, AppState, LogTask, PaginationPayload, ResJson, ResJsonWithPagination};
+use crate::api::common::{
+    AppError, AppState, LogTask, PaginationPayload, ResJson, ResJsonWithPagination,
+};
 use crate::entity::collect_config::Model;
 use crate::service::collect_config_service::CollectConfigService;
 use crate::{bool_response, data_response, pagination_response};
@@ -59,6 +61,7 @@ async fn list(
 
     pagination_response!(res, payload.current, payload.page_size)
 }
+
 async fn add(
     state: State<Arc<AppState>>,
     Json(payload): Json<Model>,

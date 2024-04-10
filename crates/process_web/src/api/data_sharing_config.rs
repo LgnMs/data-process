@@ -123,7 +123,8 @@ async fn get_data(
     let api_id = api_id[1..].to_string();
     let user_info = json!({
         "user": user_info.auth_id
-    }).to_string();
+    })
+    .to_string();
 
     let res = DataSharingConfigService::get_data(&state.conn, api_id, payload).await;
 
@@ -143,5 +144,4 @@ async fn get_data(
     .await?;
 
     data_response!(res)
-
 }

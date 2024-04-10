@@ -2,7 +2,6 @@ use crate::api::collect_log::ListParams;
 use chrono::{Local, TimeZone};
 use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::*;
-use serde_json::json;
 use tracing::debug;
 
 use crate::entity::collect_config;
@@ -50,7 +49,7 @@ impl CollectLogService {
             .column(collect_config::Column::Name)
             .columns(collect_log::Column::iter().filter(|col| match col {
                 collect_log::Column::RunningLog => false,
-                _ => true
+                _ => true,
             }))
             .inner_join(collect_config::Entity)
             .offset((page - 1) * page_size)
@@ -59,19 +58,16 @@ impl CollectLogService {
             .order_by_desc(collect_log::Column::UpdateTime)
             .into_json();
 
-        let db_res = select
-            .paginate(db, page_size);
+        let db_res = select.paginate(db, page_size);
 
         let num_pages = db_res.num_items().await?;
 
         match db_res.fetch_page(page - 1).await {
-            Ok(p) => {
-                Ok((p, num_pages))
-            },
+            Ok(p) => Ok((p, num_pages)),
             Err(err) => {
                 println!("err {err}");
                 Err(err)
-            },
+            }
         }
     }
 
@@ -112,7 +108,6 @@ impl CollectLogService {
             let log = format!("{}\n{}", db_data.running_log, data.running_log);
             active_data.running_log = Set(log);
             active_data.update_time = Set(now);
-
 
             active_data.update(db).await
         } else {

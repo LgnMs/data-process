@@ -6,10 +6,10 @@ use axum::{
     Router,
 };
 use serde::Deserialize;
-use tracing::error;
-use uuid::Uuid;
 use std::sync::Arc;
+use tracing::error;
 use ts_rs::TS;
+use uuid::Uuid;
 
 use crate::api::common::{AppError, AppState, PaginationPayload, ResJson, ResJsonWithPagination};
 use crate::entity::collect_log::{self, Model};
@@ -17,7 +17,7 @@ use crate::service::collect_log_service::CollectLogService;
 use crate::{bool_response, data_response, pagination_response};
 
 pub fn set_routes() -> Router<Arc<AppState>> {
-     Router::new()
+    Router::new()
         .route("/find_by_id/:id", get(find_by_id))
         .route("/list", post(list))
         .route("/add", post(add))
@@ -85,16 +85,25 @@ async fn del(state: State<Arc<AppState>>, Path(id): Path<i32>) -> Result<ResJson
     bool_response!(res)
 }
 
-pub async fn stop_task(state: State<Arc<AppState>>, Path(id): Path<String>) -> Result<ResJson<bool>, AppError> {
+pub async fn stop_task(
+    state: State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<ResJson<bool>, AppError> {
     let log_task_id = Uuid::parse_str(id.as_str())?.simple();
 
     let log_id = state.stop_log_task(log_task_id).await;
     if let Some(log_id) = log_id {
-        if let Err(err) = CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-            status: 5,
-            running_log: "用户手动停止".to_string(),
-            ..Default::default()
-        }).await {
+        if let Err(err) = CollectLogService::update_by_id(
+            &state.conn,
+            log_id,
+            collect_log::Model {
+                status: 5,
+                running_log: "用户手动停止".to_string(),
+                ..Default::default()
+            },
+        )
+        .await
+        {
             error!("{}", err);
         }
     }

@@ -212,13 +212,15 @@ pub fn generate_sql_list(template_sql: &str, data: &Value) -> Result<Vec<String>
     let char_size3 = "}".as_bytes().len();
 
     while i < temp_index_vec.len() {
-        rel_key_vec.push(template_sql[temp_index_vec[i].0 + 1..temp_index_vec[i + 1].0].to_string());
+        rel_key_vec
+            .push(template_sql[temp_index_vec[i].0 + 1..temp_index_vec[i + 1].0].to_string());
 
         let mut one_index = temp_index_vec[i].0 - char_size1; // 取"{"前$的字节索引
         let mut two_index = temp_index_vec[i + 1].0;
 
         let pre_one = &template_sql[(one_index - char_size2)..one_index];
-        let post_two = &template_sql[(two_index + char_size3)..(two_index + char_size3 + char_size2)];
+        let post_two =
+            &template_sql[(two_index + char_size3)..(two_index + char_size3 + char_size2)];
 
         if pre_one == "'" && post_two == "'" {
             one_index -= char_size1;

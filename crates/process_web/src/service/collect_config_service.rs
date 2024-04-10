@@ -122,27 +122,32 @@ impl CollectConfigService {
             active_data.update_time = Set(now);
 
             if db_data.cache_table_name != data.cache_table_name {
-                if let (Some(from_name), Some(to_name)) = (db_data.cache_table_name.clone(), data.cache_table_name.clone()) {
+                if let (Some(from_name), Some(to_name)) = (
+                    db_data.cache_table_name.clone(),
+                    data.cache_table_name.clone(),
+                ) {
                     let alert_sql = format!("ALTER TABLE {from_name} rename to {to_name}");
-                    if let Err(err) = state.cache_conn
-                    .execute(Statement::from_string(
-                        state.cache_conn.get_database_backend(),
-                        alert_sql,
-                    ))
-                    .await {
+                    if let Err(err) = state
+                        .cache_conn
+                        .execute(Statement::from_string(
+                            state.cache_conn.get_database_backend(),
+                            alert_sql,
+                        ))
+                        .await
+                    {
                         error!("DbErr {:?}", err);
                     }
                 }
-                    
             }
 
             if let Some(db_columns_config) = data.db_columns_config.as_ref() {
-                let mut arr  = db_columns_config.as_array().unwrap_or(&vec![]).clone(); 
+                let mut arr = db_columns_config.as_array().unwrap_or(&vec![]).clone();
                 if let Some(db_columns_config2) = data.db_columns_config2.as_ref() {
-                    let arr2  = db_columns_config2.as_array().unwrap_or(&vec![]).clone(); 
-                    arr.extend(arr2.clone());                
-                    if db_data.db_columns_config != data.db_columns_config || db_data.db_columns_config2 != data.db_columns_config2 {
-                        
+                    let arr2 = db_columns_config2.as_array().unwrap_or(&vec![]).clone();
+                    arr.extend(arr2.clone());
+                    if db_data.db_columns_config != data.db_columns_config
+                        || db_data.db_columns_config2 != data.db_columns_config2
+                    {
                         Self::update_table_struct(
                             &state.cache_conn,
                             Some(&json!(arr)),
@@ -167,10 +172,10 @@ impl CollectConfigService {
             active_data.create_time = Set(now);
             active_data.update_time = Set(now);
             if let Some(db_columns_config) = data.db_columns_config.as_ref() {
-                let mut arr  = db_columns_config.as_array().unwrap_or(&vec![]).clone(); 
+                let mut arr = db_columns_config.as_array().unwrap_or(&vec![]).clone();
                 if let Some(db_columns_config2) = data.db_columns_config2.as_ref() {
-                    let arr2  = db_columns_config2.as_array().unwrap_or(&vec![]).clone(); 
-                    arr.extend(arr2.clone());                
+                    let arr2 = db_columns_config2.as_array().unwrap_or(&vec![]).clone();
+                    arr.extend(arr2.clone());
                 }
 
                 Self::create_table(
@@ -214,28 +219,32 @@ impl CollectConfigService {
         let mut err_msg = String::new();
 
         for (i, item) in list.iter().enumerate() {
-            let sql_list = item.split(';').map(|x| x.to_string()).collect::<Vec<String>>();
+            let sql_list = item
+                .split(';')
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>();
             for sql in sql_list {
                 if sql.is_empty() {
                     continue;
                 }
-                match state.cache_conn
-                        .execute(Statement::from_string(
-                            state.cache_conn.get_database_backend(),
-                            sql.clone(),
-                        ))
-                        .await
-                    {
-                        Ok(msg) => {
-                            debug!("{:?}", msg);
-                            // return Ok::<(), String>(());
-                        }
-                        Err(err) => {
-                            error!("sql {} {}", sql, err);
-                            err_msg.push_str(&format!("第{}条SQL执行失败，{} \n", i + 1, err));
-                            // return Err::<(), String>(format!("第{}条SQL执行失败，{} \n", i + 1, err));
-                        }
+                match state
+                    .cache_conn
+                    .execute(Statement::from_string(
+                        state.cache_conn.get_database_backend(),
+                        sql.clone(),
+                    ))
+                    .await
+                {
+                    Ok(msg) => {
+                        debug!("{:?}", msg);
+                        // return Ok::<(), String>(());
                     }
+                    Err(err) => {
+                        error!("sql {} {}", sql, err);
+                        err_msg.push_str(&format!("第{}条SQL执行失败，{} \n", i + 1, err));
+                        // return Err::<(), String>(format!("第{}条SQL执行失败，{} \n", i + 1, err));
+                    }
+                }
 
                 // let state = state.clone();
                 // let handler = tokio::spawn(async move {
@@ -369,13 +378,14 @@ impl CollectConfigService {
     ) -> Result<bool, DbErr> {
         let now = Local::now().naive_utc().timestamp();
         let alert_sql = format!("ALTER TABLE {table_name} rename to __{table_name}_{now}");
- 
+
         if let Err(err) = cache_db
-        .execute(Statement::from_string(
-            cache_db.get_database_backend(),
-            alert_sql,
-        ))
-        .await {
+            .execute(Statement::from_string(
+                cache_db.get_database_backend(),
+                alert_sql,
+            ))
+            .await
+        {
             // TODO 识别为表不存在的错误
             error!("DbErr {:?}", err);
         }
@@ -430,48 +440,60 @@ impl CollectConfigService {
         //     }
         // }
 
-
         if let Some(table_name) = data.cache_table_name.as_ref() {
             let mut log = String::new();
-            match TableService::table_exists(&state.cache_conn, "data_process_cache", table_name.borrow()).await {
+            match TableService::table_exists(
+                &state.cache_conn,
+                "data_process_cache",
+                table_name.borrow(),
+            )
+            .await
+            {
                 Ok(bl) => {
                     if !bl {
-                        log.push_str(format!("{table_name} 不在缓存数据库中，开始创建......\n ").as_str());
+                        log.push_str(
+                            format!("{table_name} 不在缓存数据库中，开始创建......\n ").as_str(),
+                        );
                         if let Some(db_columns_config) = data.db_columns_config.as_ref() {
-                            let mut arr  = db_columns_config.as_array().unwrap_or(&vec![]).clone(); 
+                            let mut arr = db_columns_config.as_array().unwrap_or(&vec![]).clone();
                             if let Some(db_columns_config2) = data.db_columns_config2.as_ref() {
-                                let arr2  = db_columns_config2.as_array().unwrap_or(&vec![]).clone(); 
-                                arr.extend(arr2.clone());                
+                                let arr2 = db_columns_config2.as_array().unwrap_or(&vec![]).clone();
+                                arr.extend(arr2.clone());
                             }
-            
-                            match Self::create_table(
-                                &state.cache_conn,
-                                &json!(arr),
-                                table_name,
-                            )
-                            .await {
+
+                            match Self::create_table(&state.cache_conn, &json!(arr), table_name)
+                                .await
+                            {
                                 Ok(_) => {
                                     log.push_str(format!("{table_name} 表创建成功 ").as_str());
-                                },
+                                }
                                 Err(err) => {
-                                    log.push_str(format!("{table_name} 表创建创建失败 {err} ").as_str());
-                                },
+                                    log.push_str(
+                                        format!("{table_name} 表创建创建失败 {err} ").as_str(),
+                                    );
+                                }
                             }
                         }
                     }
-                },
+                }
                 Err(err) => {
                     log.push_str("查询表是否存在时发生错误: ");
                     log.push_str(err.to_string().as_str());
-                },
+                }
             }
 
-            match CollectLogService::update_by_id(&state.conn, log_id, collect_log::Model {
-                collect_config_id: Some(data.id),
-                status: 0,
-                running_log: log,
-                ..Default::default()
-            }).await {
+            match CollectLogService::update_by_id(
+                &state.conn,
+                log_id,
+                collect_log::Model {
+                    collect_config_id: Some(data.id),
+                    status: 0,
+                    running_log: log,
+                    ..Default::default()
+                },
+            )
+            .await
+            {
                 Ok(_) => {}
                 Err(err) => {
                     error!("任务日志添加失败 {err}");
@@ -621,9 +643,7 @@ pub async fn process_data(
                                 error!("status: 2 运行完毕；日志更新失败: {err}");
                             };
 
-                            match CollectConfigService::cache_data(state, &data_res)
-                                .await
-                            {
+                            match CollectConfigService::cache_data(state, &data_res).await {
                                 Ok(_) => {
                                     if let Some(err) = CollectLogService::update_by_id(
                                         &state.conn,

@@ -17,9 +17,8 @@ impl MigrationTrait for Migration {
                             .string()
                             .comment(r#"正在执行的任务的id"#),
                     )
-                    .to_owned()
+                    .to_owned(),
             )
             .await
     }
-
 }

@@ -5,11 +5,11 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::*;
 // use tokio::runtime::Handle;
 // use tokio::time::interval;
-use tokio::sync::RwLock;
 use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::RwLock;
 use tokio_cron_scheduler::JobScheduler;
 use tower::ServiceBuilder;
 use tracing::Level;
@@ -76,7 +76,7 @@ pub async fn start() -> Result<()> {
         conn,
         cache_conn,
         sched,
-        log_task
+        log_task,
     });
 
     // 初始化调度任务
@@ -85,7 +85,7 @@ pub async fn start() -> Result<()> {
     CollectConfigService::setup_collect_config_cron(&state).await?;
     SyncConfigService::setup_collect_config_cron(&state).await?;
     state.sched.start().await?;
-    
+
     // show_tokio_info();
 
     // build our application with a route
@@ -113,13 +113,16 @@ pub async fn start() -> Result<()> {
 
 fn setup_log() {
     let builder = tracing_subscriber::fmt();
-    let log_level = match env::var("LOG_LEVEL").expect("LOG_LEVEL is not set in .env file").as_str() {
+    let log_level = match env::var("LOG_LEVEL")
+        .expect("LOG_LEVEL is not set in .env file")
+        .as_str()
+    {
         "TRACE" => Level::TRACE,
         "INFO" => Level::INFO,
         "DEBUG" => Level::DEBUG,
         "WARN" => Level::WARN,
         "ERROR" => Level::ERROR,
-        _ => Level::ERROR
+        _ => Level::ERROR,
     };
 
     println!("LOG_LEVEL is {}", log_level);

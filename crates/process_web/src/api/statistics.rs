@@ -6,17 +6,15 @@ use axum::extract::State;
 use axum::routing::get;
 use axum::{routing::post, Json, Router};
 use chrono::{Local, NaiveDateTime, TimeZone};
-use sea_orm::{
-    ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
-    QuerySelect, Statement, JsonValue
-};
-use serde::{Deserialize, Serialize};
-use serde::ser::SerializeStruct;
-use serde_json::Value;
-use sysinfo::{
-    DiskUsage, System
-};
 use migration::Condition;
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, DbBackend, EntityTrait, FromQueryResult, JsonValue, QueryFilter,
+    QueryOrder, QuerySelect, Statement,
+};
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use sysinfo::{DiskUsage, System};
 use ts_rs::TS;
 
 use crate::data_response;
@@ -27,10 +25,7 @@ use crate::entity::{
 use super::common::{AppError, AppState, ResJson};
 
 fn get_native_date_by_timestamp(timestamp: i64) -> NaiveDateTime {
-    Local
-        .timestamp_millis_opt(timestamp)
-        .unwrap()
-        .naive_local()
+    Local.timestamp_millis_opt(timestamp).unwrap().naive_local()
 }
 
 pub fn set_routes() -> Router<Arc<AppState>> {
@@ -62,9 +57,7 @@ pub async fn collect_task_info(
 ) -> Result<ResJson<CollectTaskInfo>, AppError> {
     let cache_db = &state.cache_conn;
     let query_table_name_sql: &str = match cache_db.get_database_backend() {
-        DbBackend::MySql => {
-             "show tables;"
-        }
+        DbBackend::MySql => "show tables;",
         DbBackend::Postgres => {
             "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
         }
@@ -131,12 +124,14 @@ pub async fn collect_task_info_day_list(
     state: State<Arc<AppState>>,
     Json(payload): Json<CollectTaskInfoDayListReq>,
 ) -> Result<ResJson<CollectTaskInfoRes>, AppError> {
-    let (start_date, end_date) = (get_native_date_by_timestamp(payload.date[0]), get_native_date_by_timestamp(payload.date[1]));
+    let (start_date, end_date) = (
+        get_native_date_by_timestamp(payload.date[0]),
+        get_native_date_by_timestamp(payload.date[1]),
+    );
     let mut conditions = Condition::all();
     conditions = conditions
         .add(collect_log::Column::UpdateTime.gte(start_date))
         .add(collect_log::Column::UpdateTime.lte(end_date));
-
 
     let query: &str = match state.conn.get_database_backend() {
         DbBackend::MySql => {
@@ -174,11 +169,13 @@ pub async fn collect_task_info_day_list(
         }
     };
 
-    let list = JsonValue::find_by_statement(
-        Statement::from_sql_and_values(state.conn.get_database_backend(), query, [start_date.into(), end_date.into()]),
-    )
-        .all(&state.conn)
-        .await?;
+    let list = JsonValue::find_by_statement(Statement::from_sql_and_values(
+        state.conn.get_database_backend(),
+        query,
+        [start_date.into(), end_date.into()],
+    ))
+    .all(&state.conn)
+    .await?;
 
     let rank_list: Vec<Value> = collect_log::Entity::find()
         .select_only()
@@ -195,10 +192,7 @@ pub async fn collect_task_info_day_list(
         .all(&state.conn)
         .await?;
 
-    let res: Result<CollectTaskInfoRes> = Ok(CollectTaskInfoRes {
-        list,
-        rank_list,
-    });
+    let res: Result<CollectTaskInfoRes> = Ok(CollectTaskInfoRes { list, rank_list });
 
     data_response!(res)
 }
@@ -246,10 +240,12 @@ pub async fn sharing_task_info(
     let mut conditions = Condition::all();
     conditions = conditions
         .add(
-            sharing_request_log::Column::UpdateTime.gte(get_native_date_by_timestamp(payload.date[0])),
+            sharing_request_log::Column::UpdateTime
+                .gte(get_native_date_by_timestamp(payload.date[0])),
         )
         .add(
-            sharing_request_log::Column::UpdateTime.lte(get_native_date_by_timestamp(payload.date[1])),
+            sharing_request_log::Column::UpdateTime
+                .lte(get_native_date_by_timestamp(payload.date[1])),
         );
 
     let list = sharing_request_log::Entity::find()
@@ -441,10 +437,13 @@ struct MyDiskUsage(DiskUsage);
 impl Serialize for MyDiskUsage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer 
+        S: serde::Serializer,
     {
         let mut disk_usage = serializer.serialize_struct("disk_usage", 4)?;
-        disk_usage.serialize_field("total_written_bytes", &format!("{:?}", self.0.total_written_bytes))?;
+        disk_usage.serialize_field(
+            "total_written_bytes",
+            &format!("{:?}", self.0.total_written_bytes),
+        )?;
         disk_usage.serialize_field("written_bytes", &format!("{}", self.0.written_bytes))?;
         disk_usage.serialize_field("total_read_bytes", &format!("{}", self.0.total_read_bytes))?;
         disk_usage.serialize_field("read_bytes", &format!("{:?}", self.0.read_bytes))?;
@@ -492,7 +491,7 @@ async fn get_sys_info() -> Result<ResJson<SystemInfo>, AppError> {
     };
 
     let my_processes_disk_usage = processes_disk_usage.map(MyDiskUsage);
-    
+
     let res: Result<SystemInfo> = Ok(SystemInfo {
         total_memory: sys.total_memory(),
         used_memory: sys.used_memory(),
@@ -501,7 +500,7 @@ async fn get_sys_info() -> Result<ResJson<SystemInfo>, AppError> {
         cpu_uses: sys.cpus().iter().map(|cpu| cpu.cpu_usage()).collect(),
         processes_disk_usage: my_processes_disk_usage,
         processes_cpu_usage,
-        processes_memory_usage
+        processes_memory_usage,
     });
 
     data_response!(res)
@@ -516,7 +515,7 @@ async fn get_sys_info() -> Result<ResJson<SystemInfo>, AppError> {
 struct TaskInfo {
     collect_num: i64,
     sync_num: i64,
-    sharing_num: i64
+    sharing_num: i64,
 }
 
 async fn get_task_info(state: State<Arc<AppState>>) -> Result<ResJson<TaskInfo>, AppError> {
@@ -545,7 +544,7 @@ async fn get_task_info(state: State<Arc<AppState>>) -> Result<ResJson<TaskInfo>,
     let res: Result<TaskInfo> = Ok(TaskInfo {
         collect_num: collect_num.num_items,
         sync_num: sync_num.num_items,
-        sharing_num: sharing_num.num_items
+        sharing_num: sharing_num.num_items,
     });
 
     data_response!(res)

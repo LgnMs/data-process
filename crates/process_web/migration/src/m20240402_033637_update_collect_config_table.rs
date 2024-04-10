@@ -8,7 +8,6 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-
         manager
             .alter_table(
                 Table::alter()
@@ -18,9 +17,8 @@ impl MigrationTrait for Migration {
                             .json()
                             .comment(r#"数据库列配置2"#),
                     )
-                    .to_owned()
+                    .to_owned(),
             )
             .await
     }
-
 }
