@@ -26,10 +26,3 @@ $ cargo run
 # 前端
 $ cd crates/process_web/ui && npm run dev
 ```
-
-### TODO
-
-- [ ] 采集Excel、csv、JSON中的数据
-- [ ] 数据清洗
-- [ ] 采集任务可配置要默认携带安全认证信息
-- [ ] 共享接口调用添加权限认证
